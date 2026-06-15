@@ -302,7 +302,7 @@ app.get('/api/chat/stream', async (req, res) => {
       contextText += `[Source ${idx + 1}] Lease File: "${c.filename}", Clause: ${c.clause_number || ''} ${c.clause_title || ''}\nContent:\n${c.text_content}\n\n`;
     });
 
-    // D. Stream response from Claude
+    // D. Stream response from LLM
     const prompt = `
 You are an expert commercial real estate lease compliance analyst. Answering the user question grounded ONLY in the lease context below.
 
@@ -319,16 +319,42 @@ Instructions:
 4. If the context does not contain the answer, explain that you couldn't find the answer in the active leases.
 `;
 
-    const stream = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 1500,
+    const isAnthropicFake = !process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY.includes('xxx') || process.env.ANTHROPIC_API_KEY === '';
+
+    if (!isAnthropicFake) {
+      try {
+        const stream = await anthropic.messages.create({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 1500,
+          messages: [{ role: 'user', content: prompt }],
+          stream: true,
+        });
+
+        for await (const chunk of stream) {
+          if (chunk.type === 'content_block_delta' && chunk.delta && 'text' in chunk.delta) {
+            res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+          }
+        }
+        res.write('data: [DONE]\n\n');
+        res.end();
+        return;
+      } catch (err: any) {
+        console.warn(`Claude streaming failed, falling back to OpenAI: ${err.message}`);
+      }
+    }
+
+    // OpenAI streaming fallback
+    console.log("Streaming chat response using OpenAI gpt-4o-mini...");
+    const stream = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       stream: true,
     });
 
     for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta && 'text' in chunk.delta) {
-        res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+      const content = chunk.choices[0]?.delta?.content || '';
+      if (content) {
+        res.write(`data: ${JSON.stringify({ text: content })}\n\n`);
       }
     }
 

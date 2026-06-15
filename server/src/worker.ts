@@ -126,104 +126,116 @@ async function processNextJob() {
     console.log(`Saved ${chunkIds.length} clauses with embeddings.`);
     await updateJobProgress(job.id, 70);
 
-    // 4. Extract terms with Claude using Tool Use
-    console.log(`Extracting terms for lease ${leaseId} using Claude...`);
+    // 4. Extract terms with LLM
+    let extractedTerms: Record<string, { value: string; citation: string }>;
     const systemPrompt = `You are a legal lease abstraction AI. Extract structured terms from the lease document text. Ground every extracted term in a citation referring to specific sections, clauses, or headings in the lease text. Make sure your extraction is accurate.`;
     
-    // Combine full lease text or top chunks if too long. Let's send the full text since Claude 3.5 Sonnet supports 200k context.
-    const extractionResponse = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 4000,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: `Here is the full text of the lease agreement:\n\n${parserData.text}\n\nExtract the lease terms using the extract_lease_terms tool.`
-        }
-      ],
-      tools: [
-        {
-          name: 'extract_lease_terms',
-          description: 'Extract key terms and citation clauses from a commercial lease.',
-          input_schema: {
-            type: 'object',
-            properties: {
-              tenant_name: {
+    const isAnthropicFake = !process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY.includes('xxx') || process.env.ANTHROPIC_API_KEY === '';
+
+    if (!isAnthropicFake) {
+      try {
+        console.log(`Extracting terms for lease ${leaseId} using Claude...`);
+        const extractionResponse = await anthropic.messages.create({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 4000,
+          system: systemPrompt,
+          messages: [
+            {
+              role: 'user',
+              content: `Here is the full text of the lease agreement:\n\n${parserData.text}\n\nExtract the lease terms using the extract_lease_terms tool.`
+            }
+          ],
+          tools: [
+            {
+              name: 'extract_lease_terms',
+              description: 'Extract key terms and citation clauses from a commercial lease.',
+              input_schema: {
                 type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
-              },
-              landlord_name: {
-                type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
-              },
-              commencement_date: {
-                type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
-              },
-              expiration_date: {
-                type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
-              },
-              initial_rent: {
-                type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
-              },
-              rent_escalation: {
-                type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
-              },
-              break_clause: {
-                type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
-              },
-              renewal_option: {
-                type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
-              },
-              repair_obligations: {
-                type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
-              },
-              indemnity_covenants: {
-                type: 'object',
-                properties: { value: { type: 'string' }, citation: { type: 'string' } },
-                required: ['value', 'citation']
+                properties: {
+                  tenant_name: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  },
+                  landlord_name: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  },
+                  commencement_date: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  },
+                  expiration_date: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  },
+                  initial_rent: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  },
+                  rent_escalation: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  },
+                  break_clause: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  },
+                  renewal_option: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  },
+                  repair_obligations: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  },
+                  indemnity_covenants: {
+                    type: 'object',
+                    properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                    required: ['value', 'citation']
+                  }
+                },
+                required: [
+                  'tenant_name',
+                  'landlord_name',
+                  'commencement_date',
+                  'expiration_date',
+                  'initial_rent',
+                  'rent_escalation',
+                  'break_clause',
+                  'renewal_option',
+                  'repair_obligations',
+                  'indemnity_covenants'
+                ]
               }
-            },
-            required: [
-              'tenant_name',
-              'landlord_name',
-              'commencement_date',
-              'expiration_date',
-              'initial_rent',
-              'rent_escalation',
-              'break_clause',
-              'renewal_option',
-              'repair_obligations',
-              'indemnity_covenants'
-            ]
-          }
+            }
+          ],
+          tool_choice: { type: 'tool', name: 'extract_lease_terms' }
+        });
+
+        const toolUseBlock = extractionResponse.content.find(block => block.type === 'tool_use');
+        if (toolUseBlock && toolUseBlock.type === 'tool_use') {
+          extractedTerms = toolUseBlock.input as Record<string, { value: string; citation: string }>;
+          console.log('Extracted terms from Claude successfully.');
+        } else {
+          throw new Error('Claude did not use the extract_lease_terms tool');
         }
-      ],
-      tool_choice: { type: 'tool', name: 'extract_lease_terms' }
-    });
-
-    const toolUseBlock = extractionResponse.content.find(block => block.type === 'tool_use');
-    if (!toolUseBlock || toolUseBlock.type !== 'tool_use') {
-      throw new Error('Claude did not use the extract_lease_terms tool');
+      } catch (err: any) {
+        console.warn(`Claude extraction failed, falling back to OpenAI: ${err.message}`);
+        extractedTerms = await extractWithOpenAI(parserData.text, systemPrompt);
+      }
+    } else {
+      console.log(`Anthropic key is placeholder/missing. Extracting terms for lease ${leaseId} using OpenAI...`);
+      extractedTerms = await extractWithOpenAI(parserData.text, systemPrompt);
     }
-
-    const extractedTerms = toolUseBlock.input as Record<string, { value: string; citation: string }>;
-    console.log('Extracted terms from Claude successfully.');
 
     // Save terms to database
     for (const [termName, termData] of Object.entries(extractedTerms)) {
@@ -304,4 +316,98 @@ async function updateJobProgress(jobId: string, progress: number) {
      WHERE id = $2`,
     [progress, jobId]
   );
+}
+
+async function extractWithOpenAI(text: string, systemPrompt: string): Promise<Record<string, { value: string; citation: string }>> {
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `Here is the full text of the lease agreement:\n\n${text}\n\nExtract the lease terms using the extract_lease_terms function.` }
+    ],
+    tools: [
+      {
+        type: 'function',
+        function: {
+          name: 'extract_lease_terms',
+          description: 'Extract key terms and citation clauses from a commercial lease.',
+          parameters: {
+            type: 'object',
+            properties: {
+              tenant_name: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              },
+              landlord_name: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              },
+              commencement_date: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              },
+              expiration_date: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              },
+              initial_rent: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              },
+              rent_escalation: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              },
+              break_clause: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              },
+              renewal_option: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              },
+              repair_obligations: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              },
+              indemnity_covenants: {
+                type: 'object',
+                properties: { value: { type: 'string' }, citation: { type: 'string' } },
+                required: ['value', 'citation']
+              }
+            },
+            required: [
+              'tenant_name',
+              'landlord_name',
+              'commencement_date',
+              'expiration_date',
+              'initial_rent',
+              'rent_escalation',
+              'break_clause',
+              'renewal_option',
+              'repair_obligations',
+              'indemnity_covenants'
+            ]
+          }
+        }
+      }
+    ],
+    tool_choice: { type: 'function', function: { name: 'extract_lease_terms' } }
+  });
+
+  const toolCall = response.choices[0].message.tool_calls?.[0];
+  if (!toolCall) {
+    throw new Error('OpenAI did not invoke the extract_lease_terms function');
+  }
+
+  return JSON.parse(toolCall.function.arguments);
 }
