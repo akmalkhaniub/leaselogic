@@ -43,6 +43,11 @@ async function processNextJob() {
   const leaseId = job.lease_id;
   console.log(`Processing job ${job.id} for lease ${leaseId}...`);
 
+  const startTime = Date.now();
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let totalCost = 0.0;
+
   try {
     // 1. Fetch lease metadata
     const leaseRes = await pool.query('SELECT filename FROM leases WHERE id = $1', [leaseId]);
@@ -93,6 +98,7 @@ async function processNextJob() {
 
     // 3. Generate embeddings and save chunks
     const chunkIds: string[] = [];
+    let totalEmbeddingTokens = 0;
     for (let i = 0; i < parserData.chunks.length; i++) {
       const chunk = parserData.chunks[i];
       
@@ -104,6 +110,10 @@ async function processNextJob() {
 
       const embedding = embeddingResponse.data[0].embedding;
       const embeddingStr = `[${embedding.join(',')}]`;
+
+      if (embeddingResponse.usage) {
+        totalEmbeddingTokens += embeddingResponse.usage.prompt_tokens;
+      }
 
       const insertRes = await pool.query(
         `INSERT INTO clauses (lease_id, clause_number, clause_title, text_content, page_number, chunk_strategy, embedding)
@@ -122,6 +132,9 @@ async function processNextJob() {
 
       chunkIds.push(insertRes.rows[0].id);
     }
+
+    totalInputTokens += totalEmbeddingTokens;
+    totalCost += (totalEmbeddingTokens / 1000000) * 0.02; // $0.02 per 1M tokens
 
     console.log(`Saved ${chunkIds.length} clauses with embeddings.`);
     await updateJobProgress(job.id, 70);
@@ -224,17 +237,33 @@ async function processNextJob() {
         const toolUseBlock = extractionResponse.content.find(block => block.type === 'tool_use');
         if (toolUseBlock && toolUseBlock.type === 'tool_use') {
           extractedTerms = toolUseBlock.input as Record<string, { value: string; citation: string }>;
+          
+          if (extractionResponse.usage) {
+            const inT = extractionResponse.usage.input_tokens;
+            const outT = extractionResponse.usage.output_tokens;
+            totalInputTokens += inT;
+            totalOutputTokens += outT;
+            totalCost += (inT / 1000000) * 3.0 + (outT / 1000000) * 15.0; // Sonnet 3.5: $3 / $15
+          }
           console.log('Extracted terms from Claude successfully.');
         } else {
           throw new Error('Claude did not use the extract_lease_terms tool');
         }
       } catch (err: any) {
         console.warn(`Claude extraction failed, falling back to OpenAI: ${err.message}`);
-        extractedTerms = await extractWithOpenAI(parserData.text, systemPrompt);
+        const result = await extractWithOpenAI(parserData.text, systemPrompt);
+        extractedTerms = result.extractedTerms;
+        totalInputTokens += result.inputTokens;
+        totalOutputTokens += result.outputTokens;
+        totalCost += (result.inputTokens / 1000000) * 0.15 + (result.outputTokens / 1000000) * 0.60;
       }
     } else {
       console.log(`Anthropic key is placeholder/missing. Extracting terms for lease ${leaseId} using OpenAI...`);
-      extractedTerms = await extractWithOpenAI(parserData.text, systemPrompt);
+      const result = await extractWithOpenAI(parserData.text, systemPrompt);
+      extractedTerms = result.extractedTerms;
+      totalInputTokens += result.inputTokens;
+      totalOutputTokens += result.outputTokens;
+      totalCost += (result.inputTokens / 1000000) * 0.15 + (result.outputTokens / 1000000) * 0.60;
     }
 
     // Save terms to database
@@ -274,11 +303,17 @@ async function processNextJob() {
     await updateJobProgress(job.id, 100);
 
     // Complete Job and update Lease status
+    const durationMs = Date.now() - startTime;
     await pool.query(
       `UPDATE abstraction_jobs 
-       SET status = 'completed', completed_at = NOW() 
+       SET status = 'completed', 
+           completed_at = NOW(),
+           input_tokens = $2,
+           output_tokens = $3,
+           processing_time_ms = $4,
+           api_cost = $5
        WHERE id = $1`,
-      [job.id]
+      [job.id, totalInputTokens, totalOutputTokens, durationMs, totalCost]
     );
 
     await pool.query(
@@ -318,7 +353,11 @@ async function updateJobProgress(jobId: string, progress: number) {
   );
 }
 
-async function extractWithOpenAI(text: string, systemPrompt: string): Promise<Record<string, { value: string; citation: string }>> {
+async function extractWithOpenAI(text: string, systemPrompt: string): Promise<{
+  extractedTerms: Record<string, { value: string; citation: string }>;
+  inputTokens: number;
+  outputTokens: number;
+}> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -409,5 +448,12 @@ async function extractWithOpenAI(text: string, systemPrompt: string): Promise<Re
     throw new Error('OpenAI did not invoke the extract_lease_terms function');
   }
 
-  return JSON.parse(toolCall.function.arguments);
+  const inputTokens = response.usage?.prompt_tokens || 0;
+  const outputTokens = response.usage?.completion_tokens || 0;
+
+  return {
+    extractedTerms: JSON.parse(toolCall.function.arguments),
+    inputTokens,
+    outputTokens
+  };
 }

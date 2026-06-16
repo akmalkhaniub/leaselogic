@@ -43,6 +43,12 @@ export default function LeaseLogicApp() {
   const [clauses, setClauses] = useState<Clause[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
+  // Views: 'workspace' | 'observability'
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability'>('workspace');
+  
+  // Observability stats state
+  const [stats, setStats] = useState<any>(null);
+
   // Tabs: 'abstract' | 'chat'
   const [activeTab, setActiveTab] = useState<'abstract' | 'chat'>('abstract');
   
@@ -91,11 +97,30 @@ export default function LeaseLogicApp() {
     }
   };
 
+  // Fetch Observability Stats
+  const fetchStats = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/observability/stats`);
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch (err) {
+      console.error('Error fetching observability stats:', err);
+    }
+  };
+
   useEffect(() => {
     fetchLeases();
     const interval = setInterval(fetchLeases, 3000);
     return () => clearInterval(interval);
   }, [selectedLease]);
+
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Load lease details
   const handleSelectLease = async (lease: Lease) => {
@@ -105,6 +130,7 @@ export default function LeaseLogicApp() {
     setAutomationLogs([]);
     setTerms([]);
     setClauses([]);
+    setCurrentView('workspace');
     
     if (lease.status === 'completed') {
       try {
@@ -381,9 +407,27 @@ export default function LeaseLogicApp() {
     <div className="app-container">
       {/* Sidebar - Lease List */}
       <div className="sidebar">
-        <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
           <h1 className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: 800 }}>LeaseLogic</h1>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>AI Abstraction & Compliance</p>
+        </div>
+
+        {/* View Switcher Toggle */}
+        <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(15,23,42,0.08)', display: 'flex', gap: '8px', background: '#f8fafc' }}>
+          <button 
+            className={`btn ${currentView === 'workspace' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px', fontSize: '0.8rem', borderRadius: '6px' }}
+            onClick={() => setCurrentView('workspace')}
+          >
+            📂 Workspace
+          </button>
+          <button 
+            className={`btn ${currentView === 'observability' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px', fontSize: '0.8rem', borderRadius: '6px' }}
+            onClick={() => setCurrentView('observability')}
+          >
+            📊 Analytics
+          </button>
         </div>
 
         <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -441,7 +485,9 @@ export default function LeaseLogicApp() {
         {/* Header */}
         <div className="header">
           <div>
-            {selectedLease ? (
+            {currentView === 'observability' ? (
+              <h2 style={{ fontSize: '1.25rem' }}>Pipeline Observability & Cost Analytics</h2>
+            ) : selectedLease ? (
               <h2 style={{ fontSize: '1.25rem' }}>{selectedLease.filename}</h2>
             ) : (
               <h2 style={{ fontSize: '1.25rem' }}>Portfolio Overview</h2>
@@ -456,8 +502,139 @@ export default function LeaseLogicApp() {
           </div>
         </div>
 
-        {/* Workspace Dashboard */}
-        {!selectedLease ? (
+        {/* Workspace Dashboard vs Observability Dashboard */}
+        {currentView === 'observability' ? (
+          <div className="pane" style={{ overflowY: 'auto' }}>
+            {/* Metric Cards Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '25px' }}>
+              
+              {/* Financial Audit Card */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Pipeline Spend</p>
+                <h3 className="gradient-text" style={{ fontSize: '2rem', fontWeight: 800 }}>
+                  ${stats ? stats.total_cost.toFixed(6) : '0.000000'}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Cumulative API usage cost (USD)
+                </p>
+              </div>
+
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Unit Cost per Lease</p>
+                <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                  ${stats && stats.total_leases > 0 ? (stats.total_cost / stats.total_leases).toFixed(6) : '0.000000'}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Average cost per file processed
+                </p>
+              </div>
+
+              {/* Pipeline Performance Card */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Avg Extraction Time</p>
+                <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                  {stats ? (stats.avg_latency_ms / 1000).toFixed(2) : '0.00'}s
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  End-to-end pipeline latency
+                </p>
+              </div>
+
+              {/* Model Accuracy Meter */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Machine Accuracy Rate</p>
+                <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--success)' }}>
+                  {stats ? stats.accuracy_rate.toFixed(1) : '100.0'}%
+                </h3>
+                <div className="progress-container" style={{ margin: '4px 0 0 0' }}>
+                  <div className="progress-bar" style={{ width: `${stats ? stats.accuracy_rate : 100}%`, background: 'var(--success)' }}></div>
+                </div>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  Unedited by reviewer after extraction
+                </p>
+              </div>
+
+            </div>
+
+            {/* Split view: Ingestion Jobs / Cost Breakdown AND Audit logs */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', flex: 1, minHeight: '400px' }}>
+              
+              {/* Cost by Lease Table */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '15px' }}>Job Ingestion & Cost Audit</h3>
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                  <table className="terms-table" style={{ margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>Lease Document</th>
+                        <th>API Cost (USD)</th>
+                        <th>Latency (sec)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats && stats.cost_by_lease.map((item: any, idx: number) => (
+                        <tr key={idx}>
+                          <td style={{ fontSize: '0.85rem', fontWeight: 600 }}>{item.filename}</td>
+                          <td style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>${parseFloat(String(item.cost)).toFixed(6)}</td>
+                          <td style={{ fontSize: '0.85rem' }}>{(item.latency_ms / 1000).toFixed(2)}s</td>
+                        </tr>
+                      ))}
+                      {(!stats || stats.cost_by_lease.length === 0) && (
+                        <tr>
+                          <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '20px' }}>No ingestion records found</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Audit Logs Table */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '15px' }}>Human Reviewer Corrections</h3>
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                  <table className="terms-table" style={{ margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>Lease</th>
+                        <th>Field / Action</th>
+                        <th>Original AI Value</th>
+                        <th>Corrected Human Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats && stats.audit_logs.map((log: any, idx: number) => {
+                        let oldVal = '';
+                        let newVal = '';
+                        try {
+                          const oldParsed = typeof log.old_values === 'string' ? JSON.parse(log.old_values) : log.old_values;
+                          const newParsed = typeof log.new_values === 'string' ? JSON.parse(log.new_values) : log.new_values;
+                          oldVal = oldParsed?.extracted_value || '';
+                          newVal = newParsed?.extracted_value || '';
+                        } catch (e) {}
+                        
+                        return (
+                          <tr key={idx}>
+                            <td style={{ fontSize: '0.8rem', fontWeight: 600 }} title={log.filename}>{log.filename}</td>
+                            <td style={{ fontSize: '0.8rem', textTransform: 'capitalize' }}>{log.action.replace(/_/g, ' ')}</td>
+                            <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{oldVal}</td>
+                            <td style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600 }}>{newVal}</td>
+                          </tr>
+                        );
+                      })}
+                      {(!stats || stats.audit_logs.length === 0) && (
+                        <tr>
+                          <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '20px' }}>No reviewer corrections logged yet</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        ) : !selectedLease ? (
           <div className="pane" style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
             <div className="glass" style={{ padding: '40px', maxWidth: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ width: '64px', height: '64px', background: 'rgba(139,92,246,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', marginBottom: '20px' }}>

@@ -182,13 +182,16 @@ app.put('/api/leases/:id/terms/:termId', async (req, res) => {
 
     const original = originalRes.rows[0];
 
+    // Determine if the value was modified
+    const isEdited = original.is_edited || (extracted_value !== original.extracted_value);
+
     // Update term
     const updatedRes = await pool.query(
       `UPDATE lease_terms
-       SET extracted_value = $1, reviewer_status = $2, updated_at = NOW()
-       WHERE id = $3 AND lease_id = $4
+       SET extracted_value = $1, reviewer_status = $2, is_edited = $3, updated_at = NOW()
+       WHERE id = $4 AND lease_id = $5
        RETURNING *`,
-      [extracted_value, reviewer_status, termId, leaseId]
+      [extracted_value, reviewer_status, isEdited, termId, leaseId]
     );
 
     // Create Audit Log entry
@@ -210,6 +213,65 @@ app.put('/api/leases/:id/terms/:termId', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// 4.5. Get Observability Stats
+app.get('/api/observability/stats', async (req, res) => {
+  try {
+    // A. Count total leases
+    const leasesCountRes = await pool.query('SELECT COUNT(*) FROM leases');
+    const totalLeases = parseInt(leasesCountRes.rows[0].count || '0');
+
+    // B. Total Cost from abstraction_jobs
+    const costRes = await pool.query("SELECT SUM(api_cost) as total_cost FROM abstraction_jobs");
+    const totalCost = parseFloat(costRes.rows[0].total_cost || '0.0');
+
+    // C. Average Latency
+    const latencyRes = await pool.query(
+      "SELECT AVG(processing_time_ms) as avg_latency FROM abstraction_jobs WHERE status = 'completed'"
+    );
+    const avgLatencyMs = parseFloat(latencyRes.rows[0].avg_latency || '0');
+
+    // D. Accuracy Rate
+    const accuracyRes = await pool.query(`
+      SELECT 
+        COUNT(CASE WHEN reviewer_status = 'approved' AND is_edited = FALSE THEN 1 END) as approved_unedited,
+        COUNT(CASE WHEN reviewer_status = 'approved' THEN 1 END) as total_approved
+      FROM lease_terms
+    `);
+    const approvedUnedited = parseInt(accuracyRes.rows[0].approved_unedited || '0');
+    const totalApproved = parseInt(accuracyRes.rows[0].total_approved || '0');
+    const accuracyRate = totalApproved > 0 ? (approvedUnedited / totalApproved) * 100 : 100.0;
+
+    // E. Cost by Lease
+    const costByLeaseRes = await pool.query(`
+      SELECT l.filename, COALESCE(j.api_cost, 0.0) as cost, COALESCE(j.processing_time_ms, 0) as latency_ms
+      FROM leases l
+      LEFT JOIN abstraction_jobs j ON l.id = j.lease_id
+      ORDER BY l.created_at DESC
+    `);
+
+    // F. Audit Logs
+    const auditLogsRes = await pool.query(`
+      SELECT a.*, l.filename
+      FROM audit_logs a
+      LEFT JOIN leases l ON a.lease_id = l.id
+      ORDER BY a.timestamp DESC
+      LIMIT 50
+    `);
+
+    res.json({
+      total_leases: totalLeases,
+      total_cost: totalCost,
+      avg_latency_ms: avgLatencyMs,
+      accuracy_rate: accuracyRate,
+      cost_by_lease: costByLeaseRes.rows,
+      audit_logs: auditLogsRes.rows,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // 5. Search Clauses (pgvector similarity search)
 app.post('/api/leases/search', async (req, res) => {
@@ -385,7 +447,26 @@ app.post('/api/automation/registry', async (req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Server is running on http://localhost:${port}`);
+  
+  // Run self-healing DB migrations for observability fields
+  try {
+    console.log('Running self-healing database migrations...');
+    await pool.query(`
+      ALTER TABLE abstraction_jobs 
+      ADD COLUMN IF NOT EXISTS input_tokens INT DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS output_tokens INT DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS processing_time_ms INT DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS api_cost NUMERIC(8,6) DEFAULT 0.000000;
+      
+      ALTER TABLE lease_terms 
+      ADD COLUMN IF NOT EXISTS is_edited BOOLEAN DEFAULT FALSE;
+    `);
+    console.log('Database migrations verified/completed successfully.');
+  } catch (err) {
+    console.error('Error running self-healing migrations:', err);
+  }
+
   startWorker();
 });

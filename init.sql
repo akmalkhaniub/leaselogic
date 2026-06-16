@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS lease_terms (
     confidence_score NUMERIC(3,2),
     source_clause_ids UUID[],
     reviewer_status VARCHAR(50) DEFAULT 'unreviewed',
+    is_edited BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -51,6 +52,10 @@ CREATE TABLE IF NOT EXISTS abstraction_jobs (
     locked_at TIMESTAMP WITH TIME ZONE,
     started_at TIMESTAMP WITH TIME ZONE,
     completed_at TIMESTAMP WITH TIME ZONE,
+    input_tokens INT DEFAULT 0,
+    output_tokens INT DEFAULT 0,
+    processing_time_ms INT DEFAULT 0,
+    api_cost NUMERIC(8,6) DEFAULT 0.000000,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
