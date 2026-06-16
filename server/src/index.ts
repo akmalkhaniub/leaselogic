@@ -272,6 +272,45 @@ app.get('/api/observability/stats', async (req, res) => {
   }
 });
 
+// 4.6. Compare terms across leases
+app.get('/api/leases/compare/terms/:termName', async (req, res) => {
+  try {
+    const { termName } = req.params;
+    
+    // Query all terms matching the specified name
+    const termsRes = await pool.query(
+      `SELECT t.id, t.lease_id, t.term_name, t.extracted_value, t.reviewer_status, t.source_clause_ids, l.filename
+       FROM lease_terms t
+       JOIN leases l ON t.lease_id = l.id
+       WHERE t.term_name = $1
+       ORDER BY l.created_at DESC`,
+      [termName]
+    );
+
+    const compareData = [];
+    for (const term of termsRes.rows) {
+      let sourceClauses: any[] = [];
+      if (term.source_clause_ids && term.source_clause_ids.length > 0) {
+        const clausesRes = await pool.query(
+          `SELECT id, clause_number, clause_title, text_content, page_number
+           FROM clauses
+           WHERE id = ANY($1)`,
+          [term.source_clause_ids]
+        );
+        sourceClauses = clausesRes.rows;
+      }
+      compareData.push({
+        ...term,
+        clauses: sourceClauses
+      });
+    }
+
+    res.json(compareData);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // 5. Search Clauses (pgvector similarity search)
 app.post('/api/leases/search', async (req, res) => {

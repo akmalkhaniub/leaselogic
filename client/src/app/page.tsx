@@ -49,6 +49,11 @@ export default function LeaseLogicApp() {
   // Observability stats state
   const [stats, setStats] = useState<any>(null);
 
+  // Comparison state
+  const [isComparing, setIsComparing] = useState(false);
+  const [comparingTermName, setComparingTermName] = useState<string | null>(null);
+  const [compareData, setCompareData] = useState<any[]>([]);
+
   // Tabs: 'abstract' | 'chat'
   const [activeTab, setActiveTab] = useState<'abstract' | 'chat'>('abstract');
   
@@ -107,6 +112,22 @@ export default function LeaseLogicApp() {
       }
     } catch (err) {
       console.error('Error fetching observability stats:', err);
+    }
+  };
+
+  // Compare Term across portfolio
+  const handleCompareTerm = async (termName: string) => {
+    setComparingTermName(termName);
+    setIsComparing(true);
+    setCompareData([]);
+    try {
+      const res = await fetch(`${API_BASE}/leases/compare/terms/${termName}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCompareData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching comparison data:', err);
     }
   };
 
@@ -738,11 +759,16 @@ export default function LeaseLogicApp() {
                               )}
                             </td>
                             <td onClick={(e) => e.stopPropagation()}>
-                              {editingTerm === term.id ? (
-                                <button onClick={() => saveEdit(term)} className="btn" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Save</button>
-                              ) : (
-                                <button onClick={() => startEdit(term)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Edit</button>
-                              )}
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                {editingTerm === term.id ? (
+                                  <button onClick={() => saveEdit(term)} className="btn" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Save</button>
+                                ) : (
+                                  <>
+                                    <button onClick={() => startEdit(term)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Edit</button>
+                                    <button onClick={() => handleCompareTerm(term.term_name)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--primary)', color: 'var(--primary)', background: 'transparent' }} title="Compare across portfolio">Compare</button>
+                                  </>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -889,6 +915,159 @@ export default function LeaseLogicApp() {
           </div>
         )}
       </div>
+
+      {/* Cross-Lease Comparison Overlay Modal */}
+      {isComparing && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.3)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          zIndex: 999,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          animation: 'slideIn 0.25s ease'
+        }}>
+          <div className="glass" style={{
+            width: '90vw',
+            height: '85vh',
+            maxWidth: '1200px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            padding: '30px',
+            background: '#ffffff',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(15, 23, 42, 0.08)', paddingBottom: '15px' }}>
+              <div>
+                <span style={{ textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.05em' }}>Portfolio Analyzer</span>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, textTransform: 'capitalize', marginTop: '4px' }}>
+                  Comparing: {comparingTermName?.replace(/_/g, ' ')}
+                </h2>
+              </div>
+              <button 
+                onClick={() => { setIsComparing(false); setComparingTermName(null); setCompareData([]); }}
+                className="btn btn-secondary"
+                style={{ padding: '8px 16px', borderRadius: '8px' }}
+              >
+                ✕ Close Analyzer
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowX: 'auto', display: 'flex', gap: '20px', paddingBottom: '10px', alignItems: 'stretch' }}>
+              {compareData.length === 0 ? (
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--text-muted)' }}>
+                  Loading comparative lease data...
+                </div>
+              ) : (
+                compareData.map((item, idx) => {
+                  const isCurrentSelected = item.lease_id === selectedLease?.id;
+                  
+                  return (
+                    <div 
+                      key={idx} 
+                      className="glass" 
+                      style={{ 
+                        flex: '1 0 320px', 
+                        maxWidth: '400px', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        border: isCurrentSelected ? '2px solid var(--primary)' : '1px solid var(--card-border)',
+                        background: isCurrentSelected ? 'rgba(109, 40, 217, 0.01)' : 'var(--card-bg)',
+                        boxShadow: isCurrentSelected ? '0 4px 20px rgba(109, 40, 217, 0.08)' : 'none',
+                        transition: 'all 0.2s ease',
+                        borderRadius: '12px',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {/* Column Header */}
+                      <div style={{ 
+                        padding: '16px', 
+                        background: isCurrentSelected ? 'rgba(109, 40, 217, 0.04)' : 'rgba(15, 23, 42, 0.01)', 
+                        borderBottom: '1px solid rgba(15, 23, 42, 0.06)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <h4 style={{ fontSize: '0.9rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }} title={item.filename}>
+                          {item.filename}
+                        </h4>
+                        {isCurrentSelected && (
+                          <span className="badge badge-completed" style={{ background: 'var(--primary)', color: 'white', fontSize: '0.65rem' }}>Active</span>
+                        )}
+                      </div>
+
+                      {/* Column Content */}
+                      <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
+                        {/* Extracted Value */}
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Extracted Value</span>
+                          <div style={{ 
+                            marginTop: '6px', 
+                            padding: '12px', 
+                            background: '#f8fafc', 
+                            borderRadius: '8px', 
+                            border: '1px solid rgba(15, 23, 42, 0.04)',
+                            fontSize: '0.85rem',
+                            lineHeight: 1.5,
+                            fontWeight: 500,
+                            color: 'var(--foreground)'
+                          }}>
+                            {item.extracted_value}
+                          </div>
+                          <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span className={`badge badge-${item.reviewer_status}`}>
+                              {item.reviewer_status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Grounding Clause */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Grounding Source Clause</span>
+                          <div style={{ 
+                            flex: 1, 
+                            padding: '12px', 
+                            background: '#f8fafc', 
+                            borderRadius: '8px', 
+                            border: '1px solid rgba(15, 23, 42, 0.04)',
+                            fontSize: '0.82rem',
+                            lineHeight: 1.6,
+                            color: 'var(--text-muted)',
+                            overflowY: 'auto',
+                            maxHeight: '220px',
+                            whiteSpace: 'pre-line'
+                          }}>
+                            {item.clauses && item.clauses.length > 0 ? (
+                              item.clauses.map((clause: any, cIdx: number) => (
+                                <div key={cIdx} style={{ marginBottom: cIdx < item.clauses.length - 1 ? '10px' : 0 }}>
+                                  <p style={{ fontWeight: 600, color: 'var(--primary)', fontSize: '0.75rem', marginBottom: '2px' }}>
+                                    {clause.clause_number ? `Section ${clause.clause_number}` : ''} {clause.clause_title || ''} (Page {clause.page_number})
+                                  </p>
+                                  <p>{clause.text_content}</p>
+                                </div>
+                              ))
+                            ) : (
+                              <em style={{ color: 'var(--text-muted)' }}>No source clause link found</em>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 }
