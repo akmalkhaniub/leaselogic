@@ -7,6 +7,7 @@ import pool from './db.js';
 import { startWorker } from './worker.js';
 import { openai, anthropic } from './ai.js';
 import { runLandRegistryAutomation } from './automation.js';
+import { runPortfolioAudit } from './compliance.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -306,6 +307,16 @@ app.get('/api/leases/compare/terms/:termName', async (req, res) => {
     }
 
     res.json(compareData);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.7. Get compliance risk audit report
+app.get('/api/compliance/audit', async (req, res) => {
+  try {
+    const auditReport = await runPortfolioAudit();
+    res.json(auditReport);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

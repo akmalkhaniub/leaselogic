@@ -43,11 +43,14 @@ export default function LeaseLogicApp() {
   const [clauses, setClauses] = useState<Clause[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
-  // Views: 'workspace' | 'observability'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability'>('workspace');
+  // Views: 'workspace' | 'observability' | 'compliance'
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance'>('workspace');
   
   // Observability stats state
   const [stats, setStats] = useState<any>(null);
+
+  // Compliance report state
+  const [complianceReport, setComplianceReport] = useState<any[]>([]);
 
   // Comparison state
   const [isComparing, setIsComparing] = useState(false);
@@ -131,6 +134,49 @@ export default function LeaseLogicApp() {
     }
   };
 
+  // Fetch Compliance Audit Report
+  const fetchCompliance = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/compliance/audit`);
+      if (res.ok) {
+        const data = await res.json();
+        setComplianceReport(data);
+      }
+    } catch (err) {
+      console.error('Error fetching compliance audit:', err);
+    }
+  };
+
+  // Select lease, load terms, find term, open Document Explorer and highlight
+  const handleViewViolation = async (leaseId: string, ruleId: string) => {
+    const targetLease = leases.find(l => l.id === leaseId);
+    if (!targetLease) return;
+    
+    let termName = '';
+    if (ruleId === 'min_insurance') termName = 'indemnity_covenants';
+    else if (ruleId === 'expiry_check') termName = 'expiration_date';
+    else if (ruleId === 'break_clause') termName = 'break_clause';
+    else if (ruleId === 'repair_responsibility') termName = 'repair_obligations';
+
+    setCurrentView('workspace');
+    await handleSelectLease(targetLease);
+    
+    try {
+      const termsRes = await fetch(`${API_BASE}/leases/${leaseId}/abstract`);
+      if (termsRes.ok) {
+        const termsData = await termsRes.json();
+        setTerms(termsData);
+        const targetTerm = termsData.find((t: any) => t.term_name === termName);
+        if (targetTerm) {
+          setSelectedTerm(targetTerm);
+          setActiveTab('abstract');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchLeases();
     const interval = setInterval(fetchLeases, 3000);
@@ -139,7 +185,11 @@ export default function LeaseLogicApp() {
 
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(fetchStats, 5000);
+    fetchCompliance();
+    const interval = setInterval(() => {
+      fetchStats();
+      fetchCompliance();
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -437,17 +487,24 @@ export default function LeaseLogicApp() {
         <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(15,23,42,0.08)', display: 'flex', gap: '8px', background: '#f8fafc' }}>
           <button 
             className={`btn ${currentView === 'workspace' ? '' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '8px', fontSize: '0.8rem', borderRadius: '6px' }}
+            style={{ flex: 1, padding: '8px 4px', fontSize: '0.75rem', borderRadius: '6px' }}
             onClick={() => setCurrentView('workspace')}
           >
             📂 Workspace
           </button>
           <button 
             className={`btn ${currentView === 'observability' ? '' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '8px', fontSize: '0.8rem', borderRadius: '6px' }}
+            style={{ flex: 1, padding: '8px 4px', fontSize: '0.75rem', borderRadius: '6px' }}
             onClick={() => setCurrentView('observability')}
           >
             📊 Analytics
+          </button>
+          <button 
+            className={`btn ${currentView === 'compliance' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 4px', fontSize: '0.75rem', borderRadius: '6px' }}
+            onClick={() => setCurrentView('compliance')}
+          >
+            ⚖️ Compliance
           </button>
         </div>
 
@@ -506,7 +563,9 @@ export default function LeaseLogicApp() {
         {/* Header */}
         <div className="header">
           <div>
-            {currentView === 'observability' ? (
+            {currentView === 'compliance' ? (
+              <h2 style={{ fontSize: '1.25rem' }}>Portfolio Compliance Audit & Risk Engine</h2>
+            ) : currentView === 'observability' ? (
               <h2 style={{ fontSize: '1.25rem' }}>Pipeline Observability & Cost Analytics</h2>
             ) : selectedLease ? (
               <h2 style={{ fontSize: '1.25rem' }}>{selectedLease.filename}</h2>
@@ -523,8 +582,116 @@ export default function LeaseLogicApp() {
           </div>
         </div>
 
-        {/* Workspace Dashboard vs Observability Dashboard */}
-        {currentView === 'observability' ? (
+        {/* Workspace Dashboard vs Observability Dashboard vs Compliance Dashboard */}
+        {currentView === 'compliance' ? (
+          <div className="pane" style={{ overflowY: 'auto' }}>
+            {/* Compliance Statistics Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '25px' }}>
+              
+              {/* Compliance Rating Card */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Portfolio Compliance Rating</p>
+                <h3 className="gradient-text" style={{ fontSize: '2rem', fontWeight: 800 }}>
+                  {complianceReport.length > 0
+                    ? ((complianceReport.filter(r => r.status === 'pass').length / complianceReport.length) * 100).toFixed(1)
+                    : '100.0'}%
+                </h3>
+                <div className="progress-container" style={{ margin: '4px 0 0 0' }}>
+                  <div className="progress-bar" style={{
+                    width: `${complianceReport.length > 0 ? (complianceReport.filter(r => r.status === 'pass').length / complianceReport.length) * 100 : 100}%`,
+                    background: 'linear-gradient(90deg, var(--primary) 0%, var(--success) 100%)'
+                  }}></div>
+                </div>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  Overall rules passing rate
+                </p>
+              </div>
+
+              {/* Critical Failures Card */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Critical Failures</p>
+                <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--error)' }}>
+                  {complianceReport.filter(r => r.status === 'fail').length}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Violations requiring immediate action
+                </p>
+              </div>
+
+              {/* Compliance Warnings Card */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Compliance Warnings</p>
+                <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--warning)' }}>
+                  {complianceReport.filter(r => r.status === 'warn').length}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Medium risk details to review
+                </p>
+              </div>
+
+              {/* Total Audited Rules Card */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Checks Audited</p>
+                <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                  {complianceReport.length}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Individual rule evaluations completed
+                </p>
+              </div>
+
+            </div>
+
+            {/* Compliance Issues Details List */}
+            <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '15px' }}>Compliance Audit Violations & Risk Analysis</h3>
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                <table className="terms-table" style={{ margin: 0 }}>
+                  <thead>
+                    <tr>
+                      <th>Lease File</th>
+                      <th>Rule / Constraint</th>
+                      <th>Extracted Term Value</th>
+                      <th>Status</th>
+                      <th>Audit findings</th>
+                      <th style={{ width: '110px' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {complianceReport.map((item, idx) => (
+                      <tr key={idx} style={{ background: item.status === 'fail' ? 'rgba(220, 38, 38, 0.01)' : 'transparent' }}>
+                        <td style={{ fontSize: '0.85rem', fontWeight: 600 }}>{item.filename}</td>
+                        <td style={{ fontSize: '0.85rem', fontWeight: 500 }}>{item.rule_name}</td>
+                        <td style={{ fontSize: '0.82rem', fontFamily: 'monospace' }}>{item.term_value}</td>
+                        <td>
+                          <span className={`badge badge-${item.status === 'fail' ? 'failed' : item.status === 'warn' ? 'pending' : 'completed'}`} style={{ textTransform: 'capitalize' }}>
+                            {item.status === 'fail' ? 'critical' : item.status === 'warn' ? 'warning' : 'passing'}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{item.message}</td>
+                        <td>
+                          <button 
+                            onClick={() => handleViewViolation(item.lease_id, item.rule_id)}
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--primary)', color: 'var(--primary)', background: 'transparent' }}
+                          >
+                            🔎 View Clause
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {complianceReport.length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '20px' }}>No active lease compliance audits found. Please upload a lease.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        ) : currentView === 'observability' ? (
           <div className="pane" style={{ overflowY: 'auto' }}>
             {/* Metric Cards Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '25px' }}>
