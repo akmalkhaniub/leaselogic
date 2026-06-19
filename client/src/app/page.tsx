@@ -52,6 +52,18 @@ export default function LeaseLogicApp() {
   // Compliance report state
   const [complianceReport, setComplianceReport] = useState<any[]>([]);
 
+  // Compliance rules state
+  const [rules, setRules] = useState<any[]>([]);
+  const [newRule, setNewRule] = useState({
+    rule_name: '',
+    term_name: 'indemnity_covenants',
+    operator: 'min_value',
+    value_limit: '',
+    severity: 'fail',
+    message_template: 'Insurance coverage limit ({actual}) is below the required minimum of $5,000,000.'
+  });
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
+
   // Comparison state
   const [isComparing, setIsComparing] = useState(false);
   const [comparingTermName, setComparingTermName] = useState<string | null>(null);
@@ -118,6 +130,119 @@ export default function LeaseLogicApp() {
     }
   };
 
+  // Fetch Compliance Rules
+  const fetchRules = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/compliance/rules`);
+      if (res.ok) {
+        const data = await res.json();
+        setRules(data);
+      }
+    } catch (err) {
+      console.error('Error fetching compliance rules:', err);
+    }
+  };
+
+  // Create or Update compliance rule
+  const handleSaveRule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRule.rule_name || !newRule.value_limit || !newRule.message_template) {
+      alert('Please fill out all rule fields.');
+      return;
+    }
+    try {
+      const url = editingRuleId 
+        ? `${API_BASE}/compliance/rules/${editingRuleId}`
+        : `${API_BASE}/compliance/rules`;
+      const method = editingRuleId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRule),
+      });
+
+      if (res.ok) {
+        // Reset rule input form
+        setNewRule({
+          rule_name: '',
+          term_name: 'indemnity_covenants',
+          operator: 'min_value',
+          value_limit: '',
+          severity: 'fail',
+          message_template: 'Insurance coverage limit ({actual}) is below the required minimum of $5,000,000.'
+        });
+        setEditingRuleId(null);
+        fetchRules();
+        fetchCompliance(); // trigger immediate portfolio audit update
+      } else {
+        const errData = await res.json();
+        alert(`Error saving rule: ${errData.error}`);
+      }
+    } catch (err) {
+      console.error('Error saving compliance rule:', err);
+    }
+  };
+
+  // Delete compliance rule
+  const handleDeleteRule = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this compliance rule?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/compliance/rules/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchRules();
+        fetchCompliance(); // trigger immediate audit update
+      } else {
+        alert('Failed to delete compliance rule.');
+      }
+    } catch (err) {
+      console.error('Error deleting compliance rule:', err);
+    }
+  };
+
+  // Populate form for editing
+  const handleEditRuleClick = (rule: any) => {
+    setEditingRuleId(rule.id);
+    setNewRule({
+      rule_name: rule.rule_name,
+      term_name: rule.term_name,
+      operator: rule.operator,
+      value_limit: rule.value_limit,
+      severity: rule.severity,
+      message_template: rule.message_template
+    });
+  };
+
+  // Cancel editing mode
+  const handleCancelEditRule = () => {
+    setEditingRuleId(null);
+    setNewRule({
+      rule_name: '',
+      term_name: 'indemnity_covenants',
+      operator: 'min_value',
+      value_limit: '',
+      severity: 'fail',
+      message_template: ''
+    });
+  };
+
+  // Helper to pre-populate message template based on selected operator
+  const handleOperatorChange = (op: string) => {
+    let template = '';
+    if (op === 'min_value') {
+      template = 'Value ({actual}) is below the required minimum limit of {limit}.';
+    } else if (op === 'min_year') {
+      template = 'Lease expires in {actual}, which violates the requirement to remain active until at least {limit}.';
+    } else if (op === 'not_contains') {
+      template = 'Non-compliant term content: Disallowed phrase found: "{keyword}".';
+    } else if (op === 'tenant_structural_repair') {
+      template = 'High Risk: Tenant is assigned responsibility for structural repairs: {actual}.';
+    }
+    setNewRule(prev => ({ ...prev, operator: op, message_template: template }));
+  };
+
   // Compare Term across portfolio
   const handleCompareTerm = async (termName: string) => {
     setComparingTermName(termName);
@@ -148,15 +273,17 @@ export default function LeaseLogicApp() {
   };
 
   // Select lease, load terms, find term, open Document Explorer and highlight
-  const handleViewViolation = async (leaseId: string, ruleId: string) => {
+  const handleViewViolation = async (leaseId: string, ruleId: string, termNameArg?: string) => {
     const targetLease = leases.find(l => l.id === leaseId);
     if (!targetLease) return;
     
-    let termName = '';
-    if (ruleId === 'min_insurance') termName = 'indemnity_covenants';
-    else if (ruleId === 'expiry_check') termName = 'expiration_date';
-    else if (ruleId === 'break_clause') termName = 'break_clause';
-    else if (ruleId === 'repair_responsibility') termName = 'repair_obligations';
+    let termName = termNameArg;
+    if (!termName) {
+      if (ruleId === 'min_insurance') termName = 'indemnity_covenants';
+      else if (ruleId === 'expiry_check') termName = 'expiration_date';
+      else if (ruleId === 'break_clause') termName = 'break_clause';
+      else if (ruleId === 'repair_responsibility') termName = 'repair_obligations';
+    }
 
     setCurrentView('workspace');
     await handleSelectLease(targetLease);
@@ -186,6 +313,7 @@ export default function LeaseLogicApp() {
   useEffect(() => {
     fetchStats();
     fetchCompliance();
+    fetchRules();
     const interval = setInterval(() => {
       fetchStats();
       fetchCompliance();
@@ -671,7 +799,7 @@ export default function LeaseLogicApp() {
                         <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{item.message}</td>
                         <td>
                           <button 
-                            onClick={() => handleViewViolation(item.lease_id, item.rule_id)}
+                            onClick={() => handleViewViolation(item.lease_id, item.rule_id, item.term_name)}
                             className="btn btn-secondary"
                             style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--primary)', color: 'var(--primary)', background: 'transparent' }}
                           >
@@ -688,6 +816,183 @@ export default function LeaseLogicApp() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Compliance Rules Manager */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginTop: '25px' }}>
+              
+              {/* Left Column: Active Rules List */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '15px' }}>Active Compliance Rules</h3>
+                <div style={{ overflowY: 'auto', maxHeight: '420px' }}>
+                  <table className="terms-table" style={{ margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>Rule Name</th>
+                        <th>Target Term</th>
+                        <th>Operator</th>
+                        <th>Limit</th>
+                        <th>Severity</th>
+                        <th style={{ width: '90px', textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rules.map((rule) => (
+                        <tr key={rule.id}>
+                          <td style={{ fontSize: '0.85rem', fontWeight: 600 }}>{rule.rule_name}</td>
+                          <td style={{ fontSize: '0.82rem', fontFamily: 'monospace' }}>{rule.term_name}</td>
+                          <td style={{ fontSize: '0.82rem' }}>
+                            <span className="badge badge-secondary" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--foreground)' }}>
+                              {rule.operator}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: '0.82rem', fontFamily: 'monospace' }}>{rule.value_limit}</td>
+                          <td>
+                            <span className={`badge badge-${rule.severity === 'fail' ? 'failed' : 'pending'}`}>
+                              {rule.severity}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <button
+                              onClick={() => handleEditRuleClick(rule)}
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 6px', fontSize: '0.7rem', marginRight: '6px', minWidth: 'unset' }}
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRule(rule.id)}
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 6px', fontSize: '0.7rem', color: 'var(--error)', borderColor: 'rgba(220, 38, 38, 0.2)', minWidth: 'unset' }}
+                            >
+                              🗑️
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {rules.length === 0 && (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '20px' }}>
+                            No compliance rules found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Right Column: Rule Create/Edit Form */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '15px' }}>
+                  {editingRuleId ? 'Edit Compliance Rule' : 'Create New Compliance Rule'}
+                </h3>
+                
+                <form onSubmit={handleSaveRule} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Rule Name</label>
+                    <input
+                      type="text"
+                      value={newRule.rule_name}
+                      onChange={(e) => setNewRule(prev => ({ ...prev, rule_name: e.target.value }))}
+                      placeholder="e.g. Min Insurance Cover"
+                      required
+                      style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'transparent' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Target Term Field</label>
+                      <select
+                        value={newRule.term_name}
+                        onChange={(e) => setNewRule(prev => ({ ...prev, term_name: e.target.value }))}
+                        style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'white' }}
+                      >
+                        <option value="indemnity_covenants">Indemnity Covenants (Insurance)</option>
+                        <option value="expiration_date">Expiration Date</option>
+                        <option value="break_clause">Break Clause</option>
+                        <option value="repair_obligations">Repair Obligations</option>
+                        <option value="initial_rent">Initial Rent</option>
+                        <option value="commencement_date">Commencement Date</option>
+                        <option value="rent_escalation">Rent Escalation</option>
+                        <option value="renewal_option">Renewal Option</option>
+                        <option value="tenant_name">Tenant Name</option>
+                        <option value="landlord_name">Landlord Name</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Operator</label>
+                      <select
+                        value={newRule.operator}
+                        onChange={(e) => handleOperatorChange(e.target.value)}
+                        style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'white' }}
+                      >
+                        <option value="min_value">Numeric Greater/Equal</option>
+                        <option value="min_year">Expiry Year Greater/Equal</option>
+                        <option value="not_contains">Does Not Contain Phrases</option>
+                        <option value="tenant_structural_repair">Tenant Structural Repair Check</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Limit Value</label>
+                      <input
+                        type="text"
+                        value={newRule.value_limit}
+                        onChange={(e) => setNewRule(prev => ({ ...prev, value_limit: e.target.value }))}
+                        placeholder={newRule.operator === 'min_value' ? 'e.g. 5000000' : newRule.operator === 'min_year' ? 'e.g. 2028' : 'e.g. none, no break'}
+                        required
+                        style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'transparent' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Severity</label>
+                      <select
+                        value={newRule.severity}
+                        onChange={(e) => setNewRule(prev => ({ ...prev, severity: e.target.value }))}
+                        style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'white' }}
+                      >
+                        <option value="fail">Fail (Critical)</option>
+                        <option value="warn">Warning</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Message Template</label>
+                    <textarea
+                      value={newRule.message_template}
+                      onChange={(e) => setNewRule(prev => ({ ...prev, message_template: e.target.value }))}
+                      placeholder="e.g. Insurance coverage limit ({actual}) is below required {limit}."
+                      required
+                      rows={2}
+                      style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'transparent', resize: 'none' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                    <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                      {editingRuleId ? 'Update Rule' : 'Create Rule'}
+                    </button>
+                    {editingRuleId && (
+                      <button
+                        type="button"
+                        onClick={handleCancelEditRule}
+                        className="btn btn-secondary"
+                        style={{ width: '80px', minWidth: 'unset' }}
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+
             </div>
 
           </div>

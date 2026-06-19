@@ -57,7 +57,7 @@ async function verify() {
     // 5. Query the comparison API
     console.log('\n5. Querying comparison API endpoint...');
     const res = await fetch('http://localhost:5000/api/leases/compare/terms/initial_rent');
-    const data = await res.json();
+    const data = (await res.json()) as any;
     console.log('API Response count:', data.length);
     console.log('Lease A entry:', data.find((item: any) => item.lease_id === leaseA.id));
     console.log('Lease B entry:', data.find((item: any) => item.lease_id === leaseB.id));

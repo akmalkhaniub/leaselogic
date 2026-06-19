@@ -322,6 +322,78 @@ app.get('/api/compliance/audit', async (req, res) => {
   }
 });
 
+// 4.8. Get all compliance rules
+app.get('/api/compliance/rules', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM compliance_rules ORDER BY created_at ASC');
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.9. Create a new compliance rule
+app.post('/api/compliance/rules', async (req, res) => {
+  try {
+    const { rule_name, term_name, operator, value_limit, severity, message_template } = req.body;
+    if (!rule_name || !term_name || !operator || !value_limit || !message_template) {
+      res.status(400).json({ error: 'All fields (rule_name, term_name, operator, value_limit, message_template) are required' });
+      return;
+    }
+    const ruleCode = `rule_${Date.now()}`;
+    const result = await pool.query(
+      `INSERT INTO compliance_rules (rule_code, rule_name, term_name, operator, value_limit, severity, message_template)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [ruleCode, rule_name, term_name, operator, value_limit, severity || 'fail', message_template]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.10. Update a compliance rule
+app.put('/api/compliance/rules/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rule_name, term_name, operator, value_limit, severity, message_template } = req.body;
+    if (!rule_name || !term_name || !operator || !value_limit || !message_template) {
+      res.status(400).json({ error: 'All fields are required' });
+      return;
+    }
+    const result = await pool.query(
+      `UPDATE compliance_rules
+       SET rule_name = $1, term_name = $2, operator = $3, value_limit = $4, severity = $5, message_template = $6, updated_at = NOW()
+       WHERE id = $7
+       RETURNING *`,
+      [rule_name, term_name, operator, value_limit, severity, message_template, id]
+    );
+    if (result.rowCount === 0) {
+      res.status(404).json({ error: 'Rule not found' });
+      return;
+    }
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.11. Delete a compliance rule
+app.delete('/api/compliance/rules/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM compliance_rules WHERE id = $1 RETURNING *', [id]);
+    if (result.rowCount === 0) {
+      res.status(404).json({ error: 'Rule not found' });
+      return;
+    }
+    res.json({ message: 'Rule deleted successfully', rule: result.rows[0] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // 5. Search Clauses (pgvector similarity search)
 app.post('/api/leases/search', async (req, res) => {
@@ -500,7 +572,7 @@ app.post('/api/automation/registry', async (req, res) => {
 app.listen(port, async () => {
   console.log(`Server is running on http://localhost:${port}`);
   
-  // Run self-healing DB migrations for observability fields
+  // Run self-healing DB migrations for observability fields and compliance rules
   try {
     console.log('Running self-healing database migrations...');
     await pool.query(`
@@ -513,6 +585,71 @@ app.listen(port, async () => {
       ALTER TABLE lease_terms 
       ADD COLUMN IF NOT EXISTS is_edited BOOLEAN DEFAULT FALSE;
     `);
+
+    // Create compliance_rules table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS compliance_rules (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          rule_code VARCHAR(100) UNIQUE NOT NULL,
+          rule_name VARCHAR(255) NOT NULL,
+          term_name VARCHAR(100) NOT NULL,
+          operator VARCHAR(50) NOT NULL,
+          value_limit VARCHAR(255) NOT NULL,
+          severity VARCHAR(20) DEFAULT 'fail',
+          message_template TEXT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Seed default rules if empty
+    const checkRules = await pool.query('SELECT COUNT(*) FROM compliance_rules');
+    const rulesCount = parseInt(checkRules.rows[0].count || '0');
+    if (rulesCount === 0) {
+      console.log('Seeding default compliance rules...');
+      await pool.query(`
+        INSERT INTO compliance_rules (rule_code, rule_name, term_name, operator, value_limit, severity, message_template)
+        VALUES 
+          (
+            'min_insurance', 
+            'Minimum Public Liability Insurance ($5M)', 
+            'indemnity_covenants', 
+            'min_value', 
+            '5000000', 
+            'fail', 
+            'Insurance coverage limit ({actual}) is below the required minimum of $5,000,000.'
+          ),
+          (
+            'expiry_check', 
+            'Lease Long-term Commitment (Expiry >= 2028)', 
+            'expiration_date', 
+            'min_year', 
+            '2028', 
+            'fail', 
+            'Lease expires in {actual}, which violates the requirement to remain active until at least 2028.'
+          ),
+          (
+            'break_clause', 
+            'Tenant Break Clause Flexibility', 
+            'break_clause', 
+            'not_contains', 
+            'none,no break,n/a', 
+            'warn', 
+            'No tenant break clause found. The tenant has no early termination rights.'
+          ),
+          (
+            'repair_responsibility', 
+            'Landlord External/Structural Repairs', 
+            'repair_obligations', 
+            'tenant_structural_repair', 
+            'tenant', 
+            'fail', 
+            'High Risk: Tenant is assigned responsibility for structural, external, or roof repairs.'
+          );
+      `);
+      console.log('Default compliance rules seeded successfully.');
+    }
+
     console.log('Database migrations verified/completed successfully.');
   } catch (err) {
     console.error('Error running self-healing migrations:', err);

@@ -38,7 +38,7 @@ async function verify() {
     // 4. Fetch initial stats
     console.log('\n4. Fetching initial stats...');
     const statsRes1 = await fetch('http://localhost:5000/api/observability/stats');
-    const stats1 = await statsRes1.json();
+    const stats1 = (await statsRes1.json()) as any;
     console.log('Initial stats - total cost:', stats1.total_cost, 'accuracy rate:', stats1.accuracy_rate);
 
     // 5. Simulate human reviewer editing the term
@@ -51,13 +51,13 @@ async function verify() {
         reviewer_status: 'approved'
       })
     });
-    const updatedTerm = await editRes.json();
+    const updatedTerm = (await editRes.json()) as any;
     console.log('Updated term - is_edited:', updatedTerm.is_edited, 'reviewer_status:', updatedTerm.reviewer_status);
 
     // 6. Fetch stats again
     console.log('\n6. Fetching updated stats...');
     const statsRes2 = await fetch('http://localhost:5000/api/observability/stats');
-    const stats2 = await statsRes2.json();
+    const stats2 = (await statsRes2.json()) as any;
     console.log('Updated stats - total cost:', stats2.total_cost, 'accuracy rate:', stats2.accuracy_rate);
     console.log('Latest audit log entry:', stats2.audit_logs[0]);
 

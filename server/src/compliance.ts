@@ -3,8 +3,9 @@ import pool from './db.js';
 export interface AuditResult {
   lease_id: string;
   filename: string;
-  rule_id: string;
+  rule_id: string; // Returns rule_code for frontend and test compatibility
   rule_name: string;
+  term_name: string; // The target lease term name
   status: 'pass' | 'fail' | 'warn';
   term_value: string;
   message: string;
@@ -12,6 +13,11 @@ export interface AuditResult {
 
 export async function runPortfolioAudit(): Promise<AuditResult[]> {
   const leasesRes = await pool.query("SELECT id, filename FROM leases WHERE status = 'completed'");
+  
+  // Fetch compliance rules from the database
+  const rulesRes = await pool.query("SELECT * FROM compliance_rules ORDER BY created_at ASC");
+  const rules = rulesRes.rows;
+
   const results: AuditResult[] = [];
 
   for (const lease of leasesRes.rows) {
@@ -25,150 +31,105 @@ export async function runPortfolioAudit(): Promise<AuditResult[]> {
       termsMap.set(term.term_name, { id: term.id, value: term.extracted_value || '' });
     }
 
-    // Rule 1: Minimum Liability Insurance ($5,000,000)
-    const insuranceData = termsMap.get('indemnity_covenants');
-    if (insuranceData) {
-      const insuranceVal = insuranceData.value;
-      const cleanVal = insuranceVal.replace(/,/g, '');
-      const millionMatch = cleanVal.match(/(\d+)\s*(m|million)/i);
-      let maxLimit = 0;
-      if (millionMatch) {
-        maxLimit = parseInt(millionMatch[1]) * 1000000;
-      } else {
-        const standardMatches = cleanVal.match(/\b\d{5,10}\b/g);
-        if (standardMatches) {
-          maxLimit = Math.max(...standardMatches.map(Number));
-        }
-      }
+    for (const rule of rules) {
+      const termData = termsMap.get(rule.term_name);
+      if (!termData) continue;
 
-      if (maxLimit === 0) {
-        results.push({
-          lease_id: lease.id,
-          filename: lease.filename,
-          rule_id: 'min_insurance',
-          rule_name: 'Minimum Public Liability Insurance ($5M)',
-          status: 'warn',
-          term_value: insuranceVal.split(' (Citation:')[0],
-          message: 'Unable to parse explicit insurance limit. Review manually.'
-        });
-      } else if (maxLimit < 5000000) {
-        results.push({
-          lease_id: lease.id,
-          filename: lease.filename,
-          rule_id: 'min_insurance',
-          rule_name: 'Minimum Public Liability Insurance ($5M)',
-          status: 'fail',
-          term_value: insuranceVal.split(' (Citation:')[0],
-          message: `Insurance coverage limit ($${maxLimit.toLocaleString()}) is below the required minimum of $5,000,000.`
-        });
-      } else {
-        results.push({
-          lease_id: lease.id,
-          filename: lease.filename,
-          rule_id: 'min_insurance',
-          rule_name: 'Minimum Public Liability Insurance ($5M)',
-          status: 'pass',
-          term_value: insuranceVal.split(' (Citation:')[0],
-          message: `Passed: Insurance limit ($${maxLimit.toLocaleString()}) meets the $5,000,000 requirement.`
-        });
-      }
-    }
+      const termVal = termData.value;
+      const cleanTermVal = termVal.split(' (Citation:')[0]; // Clean out citation from display term
 
-    // Rule 2: Long-term Expiry Check (must not expire before 2028)
-    const expiryData = termsMap.get('expiration_date');
-    if (expiryData) {
-      const expiryVal = expiryData.value;
-      const yearMatch = expiryVal.match(/\b(20\d{2})\b/);
-      if (yearMatch) {
-        const year = parseInt(yearMatch[1]);
-        if (year < 2028) {
-          results.push({
-            lease_id: lease.id,
-            filename: lease.filename,
-            rule_id: 'expiry_check',
-            rule_name: 'Lease Long-term Commitment (Expiry >= 2028)',
-            status: 'fail',
-            term_value: expiryVal.split(' (Citation:')[0],
-            message: `Lease expires in ${year}, which violates the requirement to remain active until at least 2028.`
-          });
+      let status: 'pass' | 'fail' | 'warn' = 'pass';
+      let message = '';
+
+      if (rule.operator === 'min_value') {
+        const threshold = parseFloat(rule.value_limit);
+        // parse numeric value from termVal
+        const cleanVal = termVal.replace(/,/g, '');
+        const millionMatch = cleanVal.match(/(\d+(?:\.\d+)?)\s*(m|million)/i);
+        let parsedNum = 0;
+        if (millionMatch) {
+          parsedNum = parseFloat(millionMatch[1]) * 1000000;
         } else {
-          results.push({
-            lease_id: lease.id,
-            filename: lease.filename,
-            rule_id: 'expiry_check',
-            rule_name: 'Lease Long-term Commitment (Expiry >= 2028)',
-            status: 'pass',
-            term_value: expiryVal.split(' (Citation:')[0],
-            message: `Passed: Lease expires in ${year}, meeting the long-term requirement.`
-          });
+          const standardMatches = cleanVal.match(/\b\d{5,10}\b/g);
+          if (standardMatches) {
+            parsedNum = Math.max(...standardMatches.map(Number));
+          }
         }
-      } else {
-        results.push({
-          lease_id: lease.id,
-          filename: lease.filename,
-          rule_id: 'expiry_check',
-          rule_name: 'Lease Long-term Commitment (Expiry >= 2028)',
-          status: 'warn',
-          term_value: expiryVal.split(' (Citation:')[0],
-          message: 'Could not parse expiry year. Review manually.'
-        });
-      }
-    }
 
-    // Rule 3: Break Clause Availability
-    const breakData = termsMap.get('break_clause');
-    if (breakData) {
-      const breakVal = breakData.value;
-      const isNone = breakVal.toLowerCase().includes('none') || breakVal.toLowerCase().includes('no break') || breakVal.toLowerCase().includes('n/a');
-      if (isNone) {
-        results.push({
-          lease_id: lease.id,
-          filename: lease.filename,
-          rule_id: 'break_clause',
-          rule_name: 'Tenant Break Clause Flexibility',
-          status: 'warn',
-          term_value: breakVal.split(' (Citation:')[0],
-          message: 'No tenant break clause found. The tenant has no early termination rights.'
-        });
-      } else {
-        results.push({
-          lease_id: lease.id,
-          filename: lease.filename,
-          rule_id: 'break_clause',
-          rule_name: 'Tenant Break Clause Flexibility',
-          status: 'pass',
-          term_value: breakVal.split(' (Citation:')[0],
-          message: 'Passed: Early break clause option is available to the tenant.'
-        });
+        if (parsedNum === 0) {
+          status = 'warn';
+          message = `Unable to parse numeric limit for ${rule.rule_name}. Review manually.`;
+        } else if (parsedNum < threshold) {
+          status = rule.severity as 'pass' | 'fail' | 'warn';
+          message = rule.message_template
+            .replace('{actual}', `$${parsedNum.toLocaleString()}`)
+            .replace('{limit}', `$${threshold.toLocaleString()}`);
+        } else {
+          status = 'pass';
+          message = `Passed: ${rule.rule_name} meets the limit (Value: $${parsedNum.toLocaleString()}).`;
+        }
+      } 
+      else if (rule.operator === 'min_year') {
+        const thresholdYear = parseInt(rule.value_limit);
+        const yearMatch = termVal.match(/\b(20\d{2})\b/);
+        if (yearMatch) {
+          const year = parseInt(yearMatch[1]);
+          if (year < thresholdYear) {
+            status = rule.severity as 'pass' | 'fail' | 'warn';
+            message = rule.message_template
+              .replace('{actual}', year.toString())
+              .replace('{limit}', thresholdYear.toString());
+          } else {
+            status = 'pass';
+            message = `Passed: ${rule.rule_name} (Year: ${year}).`;
+          }
+        } else {
+          status = 'warn';
+          message = `Could not parse year for ${rule.rule_name}. Review manually.`;
+        }
+      } 
+      else if (rule.operator === 'not_contains') {
+        // value_limit contains comma-separated keywords to alert on
+        const keywords = rule.value_limit.split(',').map((k: string) => k.trim().toLowerCase());
+        const lowercaseVal = termVal.toLowerCase();
+        const foundKeyword = keywords.find((k: string) => lowercaseVal.includes(k));
+        
+        if (foundKeyword) {
+          status = rule.severity as 'pass' | 'fail' | 'warn';
+          message = rule.message_template
+            .replace('{actual}', cleanTermVal)
+            .replace('{keyword}', foundKeyword)
+            .replace('{limit}', rule.value_limit);
+        } else {
+          status = 'pass';
+          message = `Passed: ${rule.rule_name} is compliant.`;
+        }
+      } 
+      else if (rule.operator === 'tenant_structural_repair') {
+        // Special logic for repair obligations
+        const lowercaseVal = termVal.toLowerCase();
+        const tenantStructural = lowercaseVal.includes('tenant') && 
+          (lowercaseVal.includes('structural') || lowercaseVal.includes('roof') || lowercaseVal.includes('external'));
+        
+        if (tenantStructural) {
+          status = rule.severity as 'pass' | 'fail' | 'warn';
+          message = rule.message_template.replace('{actual}', cleanTermVal);
+        } else {
+          status = 'pass';
+          message = `Passed: ${rule.rule_name} is compliant.`;
+        }
       }
-    }
 
-    // Rule 4: Structural Repair Responsibility
-    const repairData = termsMap.get('repair_obligations');
-    if (repairData) {
-      const repairVal = repairData.value;
-      const tenantStructural = repairVal.toLowerCase().includes('tenant') && (repairVal.toLowerCase().includes('structural') || repairVal.toLowerCase().includes('roof') || repairVal.toLowerCase().includes('external'));
-      if (tenantStructural) {
-        results.push({
-          lease_id: lease.id,
-          filename: lease.filename,
-          rule_id: 'repair_responsibility',
-          rule_name: 'Landlord External/Structural Repairs',
-          status: 'fail',
-          term_value: repairVal.split(' (Citation:')[0],
-          message: 'High Risk: Tenant is assigned responsibility for structural, external, or roof repairs.'
-        });
-      } else {
-        results.push({
-          lease_id: lease.id,
-          filename: lease.filename,
-          rule_id: 'repair_responsibility',
-          rule_name: 'Landlord External/Structural Repairs',
-          status: 'pass',
-          term_value: repairVal.split(' (Citation:')[0],
-          message: 'Passed: Tenant is only responsible for internal, non-structural maintenance.'
-        });
-      }
+      results.push({
+        lease_id: lease.id,
+        filename: lease.filename,
+        rule_id: rule.rule_code,
+        rule_name: rule.rule_name,
+        term_name: rule.term_name,
+        status,
+        term_value: cleanTermVal,
+        message
+      });
     }
   }
 

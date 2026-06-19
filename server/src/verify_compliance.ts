@@ -57,7 +57,7 @@ async function verify() {
     // 4. Query compliance API
     console.log('\n4. Querying compliance audit API...');
     const response = await fetch('http://localhost:5000/api/compliance/audit');
-    const report = await response.json();
+    const report = (await response.json()) as any;
     
     const leaseReport = report.filter((item: any) => item.lease_id === lease.id);
     console.log('Total rules evaluated for test lease:', leaseReport.length);
