@@ -69,8 +69,13 @@ export default function LeaseLogicApp() {
   const [comparingTermName, setComparingTermName] = useState<string | null>(null);
   const [compareData, setCompareData] = useState<any[]>([]);
 
-  // Tabs: 'abstract' | 'chat'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat'>('abstract');
+  // Rent Projection state
+  const [rentProjection, setRentProjection] = useState<any>(null);
+  const [loadingProjection, setLoadingProjection] = useState(false);
+  const [activeChartYear, setActiveChartYear] = useState<number | null>(null);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -272,6 +277,22 @@ export default function LeaseLogicApp() {
     }
   };
 
+  // Fetch Rent Projection
+  const fetchRentProjection = async (leaseId: string) => {
+    setLoadingProjection(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${leaseId}/rent-projection`);
+      if (res.ok) {
+        const data = await res.json();
+        setRentProjection(data);
+      }
+    } catch (err) {
+      console.error('Error fetching rent projection:', err);
+    } finally {
+      setLoadingProjection(false);
+    }
+  };
+
   // Select lease, load terms, find term, open Document Explorer and highlight
   const handleViewViolation = async (leaseId: string, ruleId: string, termNameArg?: string) => {
     const targetLease = leases.find(l => l.id === leaseId);
@@ -330,6 +351,7 @@ export default function LeaseLogicApp() {
     setTerms([]);
     setClauses([]);
     setCurrentView('workspace');
+    setRentProjection(null);
     
     if (lease.status === 'completed') {
       try {
@@ -346,6 +368,9 @@ export default function LeaseLogicApp() {
           const clausesData = await clausesRes.json();
           setClauses(clausesData);
         }
+
+        // Fetch rent projection
+        fetchRentProjection(lease.id);
       } catch (err) {
         console.error('Error loading lease details:', err);
       }
@@ -397,6 +422,9 @@ export default function LeaseLogicApp() {
         const updated = await res.json();
         setTerms(terms.map(t => t.id === term.id ? updated : t));
         setEditingTerm(null);
+        if (selectedLease) {
+          fetchRentProjection(selectedLease.id);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -1263,7 +1291,7 @@ export default function LeaseLogicApp() {
               )}
             </div>
 
-            {/* Split Screen Right: Explorer / Chat */}
+            {/* Split Screen Right: Explorer / Chat / Schedule */}
             <div className="pane">
               <div className="tabs">
                 <div className={`tab ${activeTab === 'abstract' ? 'active' : ''}`} onClick={() => setActiveTab('abstract')}>
@@ -1271,6 +1299,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'chat' ? 'active' : ''}`} onClick={() => setActiveTab('chat')}>
                   Compliance Q&A
+                </div>
+                <div className={`tab ${activeTab === 'schedule' ? 'active' : ''}`} onClick={() => setActiveTab('schedule')}>
+                  Rent Schedule
                 </div>
               </div>
 
@@ -1301,7 +1332,7 @@ export default function LeaseLogicApp() {
                     })}
                   </div>
                 </div>
-              ) : (
+              ) : activeTab === 'chat' ? (
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflow: 'hidden' }}>
                   {/* Chat messages */}
                   <div className="chat-messages">
@@ -1381,6 +1412,218 @@ export default function LeaseLogicApp() {
                       Send
                     </button>
                   </div>
+                </div>
+              ) : (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Rent Projection & Payment Forecast</h3>
+                    {rentProjection && (
+                      <span className="badge badge-secondary" style={{ textTransform: 'uppercase', fontSize: '0.75rem', padding: '4px 8px' }}>
+                        Currency: {rentProjection.currency}
+                      </span>
+                    )}
+                  </div>
+
+                  {loadingProjection ? (
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Generating rent schedule projections...</span>
+                    </div>
+                  ) : !rentProjection ? (
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No rent data available. Verify initial rent and lease dates.</span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                      
+                      {/* Metric summary boxes */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
+                        <div className="glass" style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border)' }}>
+                          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Initial Rent (PA)</p>
+                          <h4 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
+                            {rentProjection.currency}{rentProjection.initial_rent_annual.toLocaleString()}
+                          </h4>
+                        </div>
+                        <div className="glass" style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border)' }}>
+                          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Escalation Rule</p>
+                          <h4 style={{ fontSize: '0.85rem', fontWeight: 600, wordBreak: 'break-all', lineHeight: 1.2 }}>
+                            {rentProjection.escalation_type === 'percent' 
+                              ? `+${rentProjection.escalation_rate}% Compound` 
+                              : rentProjection.escalation_type === 'flat' 
+                                ? `+${rentProjection.currency}${rentProjection.escalation_rate.toLocaleString()} Flat` 
+                                : 'No Escalation'}
+                          </h4>
+                        </div>
+                        <div className="glass" style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border)' }}>
+                          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Lease Duration</p>
+                          <h4 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{rentProjection.duration_years} Years</h4>
+                        </div>
+                        <div className="glass" style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border)' }}>
+                          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Cumulative Rent</p>
+                          <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            {rentProjection.currency}{rentProjection.total_rent_cumulative.toLocaleString()}
+                          </h4>
+                        </div>
+                      </div>
+
+                      {/* SVG Line/Area Chart */}
+                      <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Projected Annual Rent Trend</h4>
+                        <div style={{ position: 'relative', width: '100%', height: '220px' }}>
+                          <svg viewBox="0 0 500 220" width="100%" height="100%" style={{ overflow: 'visible' }}>
+                            <defs>
+                              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.3" />
+                                <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0" />
+                              </linearGradient>
+                            </defs>
+
+                            {/* Render grid lines */}
+                            {[0, 1, 2, 3, 4].map(idx => {
+                              const y = 20 + idx * 40;
+                              return (
+                                <line 
+                                  key={idx}
+                                  x1="40" 
+                                  y1={y} 
+                                  x2="480" 
+                                  y2={y} 
+                                  stroke="rgba(0,0,0,0.05)" 
+                                  strokeDasharray="4"
+                                />
+                              );
+                            })}
+
+                            {/* Render chart line paths */}
+                            {(() => {
+                              const points = rentProjection.schedule.map((p: any, idx: number) => {
+                                const x = 40 + (idx / Math.max(1, rentProjection.schedule.length - 1)) * 440;
+                                const maxRent = Math.max(...rentProjection.schedule.map((sp: any) => sp.annual_rent));
+                                const minRent = Math.min(...rentProjection.schedule.map((sp: any) => sp.annual_rent));
+                                const diff = maxRent - minRent || 1;
+                                // Scale Y between 20 and 180
+                                const y = 180 - ((p.annual_rent - minRent * 0.9) / (maxRent * 1.1 - minRent * 0.9)) * 160;
+                                return { x, y, val: p.annual_rent, year: p.year, monthly: p.monthly_rent };
+                              });
+
+                              const linePath = points.map((pt: any, idx: number) => 
+                                `${idx === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`
+                              ).join(' ');
+
+                              const areaPath = points.length > 0 
+                                ? `${linePath} L ${points[points.length - 1].x} 180 L ${points[0].x} 180 Z` 
+                                : '';
+
+                              return (
+                                <>
+                                  {/* Area under the line */}
+                                  {areaPath && <path d={areaPath} fill="url(#areaGrad)" />}
+
+                                  {/* The trend line */}
+                                  {linePath && <path d={linePath} fill="none" stroke="var(--primary)" strokeWidth="3" />}
+
+                                  {/* Data points */}
+                                  {points.map((pt: any, idx: number) => (
+                                    <g key={idx}>
+                                      <circle 
+                                        cx={pt.x} 
+                                        cy={pt.y} 
+                                        r={activeChartYear === pt.year ? 7 : 4} 
+                                        fill="var(--background)" 
+                                        stroke="var(--primary)" 
+                                        strokeWidth="2" 
+                                        style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
+                                        onMouseEnter={() => setActiveChartYear(pt.year)}
+                                        onMouseLeave={() => setActiveChartYear(null)}
+                                      />
+                                      {/* Axis year labels */}
+                                      <text 
+                                        x={pt.x} 
+                                        y="200" 
+                                        textAnchor="middle" 
+                                        style={{ fontSize: '0.75rem', fill: 'var(--text-muted)' }}
+                                      >
+                                        Yr {pt.year}
+                                      </text>
+                                    </g>
+                                  ))}
+
+                                  {/* Interactive Tooltip Card overlay on hover */}
+                                  {points.map((pt: any, idx: number) => {
+                                    if (activeChartYear !== pt.year) return null;
+                                    
+                                    // Tooltip coordinates
+                                    const tooltipX = pt.x > 250 ? pt.x - 130 : pt.x + 10;
+                                    const tooltipY = pt.y - 45;
+
+                                    return (
+                                      <g key={`tooltip-${idx}`} style={{ pointerEvents: 'none' }}>
+                                        <rect 
+                                          x={tooltipX} 
+                                          y={tooltipY} 
+                                          width="120" 
+                                          height="55" 
+                                          rx="6" 
+                                          fill="var(--background)" 
+                                          stroke="var(--primary)" 
+                                          strokeWidth="1"
+                                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.06))' }}
+                                        />
+                                        <text x={tooltipX + 8} y={tooltipY + 16} style={{ fontSize: '0.7rem', fontWeight: 700, fill: 'var(--text-muted)' }}>
+                                          Year {pt.year} Projection
+                                        </text>
+                                        <text x={tooltipX + 8} y={tooltipY + 32} style={{ fontSize: '0.75rem', fontWeight: 800, fill: 'var(--foreground)' }}>
+                                          Annual: {rentProjection.currency}{pt.val.toLocaleString()}
+                                        </text>
+                                        <text x={tooltipX + 8} y={tooltipY + 46} style={{ fontSize: '0.7rem', fill: 'var(--text-muted)' }}>
+                                          Monthly: {rentProjection.currency}{pt.monthly.toLocaleString()}
+                                        </text>
+                                      </g>
+                                    );
+                                  })}
+                                </>
+                              );
+                            })()}
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Detailed Schedule Table */}
+                      <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '15px' }}>Yearly Payment Schedule Breakdowns</h4>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th style={{ width: '60px' }}>Year</th>
+                              <th>Dates Range</th>
+                              <th>Monthly Payments</th>
+                              <th>Annual Rent</th>
+                              <th>Cumulative Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rentProjection.schedule.map((item: any) => (
+                              <tr key={item.year}>
+                                <td style={{ fontWeight: 700 }}>Year {item.year}</td>
+                                <td style={{ fontSize: '0.8rem' }}>
+                                  {item.start_date} to {item.end_date}
+                                </td>
+                                <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                                  {rentProjection.currency}{item.monthly_rent.toLocaleString()}
+                                </td>
+                                <td style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)' }}>
+                                  {rentProjection.currency}{item.annual_rent.toLocaleString()}
+                                </td>
+                                <td style={{ fontFamily: 'monospace', color: 'var(--text-muted)' }}>
+                                  {rentProjection.currency}{item.cumulative_rent.toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                    </div>
+                  )}
                 </div>
               )}
             </div>

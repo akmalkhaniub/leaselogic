@@ -8,6 +8,7 @@ import { startWorker } from './worker.js';
 import { openai, anthropic } from './ai.js';
 import { runLandRegistryAutomation } from './automation.js';
 import { runPortfolioAudit } from './compliance.js';
+import { getRentProjection } from './rent_projection.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -142,6 +143,17 @@ app.get('/api/leases/:id/abstract', async (req, res) => {
       [id]
     );
     res.json(terms.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3.5. Get Rent Projection Schedule
+app.get('/api/leases/:id/rent-projection', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const projection = await getRentProjection(id);
+    res.json(projection);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
