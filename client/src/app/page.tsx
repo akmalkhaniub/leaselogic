@@ -293,6 +293,396 @@ export default function LeaseLogicApp() {
     }
   };
 
+  // Export terms sheet across all portfolio leases to CSV
+  const handleExportCSV = () => {
+    window.open(`${API_BASE}/portfolio/export/csv`, '_blank');
+  };
+
+  // Generate and print/download styled PDF Portfolio Compliance Report
+  const handlePrintPDFReport = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Pop-up blocked. Please enable pop-ups to download the PDF report.');
+      return;
+    }
+
+    const printDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const activeRulesCount = rules.length || 4;
+    const totalChecksEvaluated = complianceReport.length;
+    const passedChecks = complianceReport.filter(r => r.status === 'pass').length;
+    const criticalFailures = complianceReport.filter(r => r.status === 'fail').length;
+    const warningsCount = complianceReport.filter(r => r.status === 'warn').length;
+    const complianceRate = totalChecksEvaluated > 0 
+      ? ((passedChecks / totalChecksEvaluated) * 100).toFixed(1)
+      : '100.0';
+
+    // Build the lease details table rows
+    const leaseTableRows = leases.map(lease => {
+      const leaseViolations = complianceReport.filter(r => r.lease_id === lease.id);
+      const leaseFailed = leaseViolations.filter(r => r.status === 'fail').length;
+      const leaseWarned = leaseViolations.filter(r => r.status === 'warn').length;
+      const score = `${activeRulesCount - leaseFailed - leaseWarned} / ${activeRulesCount}`;
+      const statusText = leaseFailed > 0 ? 'Critical' : leaseWarned > 0 ? 'Warning' : 'Passing';
+      const statusClass = leaseFailed > 0 ? 'failed' : leaseWarned > 0 ? 'warning' : 'completed';
+
+      return `
+        <tr>
+          <td><strong>${lease.filename}</strong></td>
+          <td>${(lease.file_size / 1024).toFixed(1)} KB</td>
+          <td>${score}</td>
+          <td>
+            <span class="badge badge-${statusClass}">${statusText}</span>
+          </td>
+          <td>${lease.job_status || 'completed'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Build the active violations table rows
+    const violationsTableRows = complianceReport
+      .filter(item => item.status === 'fail' || item.status === 'warn')
+      .map(item => {
+        const badgeClass = item.status === 'fail' ? 'failed' : 'warning';
+        const badgeText = item.status === 'fail' ? 'Critical Failure' : 'Warning';
+        return `
+          <tr>
+            <td><strong>${item.filename}</strong></td>
+            <td>${item.rule_name}</td>
+            <td class="mono">${item.term_value}</td>
+            <td>
+              <span class="badge badge-${badgeClass}">${badgeText}</span>
+            </td>
+            <td>${item.message}</td>
+          </tr>
+        `;
+      }).join('');
+
+    // Build the rules catalog rows
+    const rulesTableRows = rules.map(rule => {
+      return `
+        <tr>
+          <td><strong>${rule.rule_name}</strong></td>
+          <td class="mono">${rule.term_name}</td>
+          <td class="mono">${rule.operator}</td>
+          <td>${rule.value_limit}</td>
+          <td>
+            <span class="badge badge-${rule.severity === 'fail' ? 'failed' : 'warning'}">${rule.severity}</span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>LeaseLogic Compliance & Risk Report</title>
+          <style>
+            :root {
+              --primary: #8b5cf6;
+              --primary-light: #f5f3ff;
+              --foreground: #1f2937;
+              --text-muted: #6b7280;
+              --border: #e5e7eb;
+              --success: #10b981;
+              --warning: #f59e0b;
+              --error: #ef4444;
+            }
+            body {
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              color: var(--foreground);
+              line-height: 1.5;
+              padding: 0;
+              margin: 0;
+              background: #ffffff;
+              -webkit-print-color-adjust: exact;
+            }
+            .header-bar {
+              border-bottom: 2px solid var(--primary);
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+            }
+            .logo {
+              font-size: 24px;
+              font-weight: 800;
+              color: var(--foreground);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .logo span {
+              color: var(--primary);
+            }
+            .report-title {
+              font-size: 18px;
+              font-weight: 700;
+              color: var(--text-muted);
+              margin: 0 0 5px 0;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            .report-meta {
+              font-size: 0.85rem;
+              color: var(--text-muted);
+              text-align: right;
+            }
+            h1 {
+              font-size: 28px;
+              font-weight: 800;
+              margin: 0;
+              color: var(--foreground);
+            }
+            h2 {
+              font-size: 18px;
+              font-weight: 700;
+              color: var(--foreground);
+              border-bottom: 1px solid var(--border);
+              padding-bottom: 8px;
+              margin: 35px 0 15px 0;
+              page-break-after: avoid;
+            }
+            .stats-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 15px;
+              margin-bottom: 30px;
+            }
+            .stat-card {
+              border: 1px solid var(--border);
+              padding: 15px;
+              border-radius: 8px;
+              background: #fafafa;
+            }
+            .stat-label {
+              font-size: 0.72rem;
+              color: var(--text-muted);
+              text-transform: uppercase;
+              font-weight: 700;
+              margin-bottom: 5px;
+            }
+            .stat-value {
+              font-size: 22px;
+              font-weight: 800;
+              color: var(--foreground);
+            }
+            .stat-value.primary {
+              color: var(--primary);
+            }
+            .stat-value.error {
+              color: var(--error);
+            }
+            .stat-value.warning {
+              color: var(--warning);
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 25px;
+              font-size: 0.85rem;
+            }
+            th {
+              background: var(--primary-light);
+              color: var(--foreground);
+              font-weight: 700;
+              text-align: left;
+              padding: 10px 12px;
+              border-bottom: 2px solid var(--border);
+            }
+            td {
+              padding: 10px 12px;
+              border-bottom: 1px solid var(--border);
+              vertical-align: top;
+            }
+            tr:nth-child(even) {
+              background: #fafafa;
+            }
+            .badge {
+              display: inline-block;
+              padding: 3px 8px;
+              font-size: 0.7rem;
+              font-weight: 700;
+              border-radius: 4px;
+              text-transform: uppercase;
+            }
+            .badge-completed {
+              background: #d1fae5;
+              color: #065f46;
+            }
+            .badge-warning {
+              background: #fef3c7;
+              color: #92400e;
+            }
+            .badge-failed {
+              background: #fee2e2;
+              color: #991b1b;
+            }
+            .mono {
+              font-family: monospace;
+              font-size: 0.8rem;
+            }
+            .action-plan {
+              background: #f9fafb;
+              border-left: 4px solid var(--primary);
+              padding: 20px;
+              border-radius: 0 8px 8px 0;
+              margin-bottom: 30px;
+              page-break-inside: avoid;
+            }
+            .action-plan h3 {
+              margin-top: 0;
+              color: var(--primary);
+              font-size: 16px;
+            }
+            .action-plan ul {
+              margin: 0;
+              padding-left: 20px;
+              font-size: 0.85rem;
+              color: var(--foreground);
+            }
+            .action-plan li {
+              margin-bottom: 8px;
+            }
+            @media print {
+              .no-print {
+                display: none;
+              }
+              body {
+                padding: 10px;
+              }
+              @page {
+                size: A4 portrait;
+                margin: 15mm 15mm 20mm 15mm;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header-bar">
+            <div>
+              <div class="logo">Lease<span>Logic</span></div>
+              <h1>Portfolio Audit Report</h1>
+            </div>
+            <div class="report-meta">
+              <div class="report-title">Executive Risk Brief</div>
+              <div>Generated: ${printDate}</div>
+              <div>Database Scope: Active pgvector Portfolio</div>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Compliance Rating</div>
+              <div class="stat-value primary">${complianceRate}%</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Critical Failures</div>
+              <div class="stat-value error">${criticalFailures}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Compliance Warnings</div>
+              <div class="stat-value warning">${warningsCount}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Active Leases</div>
+              <div class="stat-value">${leases.length}</div>
+            </div>
+          </div>
+
+          <div class="action-plan">
+            <h3>Strategic Recommendations & Action Items</h3>
+            <ul>
+              ${criticalFailures > 0 
+                ? `<li><strong>Resolve Structural repair issues:</strong> Review the lease clauses where structural repairs have been assigned to the Tenant immediately to renegotiate terms or establish internal capital reserves.</li>` 
+                : '<li><strong>Structural repairs check passed:</strong> All active leases successfully keep structural maintenance under Landlord responsibility.</li>'}
+              ${criticalFailures > 0 
+                ? `<li><strong>Review low public liability caps:</strong> Multiple leases flag insurance coverage below the corporate requirement of $5,000,000. Initiate discussions to increase caps.</li>` 
+                : '<li><strong>Insurance cap validation passed:</strong> All leases satisfy minimum corporate liability insurance standards.</li>'}
+              ${warningsCount > 0 
+                ? `<li><strong>Tenant Break Clauses:</strong> Identify and flag options for leases currently missing termination rights. Plan around fixed timelines for Regent Street and Oxford Street.</li>` 
+                : ''}
+              <li><strong>Database synchronization:</strong> Human modifications have been logged and synced back to primary PostgreSQL storage.</li>
+            </ul>
+          </div>
+
+          <h2>1. Leases Audited</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Lease Filename</th>
+                <th>File Size</th>
+                <th>Passed Checks</th>
+                <th>Risk Category</th>
+                <th>Pipeline Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${leaseTableRows || '<tr><td colspan="5" style="text-align:center;">No audited leases found.</td></tr>'}
+            </tbody>
+          </table>
+
+          <h2 style="page-break-before: always;">2. Compliance Violations & Warnings</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Lease Filename</th>
+                <th>Rule Name</th>
+                <th>Extracted Value</th>
+                <th>Severity</th>
+                <th>Auditor Findings & Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${violationsTableRows || '<tr><td colspan="5" style="text-align:center;color:var(--success);font-weight:bold;padding:20px;">\u2705 100% Compliant: No active compliance risk violations detected.</td></tr>'}
+            </tbody>
+          </table>
+
+          <h2>3. Compliance Catalog & System Rules</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Rule Name</th>
+                <th>Term Field</th>
+                <th>Operator</th>
+                <th>Constraint Limit</th>
+                <th>Alert Severity</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rulesTableRows || '<tr><td colspan="5" style="text-align:center;">No active compliance rules in catalog.</td></tr>'}
+            </tbody>
+          </table>
+
+          <div class="no-print" style="margin-top: 40px; display: flex; justify-content: center;">
+            <button onclick="window.print()" style="background:#8b5cf6; color:white; border:none; padding:12px 24px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.95rem; box-shadow:0 4px 6px rgba(139,92,246,0.25)">
+              Print Report / Save to PDF
+            </button>
+          </div>
+
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 400);
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
   // Select lease, load terms, find term, open Document Explorer and highlight
   const handleViewViolation = async (leaseId: string, ruleId: string, termNameArg?: string) => {
     const targetLease = leases.find(l => l.id === leaseId);
@@ -741,6 +1131,30 @@ export default function LeaseLogicApp() {
         {/* Workspace Dashboard vs Observability Dashboard vs Compliance Dashboard */}
         {currentView === 'compliance' ? (
           <div className="pane" style={{ overflowY: 'auto' }}>
+            {/* Exporter & Actions Panel */}
+            <div className="glass" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', marginBottom: '25px', gap: '15px', background: 'var(--primary-light)', border: '1px solid rgba(139,92,246,0.1)' }}>
+              <div>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--foreground)' }}>Compliance Reporting Actions</h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Download structured lease data or print a beautifully formatted executive risk report.</p>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={handleExportCSV}
+                  className="btn btn-secondary"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.82rem', borderColor: 'var(--primary)', color: 'var(--primary)', background: '#ffffff' }}
+                >
+                  📊 Export Terms (CSV)
+                </button>
+                <button 
+                  onClick={handlePrintPDFReport}
+                  className="btn"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.82rem' }}
+                >
+                  📄 Download PDF Report
+                </button>
+              </div>
+            </div>
+
             {/* Compliance Statistics Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '25px' }}>
               

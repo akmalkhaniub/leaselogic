@@ -334,6 +334,55 @@ app.get('/api/compliance/audit', async (req, res) => {
   }
 });
 
+// 4.75. Export all portfolio terms to CSV
+app.get('/api/portfolio/export/csv', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT l.filename, t.term_name, t.extracted_value 
+      FROM leases l
+      LEFT JOIN lease_terms t ON l.id = t.lease_id
+      WHERE l.status = 'completed'
+      ORDER BY l.filename ASC, t.term_name ASC
+    `);
+
+    const leaseDataMap = new Map<string, Record<string, string>>();
+    const allTermNames = new Set<string>();
+
+    for (const row of result.rows) {
+      if (!leaseDataMap.has(row.filename)) {
+        leaseDataMap.set(row.filename, {});
+      }
+      if (row.term_name) {
+        const cleanVal = (row.extracted_value || '').split(' (Citation:')[0];
+        leaseDataMap.get(row.filename)![row.term_name] = cleanVal;
+        allTermNames.add(row.term_name);
+      }
+    }
+
+    const termNamesArray = Array.from(allTermNames).sort();
+    
+    let csvContent = 'Lease Filename,' + termNamesArray.map(name => {
+      return name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }).join(',') + '\n';
+
+    for (const [filename, terms] of leaseDataMap.entries()) {
+      const rowValues = [filename];
+      for (const termName of termNamesArray) {
+        let val = terms[termName] || '';
+        val = val.replace(/"/g, '""');
+        rowValues.push(`"${val}"`);
+      }
+      csvContent += rowValues.join(',') + '\n';
+    }
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="leases_portfolio.csv"');
+    res.send(csvContent);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.8. Get all compliance rules
 app.get('/api/compliance/rules', async (req, res) => {
   try {
