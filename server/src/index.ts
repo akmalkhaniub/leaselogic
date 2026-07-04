@@ -227,6 +227,54 @@ app.put('/api/leases/:id/terms/:termId', async (req, res) => {
   }
 });
 
+// 4.1. Update Lease Term Grounding Mappings (Manual Reference Linking)
+app.put('/api/leases/:id/terms/:termId/grounding', async (req, res) => {
+  try {
+    const { id: leaseId, termId } = req.params;
+    const { source_clause_ids } = req.body;
+
+    // Fetch original values for audit logging
+    const originalRes = await pool.query(
+      `SELECT * FROM lease_terms WHERE id = $1 AND lease_id = $2`,
+      [termId, leaseId]
+    );
+
+    if (originalRes.rowCount === 0) {
+      res.status(404).json({ error: 'Lease term not found' });
+      return;
+    }
+
+    const original = originalRes.rows[0];
+
+    // Update grounding references
+    const updatedRes = await pool.query(
+      `UPDATE lease_terms
+       SET source_clause_ids = $1, is_edited = TRUE, updated_at = NOW()
+       WHERE id = $2 AND lease_id = $3
+       RETURNING *`,
+      [source_clause_ids, termId, leaseId]
+    );
+
+    // Create Audit Log entry
+    await pool.query(
+      `INSERT INTO audit_logs (lease_id, action, table_name, record_id, old_values, new_values)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        leaseId,
+        'update_grounding',
+        'lease_terms',
+        termId,
+        JSON.stringify({ source_clause_ids: original.source_clause_ids }),
+        JSON.stringify({ source_clause_ids })
+      ]
+    );
+
+    res.json(updatedRes.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.5. Get Observability Stats
 app.get('/api/observability/stats', async (req, res) => {
   try {

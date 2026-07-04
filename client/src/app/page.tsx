@@ -681,6 +681,35 @@ export default function LeaseLogicApp() {
 
     printWindow.document.write(htmlContent);
     printWindow.document.close();
+  // Toggle clause association with the selected lease term
+  const handleToggleGrounding = async (clauseId: string) => {
+    if (!selectedLease || !selectedTerm) return;
+
+    const currentIds = selectedTerm.source_clause_ids || [];
+    const isLinked = currentIds.includes(clauseId);
+    
+    let newIds: string[];
+    if (isLinked) {
+      newIds = currentIds.filter((id: string) => id !== clauseId);
+    } else {
+      newIds = [...currentIds, clauseId];
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/terms/${selectedTerm.id}/grounding`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_clause_ids: newIds }),
+      });
+      if (res.ok) {
+        const updatedTerm = await res.json();
+        setSelectedTerm(updatedTerm);
+        setTerms(terms.map(t => t.id === selectedTerm.id ? updatedTerm : t));
+        fetchCompliance();
+      }
+    } catch (err) {
+      console.error('Error toggling grounding mapping:', err);
+    }
   };
 
   // Select lease, load terms, find term, open Document Explorer and highlight
@@ -1731,14 +1760,49 @@ export default function LeaseLogicApp() {
                         <div 
                           key={clause.id} 
                           className={`clause-block ${isHighlighted ? 'highlighted-clause' : ''}`}
-                          style={{ marginBottom: '16px', fontSize: '0.85rem', lineHeight: 1.6 }}
+                          style={{ 
+                            marginBottom: '16px', 
+                            fontSize: '0.85rem', 
+                            lineHeight: 1.6,
+                            padding: '12px 14px',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(15, 23, 42, 0.04)',
+                            background: isHighlighted ? 'rgba(109, 40, 217, 0.05)' : 'rgba(255, 255, 255, 0.6)',
+                            transition: 'all 0.2s ease',
+                            position: 'relative'
+                          }}
                         >
-                          {(clause.clause_number || clause.clause_title) && (
-                            <p style={{ fontWeight: 600, color: 'var(--primary)', marginBottom: '4px' }}>
-                              Page {clause.page_number} - {clause.clause_number ? `Section ${clause.clause_number}` : ''} {clause.clause_title || ''}
-                            </p>
-                          )}
-                          <p style={{ color: isHighlighted ? '#ffffff' : 'var(--text-muted)', whiteSpace: 'pre-line' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                            {(clause.clause_number || clause.clause_title) && (
+                              <p style={{ fontWeight: 600, color: 'var(--primary)', margin: 0 }}>
+                                Page {clause.page_number} - {clause.clause_number ? `Section ${clause.clause_number}` : ''} {clause.clause_title || ''}
+                              </p>
+                            )}
+                            
+                            {selectedTerm && (
+                              <button
+                                onClick={() => handleToggleGrounding(clause.id)}
+                                className="btn btn-secondary"
+                                style={{
+                                  padding: '2px 8px',
+                                  fontSize: '0.72rem',
+                                  borderRadius: '4px',
+                                  height: '22px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  borderColor: isHighlighted ? 'var(--accent)' : 'rgba(15, 23, 42, 0.15)',
+                                  color: isHighlighted ? 'var(--accent)' : 'var(--text-muted)',
+                                  background: isHighlighted ? 'rgba(219, 39, 119, 0.05)' : '#ffffff',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                {isHighlighted ? '✕ Unlink' : '🔗 Link Term'}
+                              </button>
+                            )}
+                          </div>
+                          <p style={{ color: 'var(--foreground)', whiteSpace: 'pre-line', margin: 0 }}>
                             {clause.text_content}
                           </p>
                         </div>
