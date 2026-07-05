@@ -431,6 +431,14 @@ app.get('/api/portfolio/export/csv', async (req, res) => {
   }
 });
 
+// Timezone-safe date string formatter
+function toLocalDateString(d: Date): string {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 // Helper function to extract dates for timeline
 function extractTimelineDate(text: string, commencement?: Date): string | null {
   const clean = text.split(' (Citation:')[0].trim();
@@ -439,7 +447,7 @@ function extractTimelineDate(text: string, commencement?: Date): string | null {
   const dateMatch = clean.match(/([a-zA-Z]+ \d{1,2},? \d{4})|(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})|(\d{4}-\d{2}-\d{2})/);
   if (dateMatch) {
     const d = new Date(dateMatch[0]);
-    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+    if (!isNaN(d.getTime())) return toLocalDateString(d);
   }
 
   const yrMatch = clean.match(/(\d+)\s*(?:years?|anniversary)/i);
@@ -447,7 +455,7 @@ function extractTimelineDate(text: string, commencement?: Date): string | null {
     const years = parseInt(yrMatch[1]);
     const d = new Date(commencement.getTime());
     d.setFullYear(d.getFullYear() + years);
-    return d.toISOString().split('T')[0];
+    return toLocalDateString(d);
   }
 
   const yearOnly = clean.match(/\b(202\d|203\d)\b/);
@@ -456,7 +464,7 @@ function extractTimelineDate(text: string, commencement?: Date): string | null {
     const month = commencement ? commencement.getMonth() : 5;
     const day = commencement ? commencement.getDate() : 1;
     const d = new Date(yr, month, day);
-    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+    if (!isNaN(d.getTime())) return toLocalDateString(d);
   }
 
   return null;
@@ -491,7 +499,7 @@ app.get('/api/portfolio/timeline', async (req, res) => {
           filename: lease.filename,
           event_type: 'commencement',
           event_title: 'Lease Commencement',
-          date: validCommencement.toISOString().split('T')[0],
+          date: toLocalDateString(validCommencement),
           description: `Lease starts for ${lease.filename}`
         });
       }
