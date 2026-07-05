@@ -43,8 +43,8 @@ export default function LeaseLogicApp() {
   const [clauses, setClauses] = useState<Clause[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
-  // Views: 'workspace' | 'observability' | 'compliance'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance'>('workspace');
+  // Views: 'workspace' | 'observability' | 'compliance' | 'timeline'
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline'>('workspace');
   
   // Observability stats state
   const [stats, setStats] = useState<any>(null);
@@ -73,6 +73,18 @@ export default function LeaseLogicApp() {
   const [rentProjection, setRentProjection] = useState<any>(null);
   const [loadingProjection, setLoadingProjection] = useState(false);
   const [activeChartYear, setActiveChartYear] = useState<number | null>(null);
+
+  // Timeline and alerts state
+  const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+  const [loadingTimeline, setLoadingTimeline] = useState(false);
+  const [leaseAlerts, setLeaseAlerts] = useState<any[]>([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(false);
+  const [alertForm, setAlertForm] = useState({
+    term_name: 'expiration_date',
+    alert_date: '',
+    alert_type: 'email',
+    recipient: 'asset-manager@leaselogic.internal'
+  });
 
   // Tabs: 'abstract' | 'chat' | 'schedule'
   const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule'>('abstract');
@@ -712,6 +724,79 @@ export default function LeaseLogicApp() {
     }
   };
 
+  // Fetch Portfolio Timeline events
+  const fetchTimeline = async () => {
+    setLoadingTimeline(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/timeline`);
+      if (res.ok) {
+        const data = await res.json();
+        setTimelineEvents(data);
+      }
+    } catch (err) {
+      console.error('Error fetching timeline:', err);
+    } finally {
+      setLoadingTimeline(false);
+    }
+  };
+
+  // Fetch alerts configured for selected lease
+  const fetchAlerts = async (leaseId: string) => {
+    setLoadingAlerts(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${leaseId}/alerts`);
+      if (res.ok) {
+        const data = await res.json();
+        setLeaseAlerts(data);
+      }
+    } catch (err) {
+      console.error('Error fetching lease alerts:', err);
+    } finally {
+      setLoadingAlerts(false);
+    }
+  };
+
+  // Create new alert for selected lease
+  const handleCreateAlert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLease) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/alerts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(alertForm),
+      });
+      if (res.ok) {
+        fetchAlerts(selectedLease.id);
+        setAlertForm({
+          ...alertForm,
+          alert_date: ''
+        });
+        fetchTimeline(); // refresh timeline as alerts might map to it
+      }
+    } catch (err) {
+      console.error('Error creating lease alert:', err);
+    }
+  };
+
+  // Delete alert
+  const handleDeleteAlert = async (alertId: string) => {
+    if (!selectedLease) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/alerts/${alertId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchAlerts(selectedLease.id);
+        fetchTimeline();
+      }
+    } catch (err) {
+      console.error('Error deleting alert:', err);
+    }
+  };
+
   // Select lease, load terms, find term, open Document Explorer and highlight
   const handleViewViolation = async (leaseId: string, ruleId: string, termNameArg?: string) => {
     const targetLease = leases.find(l => l.id === leaseId);
@@ -754,6 +839,7 @@ export default function LeaseLogicApp() {
     fetchStats();
     fetchCompliance();
     fetchRules();
+    fetchTimeline();
     const interval = setInterval(() => {
       fetchStats();
       fetchCompliance();
@@ -771,6 +857,7 @@ export default function LeaseLogicApp() {
     setClauses([]);
     setCurrentView('workspace');
     setRentProjection(null);
+    setLeaseAlerts([]);
     
     if (lease.status === 'completed') {
       try {
@@ -790,6 +877,9 @@ export default function LeaseLogicApp() {
 
         // Fetch rent projection
         fetchRentProjection(lease.id);
+
+        // Fetch alerts
+        fetchAlerts(lease.id);
       } catch (err) {
         console.error('Error loading lease details:', err);
       }
@@ -1062,24 +1152,31 @@ export default function LeaseLogicApp() {
         <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(15,23,42,0.08)', display: 'flex', gap: '8px', background: '#f8fafc' }}>
           <button 
             className={`btn ${currentView === 'workspace' ? '' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '8px 4px', fontSize: '0.75rem', borderRadius: '6px' }}
+            style={{ flex: 1, padding: '8px 2px', fontSize: '0.7rem', borderRadius: '6px' }}
             onClick={() => setCurrentView('workspace')}
           >
             📂 Workspace
           </button>
           <button 
             className={`btn ${currentView === 'observability' ? '' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '8px 4px', fontSize: '0.75rem', borderRadius: '6px' }}
+            style={{ flex: 1, padding: '8px 2px', fontSize: '0.7rem', borderRadius: '6px' }}
             onClick={() => setCurrentView('observability')}
           >
             📊 Analytics
           </button>
           <button 
             className={`btn ${currentView === 'compliance' ? '' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '8px 4px', fontSize: '0.75rem', borderRadius: '6px' }}
+            style={{ flex: 1, padding: '8px 2px', fontSize: '0.7rem', borderRadius: '6px' }}
             onClick={() => setCurrentView('compliance')}
           >
             ⚖️ Compliance
+          </button>
+          <button 
+            className={`btn ${currentView === 'timeline' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 2px', fontSize: '0.7rem', borderRadius: '6px' }}
+            onClick={() => setCurrentView('timeline')}
+          >
+            🔔 Alerts
           </button>
         </div>
 
@@ -1142,6 +1239,8 @@ export default function LeaseLogicApp() {
               <h2 style={{ fontSize: '1.25rem' }}>Portfolio Compliance Audit & Risk Engine</h2>
             ) : currentView === 'observability' ? (
               <h2 style={{ fontSize: '1.25rem' }}>Pipeline Observability & Cost Analytics</h2>
+            ) : currentView === 'timeline' ? (
+              <h2 style={{ fontSize: '1.25rem' }}>Lease Alerts & Timeline Calendar</h2>
             ) : selectedLease ? (
               <h2 style={{ fontSize: '1.25rem' }}>{selectedLease.filename}</h2>
             ) : (
@@ -1158,7 +1257,219 @@ export default function LeaseLogicApp() {
         </div>
 
         {/* Workspace Dashboard vs Observability Dashboard vs Compliance Dashboard */}
-        {currentView === 'compliance' ? (
+        {currentView === 'timeline' ? (
+          <div className="dashboard-grid" style={{ overflow: 'hidden' }}>
+            {/* Left Panel: visual chronological timeline events feed */}
+            <div className="pane pane-border" style={{ flex: 2, overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Upcoming Portfolio Key Date Milestones</h3>
+                <button onClick={fetchTimeline} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                  🔄 Refresh Timeline
+                </button>
+              </div>
+
+              {loadingTimeline ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+                  <p style={{ color: 'var(--text-muted)' }}>Loading timeline milestones...</p>
+                </div>
+              ) : timelineEvents.length === 0 ? (
+                <div className="glass" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No upcoming timeline milestones extracted. Upload lease documents to analyze key dates.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {timelineEvents.map((evt, idx) => {
+                    const typeColors: Record<string, { bg: string, text: string, border: string }> = {
+                      commencement: { bg: 'rgba(5, 150, 105, 0.08)', text: 'var(--success)', border: 'var(--success)' },
+                      expiration: { bg: 'rgba(220, 38, 38, 0.08)', text: 'var(--error)', border: 'var(--error)' },
+                      break: { bg: 'rgba(217, 119, 6, 0.08)', text: 'var(--warning)', border: 'var(--warning)' },
+                      escalation: { bg: 'rgba(109, 40, 217, 0.08)', text: 'var(--primary)', border: 'var(--primary)' }
+                    };
+
+                    const styleToken = typeColors[evt.event_type] || { bg: 'rgba(15, 23, 42, 0.05)', text: 'var(--text-muted)', border: 'var(--text-muted)' };
+
+                    return (
+                      <div 
+                        key={idx}
+                        className="glass" 
+                        style={{ 
+                          padding: '16px', 
+                          display: 'flex', 
+                          gap: '15px', 
+                          alignItems: 'flex-start',
+                          borderLeft: `4px solid ${styleToken.border}`,
+                          background: styleToken.bg,
+                          cursor: 'pointer',
+                          transition: 'transform 0.15s ease'
+                        }}
+                        onClick={() => {
+                          const target = leases.find(l => l.id === evt.lease_id);
+                          if (target) handleSelectLease(target);
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(3px)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(0px)'}
+                      >
+                        <div style={{
+                          fontFamily: 'monospace',
+                          fontWeight: 700,
+                          fontSize: '0.9rem',
+                          color: styleToken.text,
+                          minWidth: '95px'
+                        }}>
+                          {evt.date}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>{evt.event_title}</h4>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>{evt.filename}</span>
+                          </div>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{evt.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Right Panel: Alerts trigger configurations */}
+            <div className="pane" style={{ flex: 1, overflowY: 'auto' }}>
+              {!selectedLease ? (
+                <div className="glass" style={{ padding: '30px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px' }}>
+                  <span style={{ fontSize: '2.5rem', marginBottom: '15px' }}>🔔</span>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '8px' }}>Configure Real-Time Lease Alerts</h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                    Select an active lease from the sidebar portfolio listing to set up custom email or webhook alert rules prior to upcoming key date milestones.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Configure Alerts for:</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>{selectedLease.filename}</p>
+                  </div>
+
+                  {/* Create alert form */}
+                  <div className="glass" style={{ padding: '20px' }}>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '15px' }}>Set Notification Trigger</h4>
+                    <form onSubmit={handleCreateAlert} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Target Milestone Date</label>
+                        <select 
+                          className="chat-input"
+                          style={{ border: '1px solid rgba(15, 23, 42, 0.15)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff' }}
+                          value={alertForm.term_name}
+                          onChange={(e) => setAlertForm({ ...alertForm, term_name: e.target.value })}
+                        >
+                          <option value="commencement_date">Lease Commencement Date</option>
+                          <option value="expiration_date">Lease Expiration Date</option>
+                          <option value="break_clause">Tenant Break Option Date</option>
+                          <option value="rent_escalation">Rent Review / Escalation Date</option>
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Alert Date Trigger</label>
+                        <input 
+                          type="date" 
+                          required
+                          className="chat-input"
+                          style={{ border: '1px solid rgba(15, 23, 42, 0.15)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                          value={alertForm.alert_date}
+                          onChange={(e) => setAlertForm({ ...alertForm, alert_date: e.target.value })}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Channel Type</label>
+                        <select 
+                          className="chat-input"
+                          style={{ border: '1px solid rgba(15, 23, 42, 0.15)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff' }}
+                          value={alertForm.alert_type}
+                          onChange={(e) => setAlertForm({ ...alertForm, alert_type: e.target.value })}
+                        >
+                          <option value="email">Email Alert Notification</option>
+                          <option value="webhook">Webhook Callback Endpoint</option>
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Notification Recipient</label>
+                        <input 
+                          type="text" 
+                          required
+                          placeholder={alertForm.alert_type === 'email' ? 'manager@company.com' : 'https://api.company.com/webhook'}
+                          className="chat-input"
+                          style={{ border: '1px solid rgba(15, 23, 42, 0.15)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                          value={alertForm.recipient}
+                          onChange={(e) => setAlertForm({ ...alertForm, recipient: e.target.value })}
+                        />
+                      </div>
+
+                      <button type="submit" className="btn" style={{ padding: '10px', fontSize: '0.85rem', width: '100%', marginTop: '5px' }}>
+                        Create Notification Alert Rule
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Active alerts rules catalog list */}
+                  <div className="glass" style={{ padding: '20px' }}>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '15px' }}>Lease Alerts Catalog</h4>
+                    {loadingAlerts ? (
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Retrieving rules catalog...</p>
+                    ) : leaseAlerts.length === 0 ? (
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, fontStyle: 'italic' }}>No alerts configured for this lease yet.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {leaseAlerts.map((alert) => (
+                          <div 
+                            key={alert.id}
+                            style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              padding: '10px 12px', 
+                              background: '#f8fafc', 
+                              borderRadius: '6px', 
+                              border: '1px solid rgba(15, 23, 42, 0.05)',
+                              fontSize: '0.78rem'
+                            }}
+                          >
+                            <div>
+                              <p style={{ fontWeight: 700, margin: 0, textTransform: 'capitalize' }}>
+                                {alert.term_name.replace(/_/g, ' ')}
+                              </p>
+                              <p style={{ color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                                Trigger: {alert.alert_date.split('T')[0]} ({alert.alert_type})
+                              </p>
+                              <p style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 600, margin: '2px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }} title={alert.recipient}>
+                                Recipient: {alert.recipient}
+                              </p>
+                            </div>
+                            <button 
+                              onClick={() => handleDeleteAlert(alert.id)}
+                              style={{ 
+                                background: 'transparent', 
+                                border: 'none', 
+                                color: 'var(--error)', 
+                                cursor: 'pointer',
+                                fontSize: '0.95rem',
+                                padding: '4px'
+                              }}
+                              title="Delete Alert Rule"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : currentView === 'compliance' ? (
           <div className="pane" style={{ overflowY: 'auto' }}>
             {/* Exporter & Actions Panel */}
             <div className="glass" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', marginBottom: '25px', gap: '15px', background: 'var(--primary-light)', border: '1px solid rgba(139,92,246,0.1)' }}>
