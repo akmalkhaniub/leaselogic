@@ -431,6 +431,175 @@ app.get('/api/portfolio/export/csv', async (req, res) => {
   }
 });
 
+// Helper function to extract dates for timeline
+function extractTimelineDate(text: string, commencement?: Date): string | null {
+  const clean = text.split(' (Citation:')[0].trim();
+  if (!clean || clean.toLowerCase() === 'none' || clean.toLowerCase() === 'n/a') return null;
+
+  const dateMatch = clean.match(/([a-zA-Z]+ \d{1,2},? \d{4})|(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})|(\d{4}-\d{2}-\d{2})/);
+  if (dateMatch) {
+    const d = new Date(dateMatch[0]);
+    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+  }
+
+  const yrMatch = clean.match(/(\d+)\s*(?:years?|anniversary)/i);
+  if (yrMatch && commencement) {
+    const years = parseInt(yrMatch[1]);
+    const d = new Date(commencement.getTime());
+    d.setFullYear(d.getFullYear() + years);
+    return d.toISOString().split('T')[0];
+  }
+
+  const yearOnly = clean.match(/\b(202\d|203\d)\b/);
+  if (yearOnly) {
+    const yr = parseInt(yearOnly[1]);
+    const month = commencement ? commencement.getMonth() : 5;
+    const day = commencement ? commencement.getDate() : 1;
+    const d = new Date(yr, month, day);
+    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+  }
+
+  return null;
+}
+
+// 4.76. Get visual timeline events across portfolio leases
+app.get('/api/portfolio/timeline', async (req, res) => {
+  try {
+    const leasesRes = await pool.query("SELECT id, filename FROM leases WHERE status = 'completed'");
+    const events: any[] = [];
+
+    for (const lease of leasesRes.rows) {
+      const termsRes = await pool.query(
+        "SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1",
+        [lease.id]
+      );
+      const termsMap = new Map<string, string>();
+      for (const row of termsRes.rows) {
+        termsMap.set(row.term_name, row.extracted_value || '');
+      }
+
+      const commencementRaw = termsMap.get('commencement_date') || '';
+      const expirationRaw = termsMap.get('expiration_date') || '';
+      const breakRaw = termsMap.get('break_clause') || '';
+
+      const commencementDate = commencementRaw ? new Date(commencementRaw.split(' (Citation:')[0]) : null;
+      const validCommencement = commencementDate && !isNaN(commencementDate.getTime()) ? commencementDate : null;
+
+      if (validCommencement) {
+        events.push({
+          lease_id: lease.id,
+          filename: lease.filename,
+          event_type: 'commencement',
+          event_title: 'Lease Commencement',
+          date: validCommencement.toISOString().split('T')[0],
+          description: `Lease starts for ${lease.filename}`
+        });
+      }
+
+      const expirationStr = validCommencement ? extractTimelineDate(expirationRaw, validCommencement) : extractTimelineDate(expirationRaw);
+      if (expirationStr) {
+        events.push({
+          lease_id: lease.id,
+          filename: lease.filename,
+          event_type: 'expiration',
+          event_title: 'Lease Expiration',
+          date: expirationStr,
+          description: `Lease expires for ${lease.filename}`
+        });
+      }
+
+      const breakStr = validCommencement ? extractTimelineDate(breakRaw, validCommencement) : extractTimelineDate(breakRaw);
+      if (breakStr) {
+        events.push({
+          lease_id: lease.id,
+          filename: lease.filename,
+          event_type: 'break',
+          event_title: 'Break Clause Option',
+          date: breakStr,
+          description: `Early termination option: ${breakRaw.split(' (Citation:')[0]}`
+        });
+      }
+
+      // Add rent escalations from the rent projection schedule
+      try {
+        const projection = await getRentProjection(lease.id);
+        if (projection && projection.schedule && projection.schedule.length > 1) {
+          // Add Year 2+ schedule events
+          for (let i = 1; i < projection.schedule.length; i++) {
+            const period = projection.schedule[i];
+            events.push({
+              lease_id: lease.id,
+              filename: lease.filename,
+              event_type: 'escalation',
+              event_title: `Rent Step Up (Year ${period.year})`,
+              date: period.start_date,
+              description: `Rent increases to ${projection.currency}${period.annual_rent.toLocaleString()} / year`
+            });
+          }
+        }
+      } catch (err) {
+        console.warn(`Could not add rent escalation events for ${lease.filename}:`, err);
+      }
+    }
+
+    // Sort by date ascending
+    events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    res.json(events);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.77. GET all alerts for a specific lease
+app.get('/api/leases/:id/alerts', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM lease_alerts WHERE lease_id = $1 ORDER BY alert_date ASC",
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.78. POST create a new alert for a lease
+app.post('/api/leases/:id/alerts', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { term_name, alert_date, alert_type, recipient } = req.body;
+    if (!term_name || !alert_date || !recipient) {
+      res.status(400).json({ error: 'term_name, alert_date, and recipient are required.' });
+      return;
+    }
+
+    const result = await pool.query(
+      `INSERT INTO lease_alerts (lease_id, term_name, alert_date, alert_type, recipient, status)
+       VALUES ($1, $2, $3, $4, $5, 'pending')
+       RETURNING *`,
+      [id, term_name, alert_date, alert_type || 'email', recipient]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.79. DELETE an alert configuration
+app.delete('/api/leases/:id/alerts/:alertId', async (req, res) => {
+  try {
+    const { id, alertId } = req.params;
+    await pool.query(
+      "DELETE FROM lease_alerts WHERE id = $1 AND lease_id = $2",
+      [alertId, id]
+    );
+    res.json({ success: true, message: 'Alert deleted successfully.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.8. Get all compliance rules
 app.get('/api/compliance/rules', async (req, res) => {
   try {
@@ -708,6 +877,20 @@ app.listen(port, async () => {
           message_template TEXT NOT NULL,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create lease_alerts table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lease_alerts (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          lease_id UUID REFERENCES leases(id) ON DELETE CASCADE,
+          term_name VARCHAR(100) NOT NULL,
+          alert_date DATE NOT NULL,
+          alert_type VARCHAR(50) DEFAULT 'email',
+          recipient VARCHAR(255) NOT NULL,
+          status VARCHAR(50) DEFAULT 'pending',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
