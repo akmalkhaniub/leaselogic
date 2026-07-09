@@ -43,8 +43,8 @@ export default function LeaseLogicApp() {
   const [clauses, setClauses] = useState<Clause[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
-  // Views: 'workspace' | 'observability' | 'compliance' | 'timeline'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline'>('workspace');
+  // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark'
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark'>('workspace');
   
   // Observability stats state
   const [stats, setStats] = useState<any>(null);
@@ -85,6 +85,16 @@ export default function LeaseLogicApp() {
     alert_type: 'email',
     recipient: 'asset-manager@leaselogic.internal'
   });
+
+  // Benchmarking state
+  const [benchmarkRuns, setBenchmarkRuns] = useState<any[]>([]);
+  const [loadingBenchmarks, setLoadingBenchmarks] = useState(false);
+  const [runningBenchmark, setRunningBenchmark] = useState(false);
+  const [benchmarkTerm, setBenchmarkTerm] = useState('initial_rent');
+  const [benchmarkPrompt, setBenchmarkPrompt] = useState(
+    "You are an expert commercial real estate attorney. Extract the exact value and specific section citation for '{term_name}' from the commercial lease agreement."
+  );
+  const [selectedModels, setSelectedModels] = useState<string[]>(['claude-3-5-sonnet', 'gpt-4o-mini']);
 
   // Tabs: 'abstract' | 'chat' | 'schedule'
   const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule'>('abstract');
@@ -797,6 +807,50 @@ export default function LeaseLogicApp() {
     }
   };
 
+  // Fetch benchmark runs
+  const fetchBenchmarks = async (leaseId: string) => {
+    setLoadingBenchmarks(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${leaseId}/benchmarks`);
+      if (res.ok) {
+        const data = await res.json();
+        setBenchmarkRuns(data);
+      }
+    } catch (err) {
+      console.error('Error fetching benchmarks:', err);
+    } finally {
+      setLoadingBenchmarks(false);
+    }
+  };
+
+  // Run benchmark comparison side-by-side
+  const handleRunBenchmark = async () => {
+    if (!selectedLease || selectedModels.length === 0) return;
+    setRunningBenchmark(true);
+
+    try {
+      for (const model of selectedModels) {
+        const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/benchmarks/run`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            prompt_template: benchmarkPrompt,
+            term_name: benchmarkTerm
+          })
+        });
+        if (!res.ok) {
+          console.error(`Failed to run benchmark for ${model}`);
+        }
+      }
+      fetchBenchmarks(selectedLease.id);
+    } catch (err) {
+      console.error('Error running benchmarks:', err);
+    } finally {
+      setRunningBenchmark(false);
+    }
+  };
+
   // Select lease, load terms, find term, open Document Explorer and highlight
   const handleViewViolation = async (leaseId: string, ruleId: string, termNameArg?: string) => {
     const targetLease = leases.find(l => l.id === leaseId);
@@ -858,6 +912,7 @@ export default function LeaseLogicApp() {
     setCurrentView('workspace');
     setRentProjection(null);
     setLeaseAlerts([]);
+    setBenchmarkRuns([]);
     
     if (lease.status === 'completed') {
       try {
@@ -880,6 +935,9 @@ export default function LeaseLogicApp() {
 
         // Fetch alerts
         fetchAlerts(lease.id);
+
+        // Fetch benchmarks
+        fetchBenchmarks(lease.id);
       } catch (err) {
         console.error('Error loading lease details:', err);
       }
@@ -1149,34 +1207,41 @@ export default function LeaseLogicApp() {
         </div>
 
         {/* View Switcher Toggle */}
-        <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(15,23,42,0.08)', display: 'flex', gap: '8px', background: '#f8fafc' }}>
+        <div style={{ padding: '10px 10px', borderBottom: '1px solid rgba(15,23,42,0.08)', display: 'flex', gap: '4px', background: '#f8fafc' }}>
           <button 
             className={`btn ${currentView === 'workspace' ? '' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '8px 2px', fontSize: '0.7rem', borderRadius: '6px' }}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.62rem', borderRadius: '6px' }}
             onClick={() => setCurrentView('workspace')}
           >
-            📂 Workspace
+            📂 Work
           </button>
           <button 
             className={`btn ${currentView === 'observability' ? '' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '8px 2px', fontSize: '0.7rem', borderRadius: '6px' }}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.62rem', borderRadius: '6px' }}
             onClick={() => setCurrentView('observability')}
           >
-            📊 Analytics
+            📊 Costs
           </button>
           <button 
             className={`btn ${currentView === 'compliance' ? '' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '8px 2px', fontSize: '0.7rem', borderRadius: '6px' }}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.62rem', borderRadius: '6px' }}
             onClick={() => setCurrentView('compliance')}
           >
-            ⚖️ Compliance
+            ⚖️ Rules
           </button>
           <button 
             className={`btn ${currentView === 'timeline' ? '' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '8px 2px', fontSize: '0.7rem', borderRadius: '6px' }}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
             onClick={() => setCurrentView('timeline')}
           >
             🔔 Alerts
+          </button>
+          <button 
+            className={`btn ${currentView === 'benchmark' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => setCurrentView('benchmark')}
+          >
+            🔬 Test
           </button>
         </div>
 
@@ -1241,6 +1306,8 @@ export default function LeaseLogicApp() {
               <h2 style={{ fontSize: '1.25rem' }}>Pipeline Observability & Cost Analytics</h2>
             ) : currentView === 'timeline' ? (
               <h2 style={{ fontSize: '1.25rem' }}>Lease Alerts & Timeline Calendar</h2>
+            ) : currentView === 'benchmark' ? (
+              <h2 style={{ fontSize: '1.25rem' }}>Model Comparison & Prompt Benchmarking</h2>
             ) : selectedLease ? (
               <h2 style={{ fontSize: '1.25rem' }}>{selectedLease.filename}</h2>
             ) : (
@@ -1257,7 +1324,272 @@ export default function LeaseLogicApp() {
         </div>
 
         {/* Workspace Dashboard vs Observability Dashboard vs Compliance Dashboard */}
-        {currentView === 'timeline' ? (
+        {currentView === 'benchmark' ? (
+          <div className="dashboard-grid" style={{ overflow: 'hidden' }}>
+            {/* Left Panel: Configuration */}
+            <div className="pane pane-border" style={{ flex: 1, overflowY: 'auto' }}>
+              {!selectedLease ? (
+                <div className="glass" style={{ padding: '30px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px' }}>
+                  <span style={{ fontSize: '2.5rem', marginBottom: '15px' }}>🔬</span>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '8px' }}>Select a Lease to Benchmark</h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                    Select an active lease from the sidebar listing to test extractions across models and prompts.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Configure Benchmarking</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Lease: <strong>{selectedLease.filename}</strong></p>
+                  </div>
+
+                  <div className="glass" style={{ padding: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Target Extraction Term</label>
+                        <select 
+                          className="chat-input"
+                          style={{ border: '1px solid rgba(15, 23, 42, 0.15)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff' }}
+                          value={benchmarkTerm}
+                          onChange={(e) => setBenchmarkTerm(e.target.value)}
+                        >
+                          <option value="tenant_name">Tenant Name</option>
+                          <option value="landlord_name">Landlord Name</option>
+                          <option value="commencement_date">Commencement Date</option>
+                          <option value="expiration_date">Expiration Date</option>
+                          <option value="initial_rent">Initial Rent</option>
+                          <option value="break_clause">Break Clause Options</option>
+                          <option value="indemnity_covenants">Indemnity Insurance Covenants</option>
+                          <option value="repair_obligations">Repair/Maintenance Obligations</option>
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Models to Compare</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '5px 0' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', cursor: 'pointer' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={selectedModels.includes('claude-3-5-sonnet')}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedModels([...selectedModels, 'claude-3-5-sonnet']);
+                                } else {
+                                  setSelectedModels(selectedModels.filter(m => m !== 'claude-3-5-sonnet'));
+                                }
+                              }}
+                            />
+                            Claude 3.5 Sonnet (Premium)
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', cursor: 'pointer' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={selectedModels.includes('gpt-4o-mini')}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedModels([...selectedModels, 'gpt-4o-mini']);
+                                } else {
+                                  setSelectedModels(selectedModels.filter(m => m !== 'gpt-4o-mini'));
+                                }
+                              }}
+                            />
+                            GPT-4o Mini (Cost-Efficient)
+                          </label>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                          Prompt Template
+                          <span style={{ textTransform: 'none', fontWeight: 'normal', color: 'var(--primary)' }}>Must contain {'{term_name}'}</span>
+                        </label>
+                        <textarea 
+                          className="chat-input"
+                          style={{ border: '1px solid rgba(15, 23, 42, 0.15)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.82rem', background: '#ffffff', minHeight: '100px', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.4 }}
+                          value={benchmarkPrompt}
+                          onChange={(e) => setBenchmarkPrompt(e.target.value)}
+                        />
+                      </div>
+
+                      <button 
+                        onClick={handleRunBenchmark}
+                        disabled={runningBenchmark || selectedModels.length === 0}
+                        className="btn"
+                        style={{ padding: '10px', fontSize: '0.85rem', width: '100%', marginTop: '5px' }}
+                      >
+                        {runningBenchmark ? '⚡ Executing Benchmark Test...' : '🚀 Run Benchmark Test'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Panel: Side-by-Side Comparison Feed */}
+            <div className="pane" style={{ flex: 2, overflowY: 'auto' }}>
+              {!selectedLease ? (
+                <div className="glass" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', minHeight: '300px' }}>
+                  Select a lease to view side-by-side benchmarking comparisons.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Extraction Benchmark Runs</h3>
+                    <button 
+                      onClick={() => fetchBenchmarks(selectedLease.id)} 
+                      className="btn btn-secondary" 
+                      style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                    >
+                      🔄 Refresh
+                    </button>
+                  </div>
+
+                  {/* Summary Bar Chart */}
+                  {benchmarkRuns.length > 0 && (
+                    <div className="glass" style={{ padding: '20px' }}>
+                      <h4 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '15px' }}>Performance Analytics (Last Run)</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {/* Latency Comparison */}
+                        <div>
+                          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Latency (Response Time)</p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {benchmarkRuns.slice(0, selectedModels.length).map((run, idx) => {
+                              const maxTime = Math.max(...benchmarkRuns.slice(0, selectedModels.length).map(r => r.processing_time_ms)) || 1;
+                              const widthPct = Math.round((run.processing_time_ms / maxTime) * 100);
+                              return (
+                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 600, width: '120px', textTransform: 'capitalize' }}>{run.model.replace(/-/g, ' ')}</span>
+                                  <div style={{ flex: 1, background: '#f1f5f9', height: '16px', borderRadius: '8px', overflow: 'hidden' }}>
+                                    <div style={{ background: run.model.includes('claude') ? 'var(--primary)' : '#10b981', height: '100%', width: `${widthPct}%`, borderRadius: '8px' }} />
+                                  </div>
+                                  <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', fontWeight: 700, width: '70px', textAlign: 'right' }}>{run.processing_time_ms} ms</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Cost Comparison */}
+                        <div>
+                          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Estimated API Cost ($)</p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {benchmarkRuns.slice(0, selectedModels.length).map((run, idx) => {
+                              const maxCost = Math.max(...benchmarkRuns.slice(0, selectedModels.length).map(r => parseFloat(r.api_cost))) || 0.0001;
+                              const widthPct = Math.round((parseFloat(run.api_cost) / maxCost) * 100);
+                              return (
+                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 600, width: '120px', textTransform: 'capitalize' }}>{run.model.replace(/-/g, ' ')}</span>
+                                  <div style={{ flex: 1, background: '#f1f5f9', height: '16px', borderRadius: '8px', overflow: 'hidden' }}>
+                                    <div style={{ background: run.model.includes('claude') ? 'var(--primary)' : '#10b981', height: '100%', width: `${widthPct}%`, borderRadius: '8px' }} />
+                                  </div>
+                                  <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', fontWeight: 700, width: '70px', textAlign: 'right' }}>${parseFloat(run.api_cost).toFixed(5)}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Run History feed card list */}
+                  {loadingBenchmarks ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                      <p style={{ color: 'var(--text-muted)' }}>Retrieving benchmarking runs history...</p>
+                    </div>
+                  ) : benchmarkRuns.length === 0 ? (
+                    <div className="glass" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      No benchmark runs found. Configure parameters on the left and run a comparison test!
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      {benchmarkRuns.map((run) => {
+                        let parsedVal = { value: 'N/A', citation: 'N/A' };
+                        try {
+                          parsedVal = JSON.parse(run.extracted_value);
+                        } catch (err) {}
+
+                        // Find similarity overlap score against current database baseline
+                        const officialTerm = terms.find(t => t.term_name === run.term_name);
+                        const officialVal = officialTerm ? officialTerm.extracted_value.split(' (Citation:')[0] : '';
+                        
+                        const computeOverlap = (a: string, b: string) => {
+                          const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+                          const wA = clean(a);
+                          const wB = clean(b);
+                          if (wA.length === 0 || wB.length === 0) return 0;
+                          const intersection = wA.filter(w => wB.includes(w));
+                          return Math.round((intersection.length / Math.max(wA.length, wB.length)) * 100);
+                        };
+                        const similarity = computeOverlap(parsedVal.value || '', officialVal);
+
+                        const isClaude = run.model.includes('claude');
+                        const badgeColor = isClaude ? 'var(--primary)' : '#10b981';
+
+                        return (
+                          <div 
+                            key={run.id}
+                            className="glass"
+                            style={{ 
+                              padding: '18px', 
+                              display: 'flex', 
+                              flexDirection: 'column', 
+                              gap: '12px',
+                              borderLeft: `4px solid ${badgeColor}`
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <span style={{ background: isClaude ? 'rgba(109, 40, 217, 0.08)' : 'rgba(16, 185, 129, 0.08)', color: badgeColor, fontSize: '0.72rem', fontWeight: 700, padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                  {run.model}
+                                </span>
+                                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                  Term: <strong style={{ textTransform: 'capitalize' }}>{run.term_name.replace(/_/g, ' ')}</strong>
+                                </span>
+                              </div>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                {new Date(run.created_at).toLocaleString()}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid rgba(15,23,42,0.03)' }}>
+                              <div>
+                                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Extracted Value</p>
+                                <p style={{ fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>{parsedVal.value || 'N/A'}</p>
+                              </div>
+                              <div>
+                                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Citation Clause</p>
+                                <p style={{ fontSize: '0.82rem', fontFamily: 'monospace', margin: 0, color: 'var(--primary)' }}>{parsedVal.citation || 'N/A'}</p>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', fontSize: '0.78rem', borderTop: '1px solid rgba(15,23,42,0.06)', paddingTop: '10px' }}>
+                              <div>
+                                ⏱️ Latency: <strong>{run.processing_time_ms} ms</strong>
+                              </div>
+                              <div>
+                                🪙 Tokens: <strong>{run.input_tokens} in / {run.output_tokens} out</strong>
+                              </div>
+                              <div>
+                                💸 Est. Cost: <strong style={{ fontFamily: 'monospace' }}>${parseFloat(run.api_cost).toFixed(5)}</strong>
+                              </div>
+                              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                🎯 Overlap Score: 
+                                <span style={{ fontWeight: 700, color: similarity >= 80 ? 'var(--success)' : similarity >= 50 ? 'var(--warning)' : 'var(--error)' }}>
+                                  {similarity}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : currentView === 'timeline' ? (
           <div className="dashboard-grid" style={{ overflow: 'hidden' }}>
             {/* Left Panel: visual chronological timeline events feed */}
             <div className="pane pane-border" style={{ flex: 2, overflowY: 'auto' }}>
