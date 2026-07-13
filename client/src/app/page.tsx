@@ -96,8 +96,16 @@ export default function LeaseLogicApp() {
   );
   const [selectedModels, setSelectedModels] = useState<string[]>(['claude-3-5-sonnet', 'gpt-4o-mini']);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule'>('abstract');
+  // Reviewer comments and audit trail state
+  const [termComments, setTermComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [reviewerName, setReviewerName] = useState('Asset Reviewer');
+  const [leaseAuditLogs, setLeaseAuditLogs] = useState<any[]>([]);
+  const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -703,6 +711,8 @@ export default function LeaseLogicApp() {
 
     printWindow.document.write(htmlContent);
     printWindow.document.close();
+  };
+
   // Toggle clause association with the selected lease term
   const handleToggleGrounding = async (clauseId: string) => {
     if (!selectedLease || !selectedTerm) return;
@@ -851,6 +861,62 @@ export default function LeaseLogicApp() {
     }
   };
 
+  // Fetch reviewer comments for a term
+  const fetchTermComments = async (leaseId: string, termName: string) => {
+    setLoadingComments(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${leaseId}/terms/${termName}/comments`);
+      if (res.ok) {
+        const data = await res.json();
+        setTermComments(data);
+      }
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  // Add a new reviewer comment
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLease || !selectedTerm || !newCommentText.trim()) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/terms/${selectedTerm.term_name}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reviewer_name: reviewerName,
+          comment_text: newCommentText
+        }),
+      });
+      if (res.ok) {
+        setNewCommentText('');
+        fetchTermComments(selectedLease.id, selectedTerm.term_name);
+        fetchLeaseAuditLogs(selectedLease.id); // refresh audit trail to show new comment action
+      }
+    } catch (err) {
+      console.error('Error adding reviewer comment:', err);
+    }
+  };
+
+  // Fetch full audit logs trail for a lease
+  const fetchLeaseAuditLogs = async (leaseId: string) => {
+    setLoadingAuditLogs(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${leaseId}/audit-logs`);
+      if (res.ok) {
+        const data = await res.json();
+        setLeaseAuditLogs(data);
+      }
+    } catch (err) {
+      console.error('Error fetching audit logs:', err);
+    } finally {
+      setLoadingAuditLogs(false);
+    }
+  };
+
   // Select lease, load terms, find term, open Document Explorer and highlight
   const handleViewViolation = async (leaseId: string, ruleId: string, termNameArg?: string) => {
     const targetLease = leases.find(l => l.id === leaseId);
@@ -913,6 +979,8 @@ export default function LeaseLogicApp() {
     setRentProjection(null);
     setLeaseAlerts([]);
     setBenchmarkRuns([]);
+    setTermComments([]);
+    setLeaseAuditLogs([]);
     
     if (lease.status === 'completed') {
       try {
@@ -938,11 +1006,23 @@ export default function LeaseLogicApp() {
 
         // Fetch benchmarks
         fetchBenchmarks(lease.id);
+
+        // Fetch audit logs
+        fetchLeaseAuditLogs(lease.id);
       } catch (err) {
         console.error('Error loading lease details:', err);
       }
     }
   };
+
+  // Fetch comments automatically when selected term updates
+  useEffect(() => {
+    if (selectedLease && selectedTerm) {
+      fetchTermComments(selectedLease.id, selectedTerm.term_name);
+    } else {
+      setTermComments([]);
+    }
+  }, [selectedTerm, selectedLease]);
 
   // Upload Lease
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2389,6 +2469,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'schedule' ? 'active' : ''}`} onClick={() => setActiveTab('schedule')}>
                   Rent Schedule
                 </div>
+                <div className={`tab ${activeTab === 'review' ? 'active' : ''}`} onClick={() => setActiveTab('review')}>
+                  📝 Review & History
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -2534,7 +2617,7 @@ export default function LeaseLogicApp() {
                     </button>
                   </div>
                 </div>
-              ) : (
+              ) : activeTab === 'schedule' ? (
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Rent Projection & Payment Forecast</h3>
@@ -2746,6 +2829,193 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
+              ) : (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto', gap: '24px' }}>
+                  {/* Part A: Term comments/reviewer notes */}
+                  <div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+                      <span>📝</span> Reviewer Comments & Term Notes
+                    </h3>
+
+                    {!selectedTerm ? (
+                      <div className="glass" style={{ padding: '20px', textAlign: 'center', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                          Select a term from the <strong>Terms Sheet</strong> on the left to view notes and add reviewer comments.
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {/* Selected term summary header */}
+                        <div style={{ padding: '12px 14px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.06)', borderLeft: '3px solid var(--primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
+                          <div>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Term</span>
+                            <h4 style={{ margin: '2px 0 0 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                              {selectedTerm.term_name.split('_').join(' ')}
+                            </h4>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Status:</span>
+                            <span style={{ marginLeft: '6px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: selectedTerm.reviewer_status === 'approved' ? 'var(--success)' : 'var(--accent)' }}>
+                              {selectedTerm.reviewer_status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Comments feed */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '200px', overflowY: 'auto', paddingRight: '6px' }}>
+                          {loadingComments ? (
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '10px' }}>Loading comments...</p>
+                          ) : termComments.length === 0 ? (
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', fontStyle: 'italic', padding: '12px', background: 'rgba(0,0,0,0.01)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                              No reviewer notes yet. Leave a note below.
+                            </p>
+                          ) : (
+                            termComments.map((comment: any) => (
+                              <div 
+                                key={comment.id} 
+                                style={{ 
+                                  padding: '10px 12px', 
+                                  borderRadius: '8px', 
+                                  background: 'var(--background)', 
+                                  border: '1px solid var(--border)',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+                                  fontSize: '0.82rem',
+                                  lineHeight: 1.45
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', borderBottom: '1px solid rgba(0,0,0,0.03)', paddingBottom: '4px' }}>
+                                  <span style={{ fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span>👤</span> {comment.reviewer_name}
+                                  </span>
+                                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                    {new Date(comment.created_at).toLocaleString()}
+                                  </span>
+                                </div>
+                                <p style={{ margin: 0, color: 'var(--foreground)', whiteSpace: 'pre-wrap' }}>
+                                  {comment.comment_text}
+                                </p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        {/* Add Comment Form */}
+                        <form onSubmit={handleAddComment} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '12px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>Reviewer Name</label>
+                              <input 
+                                type="text" 
+                                value={reviewerName}
+                                onChange={(e) => setReviewerName(e.target.value)}
+                                placeholder="Your Name"
+                                required
+                                className="chat-input"
+                                style={{ padding: '8px', fontSize: '0.8rem', border: '1px solid var(--border)', borderRadius: '6px', background: 'transparent' }}
+                              />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>Reviewer Note / Comment</label>
+                              <textarea
+                                value={newCommentText}
+                                onChange={(e) => setNewCommentText(e.target.value)}
+                                placeholder="Write reviewer note/comment here..."
+                                required
+                                rows={2}
+                                className="chat-input"
+                                style={{ padding: '8px', fontSize: '0.8rem', border: '1px solid var(--border)', borderRadius: '6px', background: 'transparent', resize: 'vertical' }}
+                              />
+                            </div>
+                          </div>
+                          <button 
+                            type="submit" 
+                            className="btn" 
+                            style={{ alignSelf: 'flex-end', padding: '6px 16px', fontSize: '0.8rem' }}
+                          >
+                            ➕ Add Reviewer Note
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+
+                  <hr style={{ border: 0, borderTop: '1px dashed var(--border)', margin: '4px 0' }} />
+
+                  {/* Part B: Full Lease Revision History & Audit Trail */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+                      <span>📜</span> Revision History & Audit Logs
+                    </h3>
+
+                    <div style={{ flex: 1, overflowY: 'auto', paddingRight: '6px' }}>
+                      {loadingAuditLogs ? (
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Loading audit trail...</p>
+                      ) : leaseAuditLogs.length === 0 ? (
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px', fontStyle: 'italic' }}>
+                          No audit trail history registered for this lease.
+                        </p>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingLeft: '12px', borderLeft: '2px solid var(--border)', marginLeft: '8px', paddingTop: '8px', paddingBottom: '8px' }}>
+                          {leaseAuditLogs.map((log: any) => {
+                            let actionLabel = 'Action';
+                            let actionColor = 'var(--primary)';
+                            let description = '';
+
+                            if (log.action === 'edit_term' || log.action === 'edit_value') {
+                              actionLabel = '✏️ Value Edit';
+                              actionColor = '#ea580c';
+                              const oldV = JSON.parse(log.old_values || '{}');
+                              const newV = JSON.parse(log.new_values || '{}');
+                              description = `Updated term value to "${newV.extracted_value || ''}" (was "${oldV.extracted_value || ''}")`;
+                            } else if (log.action === 'update_grounding') {
+                              actionLabel = '🔗 Grounding';
+                              actionColor = 'var(--primary)';
+                              description = 'Re-mapped source clause text links inside Document Explorer';
+                            } else if (log.action === 'add_comment') {
+                              actionLabel = '💬 Note Added';
+                              actionColor = 'var(--success)';
+                              const newV = JSON.parse(log.new_values || '{}');
+                              description = `${newV.reviewer_name || 'Reviewer'} left a note on ${newV.term_name ? newV.term_name.split('_').join(' ') : 'term'}`;
+                            } else {
+                              actionLabel = log.action;
+                              description = `Modified table ${log.table_name}`;
+                            }
+
+                            return (
+                              <div key={log.id} style={{ position: 'relative' }}>
+                                {/* Timeline Dot indicator */}
+                                <div style={{
+                                  position: 'absolute',
+                                  left: '-18px',
+                                  top: '4px',
+                                  width: '10px',
+                                  height: '10px',
+                                  borderRadius: '50%',
+                                  background: actionColor,
+                                  border: '2px solid var(--background)'
+                                }} />
+                                
+                                <div style={{ paddingLeft: '8px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: actionColor, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                                      {actionLabel}
+                                    </span>
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                      {new Date(log.created_at).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--foreground)', lineHeight: 1.45 }}>
+                                    {description}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -2904,6 +3174,5 @@ export default function LeaseLogicApp() {
         </div>
       )}
     </div>
-  </div>
-);
+  );
 }
