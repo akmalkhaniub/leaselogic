@@ -718,6 +718,71 @@ app.post('/api/leases/:id/benchmarks/run', async (req, res) => {
   }
 });
 
+// 4.83. GET comments for a lease term
+app.get('/api/leases/:id/terms/:termName/comments', async (req, res) => {
+  try {
+    const { id, termName } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM reviewer_comments WHERE lease_id = $1 AND term_name = $2 ORDER BY created_at ASC",
+      [id, termName]
+    );
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.84. POST create a new comment on a lease term
+app.post('/api/leases/:id/terms/:termName/comments', async (req, res) => {
+  try {
+    const { id, termName } = req.params;
+    const { reviewer_name, comment_text } = req.body;
+    if (!reviewer_name || !comment_text) {
+      res.status(400).json({ error: 'reviewer_name and comment_text are required.' });
+      return;
+    }
+
+    const result = await pool.query(
+      `INSERT INTO reviewer_comments (lease_id, term_name, reviewer_name, comment_text)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [id, termName, reviewer_name, comment_text]
+    );
+
+    // Create Audit Log entry
+    await pool.query(
+      `INSERT INTO audit_logs (lease_id, action, table_name, record_id, old_values, new_values)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        id,
+        'add_comment',
+        'reviewer_comments',
+        result.rows[0].id,
+        JSON.stringify({}),
+        JSON.stringify({ term_name: termName, reviewer_name, comment_text })
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.85. GET audit logs for a specific lease
+app.get('/api/leases/:id/audit-logs', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM audit_logs WHERE lease_id = $1 ORDER BY created_at DESC",
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.8. Get all compliance rules
 app.get('/api/compliance/rules', async (req, res) => {
   try {
@@ -1025,6 +1090,18 @@ app.listen(port, async () => {
           input_tokens INT NOT NULL,
           output_tokens INT NOT NULL,
           api_cost NUMERIC(8,6) NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create reviewer_comments table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reviewer_comments (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          lease_id UUID REFERENCES leases(id) ON DELETE CASCADE,
+          term_name VARCHAR(100) NOT NULL,
+          reviewer_name VARCHAR(255) NOT NULL,
+          comment_text TEXT NOT NULL,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
