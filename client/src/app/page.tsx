@@ -104,6 +104,12 @@ export default function LeaseLogicApp() {
   const [leaseAuditLogs, setLeaseAuditLogs] = useState<any[]>([]);
   const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
 
+  // Proposed redlines state
+  const [leaseRedlines, setLeaseRedlines] = useState<any[]>([]);
+  const [editingClauseId, setEditingClauseId] = useState<string | null>(null);
+  const [redlineTextValue, setRedlineTextValue] = useState<string>('');
+  const [redlineAuthorName, setRedlineAuthorName] = useState<string>('Legal Advisor');
+
   // Tabs: 'abstract' | 'chat' | 'schedule' | 'review'
   const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review'>('abstract');
   
@@ -917,6 +923,107 @@ export default function LeaseLogicApp() {
     }
   };
 
+  // Fetch all proposed redlines for a lease
+  const fetchLeaseRedlines = async (leaseId: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/leases/${leaseId}/redlines`);
+      if (res.ok) {
+        const data = await res.json();
+        setLeaseRedlines(data);
+      }
+    } catch (err) {
+      console.error('Error fetching proposed redlines:', err);
+    }
+  };
+
+  // Propose a new or updated redline for a clause
+  const handleSaveRedline = async (clauseId: string, originalText: string) => {
+    if (!selectedLease || !redlineTextValue.trim()) return;
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/clauses/${clauseId}/redlines`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          redline_text: redlineTextValue,
+          original_text: originalText,
+          author_name: redlineAuthorName
+        })
+      });
+      if (res.ok) {
+        setEditingClauseId(null);
+        setRedlineTextValue('');
+        fetchLeaseRedlines(selectedLease.id);
+        fetchLeaseAuditLogs(selectedLease.id);
+      }
+    } catch (err) {
+      console.error('Error proposing redline:', err);
+    }
+  };
+
+  // Delete a proposed redline
+  const handleDeleteRedline = async (redlineId: string) => {
+    if (!selectedLease) return;
+    try {
+      const res = await fetch(`${API_BASE}/redlines/${redlineId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        fetchLeaseRedlines(selectedLease.id);
+        fetchLeaseAuditLogs(selectedLease.id);
+      }
+    } catch (err) {
+      console.error('Error deleting proposed redline:', err);
+    }
+  };
+
+  // Word-level LCS Diffing Algorithm
+  const diffWords = (orig: string, prop: string) => {
+    const words1 = orig.trim().split(/\s+/).filter(Boolean);
+    const words2 = prop.trim().split(/\s+/).filter(Boolean);
+
+    const n = words1.length;
+    const m = words2.length;
+    const dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
+
+    for (let i = 1; i <= n; i++) {
+      for (let j = 1; j <= m; j++) {
+        if (words1[i - 1] === words2[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+
+    let i = n, j = m;
+    const result: { type: 'added' | 'removed' | 'normal'; text: string }[] = [];
+
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && words1[i - 1] === words2[j - 1]) {
+        result.unshift({ type: 'normal', text: words1[i - 1] });
+        i--;
+        j--;
+      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        result.unshift({ type: 'added', text: words2[j - 1] });
+        j--;
+      } else {
+        result.unshift({ type: 'removed', text: words1[i - 1] });
+        i--;
+      }
+    }
+
+    const grouped: { type: 'added' | 'removed' | 'normal'; text: string }[] = [];
+    for (const item of result) {
+      const last = grouped[grouped.length - 1];
+      if (last && last.type === item.type) {
+        last.text += ' ' + item.text;
+      } else {
+        grouped.push({ ...item });
+      }
+    }
+    return grouped;
+  };
+
   // Select lease, load terms, find term, open Document Explorer and highlight
   const handleViewViolation = async (leaseId: string, ruleId: string, termNameArg?: string) => {
     const targetLease = leases.find(l => l.id === leaseId);
@@ -981,6 +1088,8 @@ export default function LeaseLogicApp() {
     setBenchmarkRuns([]);
     setTermComments([]);
     setLeaseAuditLogs([]);
+    setLeaseRedlines([]);
+    setEditingClauseId(null);
     
     if (lease.status === 'completed') {
       try {
@@ -1009,6 +1118,9 @@ export default function LeaseLogicApp() {
 
         // Fetch audit logs
         fetchLeaseAuditLogs(lease.id);
+
+        // Fetch proposed redlines
+        fetchLeaseRedlines(lease.id);
       } catch (err) {
         console.error('Error loading lease details:', err);
       }
@@ -2476,12 +2588,24 @@ export default function LeaseLogicApp() {
 
               {activeTab === 'abstract' ? (
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '16px' }}>
-                  <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px' }}>Original Lease Document Text</h4>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>Original Lease Document Text</h4>
+                    {selectedLease && (
+                      <button
+                        onClick={() => window.open(`${API_BASE}/leases/${selectedLease.id}/export-redlines`, '_blank')}
+                        className="btn btn-secondary"
+                        style={{ padding: '4px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        📄 Export Redlined Draft
+                      </button>
+                    )}
+                  </div>
                   <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
                     {clauses.map(clause => {
                       // Check if this clause is referenced by the selected term
                       const isHighlighted = selectedTerm?.source_clause_ids?.includes(clause.id);
-                      
+                      const activeRedline = leaseRedlines.find(r => r.clause_id === clause.id);
+
                       return (
                         <div 
                           key={clause.id} 
@@ -2505,9 +2629,40 @@ export default function LeaseLogicApp() {
                               </p>
                             )}
                             
-                            {selectedTerm && (
+                            <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                              {selectedTerm && (
+                                <button
+                                  onClick={() => handleToggleGrounding(clause.id)}
+                                  className="btn btn-secondary"
+                                  style={{
+                                    padding: '2px 8px',
+                                    fontSize: '0.72rem',
+                                    borderRadius: '4px',
+                                    height: '22px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    borderColor: isHighlighted ? 'var(--accent)' : 'rgba(15, 23, 42, 0.15)',
+                                    color: isHighlighted ? 'var(--accent)' : 'var(--text-muted)',
+                                    background: isHighlighted ? 'rgba(219, 39, 119, 0.05)' : '#ffffff',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  {isHighlighted ? '✕ Unlink' : '🔗 Link Term'}
+                                </button>
+                              )}
+
                               <button
-                                onClick={() => handleToggleGrounding(clause.id)}
+                                onClick={() => {
+                                  if (editingClauseId === clause.id) {
+                                    setEditingClauseId(null);
+                                    setRedlineTextValue('');
+                                  } else {
+                                    setEditingClauseId(clause.id);
+                                    setRedlineTextValue(activeRedline ? activeRedline.redline_text : clause.text_content);
+                                  }
+                                }}
                                 className="btn btn-secondary"
                                 style={{
                                   padding: '2px 8px',
@@ -2516,21 +2671,122 @@ export default function LeaseLogicApp() {
                                   height: '22px',
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  borderColor: isHighlighted ? 'var(--accent)' : 'rgba(15, 23, 42, 0.15)',
-                                  color: isHighlighted ? 'var(--accent)' : 'var(--text-muted)',
-                                  background: isHighlighted ? 'rgba(219, 39, 119, 0.05)' : '#ffffff',
+                                  borderColor: 'rgba(15, 23, 42, 0.15)',
+                                  color: 'var(--text-muted)',
+                                  background: '#ffffff',
                                   fontWeight: 600,
-                                  cursor: 'pointer',
-                                  transition: 'all 0.15s ease'
+                                  cursor: 'pointer'
                                 }}
                               >
-                                {isHighlighted ? '✕ Unlink' : '🔗 Link Term'}
+                                ✍️ {editingClauseId === clause.id ? 'Cancel' : 'Redline'}
                               </button>
-                            )}
+                            </div>
                           </div>
-                          <p style={{ color: 'var(--foreground)', whiteSpace: 'pre-line', margin: 0 }}>
-                            {clause.text_content}
-                          </p>
+
+                          {editingClauseId === clause.id ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.08)' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '12px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>Redline Author</label>
+                                  <input 
+                                    type="text" 
+                                    value={redlineAuthorName}
+                                    onChange={(e) => setRedlineAuthorName(e.target.value)}
+                                    placeholder="Your Name"
+                                    required
+                                    className="chat-input"
+                                    style={{ padding: '6px', fontSize: '0.78rem', border: '1px solid rgba(15,23,42,0.1)', borderRadius: '4px', background: '#ffffff', color: 'var(--foreground)' }}
+                                  />
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>Amend Clause Text</label>
+                                  <textarea
+                                    value={redlineTextValue}
+                                    onChange={(e) => setRedlineTextValue(e.target.value)}
+                                    rows={4}
+                                    className="chat-input"
+                                    style={{ padding: '8px', fontSize: '0.8rem', border: '1px solid rgba(15,23,42,0.1)', borderRadius: '6px', background: '#ffffff', color: 'var(--foreground)', resize: 'vertical', minHeight: '80px' }}
+                                  />
+                                </div>
+                              </div>
+
+                              <div style={{ borderTop: '1px dashed rgba(15,23,42,0.1)', paddingTop: '8px' }}>
+                                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Diff Live Preview</span>
+                                <div style={{ fontSize: '0.82rem', lineHeight: 1.5, background: '#ffffff', padding: '10px', borderRadius: '6px', border: '1px solid rgba(15,23,42,0.06)', maxHeight: '150px', overflowY: 'auto' }}>
+                                  {diffWords(clause.text_content, redlineTextValue).map((part, idx) => (
+                                    <span
+                                      key={idx}
+                                      style={{
+                                        backgroundColor: part.type === 'added' ? 'rgba(16, 185, 129, 0.15)' : part.type === 'removed' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                                        color: part.type === 'added' ? '#10b981' : part.type === 'removed' ? '#ef4444' : 'inherit',
+                                        textDecoration: part.type === 'removed' ? 'line-through' : 'none',
+                                        padding: part.type !== 'normal' ? '2px 4px' : '0',
+                                        borderRadius: part.type !== 'normal' ? '4px' : '0',
+                                        margin: part.type !== 'normal' ? '0 1px' : '0',
+                                        whiteSpace: 'pre-wrap',
+                                        display: 'inline-block'
+                                      }}
+                                    >
+                                      {part.text}{' '}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                                {activeRedline && (
+                                  <button
+                                    onClick={() => handleDeleteRedline(activeRedline.id)}
+                                    className="btn"
+                                    style={{ padding: '6px 12px', fontSize: '0.78rem', background: '#ef4444', color: 'white', borderColor: '#ef4444' }}
+                                  >
+                                    🗑️ Remove Proposal
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleSaveRedline(clause.id, clause.text_content)}
+                                  className="btn"
+                                  style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                                >
+                                  💾 Save Draft Redline
+                                </button>
+                              </div>
+                            </div>
+                          ) : activeRedline ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              <div style={{ fontSize: '0.82rem', lineHeight: 1.6 }}>
+                                {diffWords(clause.text_content, activeRedline.redline_text).map((part, idx) => (
+                                  <span
+                                    key={idx}
+                                    style={{
+                                      backgroundColor: part.type === 'added' ? 'rgba(16, 185, 129, 0.15)' : part.type === 'removed' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                                      color: part.type === 'added' ? '#10b981' : part.type === 'removed' ? '#ef4444' : 'inherit',
+                                      textDecoration: part.type === 'removed' ? 'line-through' : 'none',
+                                      padding: part.type !== 'normal' ? '2px 4px' : '0',
+                                      borderRadius: part.type !== 'normal' ? '4px' : '0',
+                                      margin: part.type !== 'normal' ? '0 1px' : '0',
+                                      whiteSpace: 'pre-wrap',
+                                      display: 'inline-block'
+                                    }}
+                                  >
+                                    {part.text}{' '}
+                                  </span>
+                                ))}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: 'rgba(139, 92, 246, 0.06)', borderRadius: '6px', fontSize: '0.72rem', border: '1px solid rgba(139, 92, 246, 0.1)' }}>
+                                <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                                  ✍️ Proposed Amendment Draft by {activeRedline.author_name}
+                                </span>
+                                <span style={{ color: 'var(--text-muted)' }}>
+                                  {new Date(activeRedline.updated_at).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <p style={{ color: 'var(--foreground)', whiteSpace: 'pre-line', margin: 0 }}>
+                              {clause.text_content}
+                            </p>
+                          )}
                         </div>
                       );
                     })}
