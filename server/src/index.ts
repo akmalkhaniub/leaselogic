@@ -783,6 +783,223 @@ app.get('/api/leases/:id/audit-logs', async (req, res) => {
   }
 });
 
+// 4.86. GET proposed redlines for a specific lease
+app.get('/api/leases/:id/redlines', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM lease_redlines WHERE lease_id = $1 ORDER BY created_at DESC",
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.87. POST propose or update a redline for a clause
+app.post('/api/leases/:id/clauses/:clauseId/redlines', async (req, res) => {
+  try {
+    const { id, clauseId } = req.params;
+    const { redline_text, original_text, author_name } = req.body;
+
+    if (!redline_text || !original_text) {
+      res.status(400).json({ error: 'redline_text and original_text are required.' });
+      return;
+    }
+
+    const author = author_name || 'Legal Advisor';
+
+    // Check if redline already exists for this clause and lease
+    const checkExist = await pool.query(
+      "SELECT id, redline_text FROM lease_redlines WHERE lease_id = $1 AND clause_id = $2",
+      [id, clauseId]
+    );
+
+    let result;
+    if (checkExist.rows.length > 0) {
+      // Update existing redline
+      const oldText = checkExist.rows[0].redline_text;
+      result = await pool.query(
+        `UPDATE lease_redlines 
+         SET redline_text = $1, author_name = $2, updated_at = CURRENT_TIMESTAMP
+         WHERE lease_id = $3 AND clause_id = $4
+         RETURNING *`,
+        [redline_text, author, id, clauseId]
+      );
+
+      // Create Audit Log entry
+      await pool.query(
+        `INSERT INTO audit_logs (lease_id, action, table_name, record_id, old_values, new_values)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          id,
+          'update_redline',
+          'lease_redlines',
+          result.rows[0].id,
+          JSON.stringify({ redline_text: oldText }),
+          JSON.stringify({ redline_text, author_name: author })
+        ]
+      );
+    } else {
+      // Insert new redline
+      result = await pool.query(
+        `INSERT INTO lease_redlines (lease_id, clause_id, redline_text, original_text, author_name)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [id, clauseId, redline_text, original_text, author]
+      );
+
+      // Create Audit Log entry
+      await pool.query(
+        `INSERT INTO audit_logs (lease_id, action, table_name, record_id, old_values, new_values)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          id,
+          'propose_redline',
+          'lease_redlines',
+          result.rows[0].id,
+          JSON.stringify({}),
+          JSON.stringify({ redline_text, author_name: author })
+        ]
+      );
+    }
+
+    res.status(201).json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.88. DELETE proposed redline
+app.delete('/api/redlines/:redlineId', async (req, res) => {
+  try {
+    const { redlineId } = req.params;
+
+    // Get lease_id before deletion to log it
+    const redlineRes = await pool.query(
+      "SELECT id, lease_id, redline_text FROM lease_redlines WHERE id = $1",
+      [redlineId]
+    );
+
+    if (redlineRes.rows.length === 0) {
+      res.status(404).json({ error: 'Redline proposal not found' });
+      return;
+    }
+
+    const { lease_id, redline_text } = redlineRes.rows[0];
+
+    await pool.query(
+      "DELETE FROM lease_redlines WHERE id = $1",
+      [redlineId]
+    );
+
+    // Create Audit Log entry
+    await pool.query(
+      `INSERT INTO audit_logs (lease_id, action, table_name, record_id, old_values, new_values)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        lease_id,
+        'delete_redline',
+        'lease_redlines',
+        redlineId,
+        JSON.stringify({ redline_text }),
+        JSON.stringify({})
+      ]
+    );
+
+    res.json({ success: true, message: 'Redline draft successfully removed.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.89. GET export lease document with proposed redlines compiled
+app.get('/api/leases/:id/export-redlines', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Fetch lease filename
+    const leaseRes = await pool.query("SELECT filename FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const leaseFilename = leaseRes.rows[0].filename;
+
+    // 2. Fetch all clauses
+    const clausesRes = await pool.query(
+      `SELECT id, clause_number, clause_title, text_content, page_number 
+       FROM clauses 
+       WHERE lease_id = $1 
+       ORDER BY page_number ASC, clause_number ASC`,
+      [id]
+    );
+    const clauses = clausesRes.rows;
+
+    // 3. Fetch all redlines
+    const redlinesRes = await pool.query(
+      `SELECT lr.*, c.clause_number, c.clause_title, c.page_number
+       FROM lease_redlines lr
+       JOIN clauses c ON lr.clause_id = c.id
+       WHERE lr.lease_id = $1 AND lr.status = 'draft'`,
+      [id]
+    );
+    const redlines = redlinesRes.rows;
+
+    // Create redline mapping by clause_id
+    const redlineMap = new Map();
+    redlines.forEach(r => redlineMap.set(r.clause_id, r));
+
+    // 4. Build Markdown content
+    let md = `# LEASE AGREEMENT DRAFT: ${leaseFilename.replace(/\\.[^/.]+$/, "")}\\n`;
+    md += `*Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*\\n`;
+    md += `*Document Status: Draft including Proposed Legal Redlines*\\n\\n`;
+
+    md += `## SECTION 1: PROPOSED LEGAL REDLINES SUMMARY\\n\\n`;
+    if (redlines.length === 0) {
+      md += `*No active redlines or amendments proposed on this lease draft.*\\n\\n`;
+    } else {
+      md += `| Section / Page Reference | Original Provision Text | Proposed Redlined Amendment | Author | Status |\\n`;
+      md += `| :--- | :--- | :--- | :--- | :--- |\\n`;
+      redlines.forEach(r => {
+        const refStr = `Page ${r.page_number}${r.clause_number ? ` - Sec ${r.clause_number}` : ''}${r.clause_title ? ` (${r.clause_title})` : ''}`;
+        const cleanOrig = r.original_text.replace(/\\r?\\n/g, ' ').slice(0, 100) + (r.original_text.length > 100 ? '...' : '');
+        const cleanRed = r.redline_text.replace(/\\r?\\n/g, ' ').slice(0, 100) + (r.redline_text.length > 100 ? '...' : '');
+        md += `| ${refStr} | ${cleanOrig} | **${cleanRed}** | ${r.author_name} | ${r.status.toUpperCase()} |\\n`;
+      });
+      md += `\\n`;
+    }
+
+    md += `---\\n\\n`;
+    md += `## SECTION 2: FULL AMENDED LEASE TEXT DRAFT\\n\\n`;
+
+    clauses.forEach(c => {
+      const titleStr = `${c.clause_number ? `Section ${c.clause_number}` : ''}${c.clause_title ? ` ${c.clause_title}` : ''}`;
+      if (titleStr.trim()) {
+        md += `### ${titleStr} (Page ${c.page_number})\\n\\n`;
+      } else {
+        md += `### Page ${c.page_number} - Unmarked Segment\\n\\n`;
+      }
+
+      const redline = redlineMap.get(c.id);
+      if (redline) {
+        md += `**[AMENDED PROVISION PROPOSED BY ${redline.author_name.toUpperCase()}]:**\\n`;
+        md += `> *${redline.redline_text}*\\n\\n`;
+        md += `*(Original text: "${redline.original_text.trim()}")*\\n\\n`;
+      } else {
+        md += `${c.text_content.trim()}\\n\\n`;
+      }
+    });
+
+    res.setHeader('Content-Type', 'text/markdown');
+    res.setHeader('Content-Disposition', `attachment; filename="Amended_Lease_${leaseFilename.replace(/\\.[^/.]+$/, "")}.md"`);
+    res.send(md);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.8. Get all compliance rules
 app.get('/api/compliance/rules', async (req, res) => {
   try {
@@ -1103,6 +1320,21 @@ app.listen(port, async () => {
           reviewer_name VARCHAR(255) NOT NULL,
           comment_text TEXT NOT NULL,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create lease_redlines table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lease_redlines (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          lease_id UUID REFERENCES leases(id) ON DELETE CASCADE,
+          clause_id UUID REFERENCES clauses(id) ON DELETE CASCADE,
+          redline_text TEXT NOT NULL,
+          original_text TEXT NOT NULL,
+          author_name VARCHAR(255) DEFAULT 'Legal Advisor',
+          status VARCHAR(50) DEFAULT 'draft',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
