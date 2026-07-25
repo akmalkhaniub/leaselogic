@@ -1000,6 +1000,178 @@ app.get('/api/leases/:id/export-redlines', async (req, res) => {
   }
 });
 
+// 4.90. PUT set/clear parent-child relationship of a lease
+app.put('/api/leases/:id/relationship', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { parent_lease_id, document_type } = req.body;
+
+    // Verify lease exists
+    const leaseCheck = await pool.query("SELECT id, filename, parent_lease_id FROM leases WHERE id = $1", [id]);
+    if (leaseCheck.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+
+    const oldParentId = leaseCheck.rows[0].parent_lease_id;
+    const docType = document_type || 'original_lease';
+    const targetParentId = parent_lease_id === '' || parent_lease_id === null ? null : parent_lease_id;
+
+    // Prevent self-reference
+    if (targetParentId === id) {
+      res.status(400).json({ error: 'A lease cannot reference itself as a parent.' });
+      return;
+    }
+
+    // Update relationship
+    const result = await pool.query(
+      `UPDATE leases 
+       SET parent_lease_id = $1, document_type = $2, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3
+       RETURNING *`,
+      [targetParentId, docType, id]
+    );
+
+    // Log in audit logs
+    const actionName = targetParentId ? 'link_parent' : 'unlink_parent';
+    await pool.query(
+      `INSERT INTO audit_logs (lease_id, action, table_name, record_id, old_values, new_values)
+       VALUES ($1, $2, 'leases', $3, $4, $5)`,
+      [
+        id,
+        actionName,
+        'leases',
+        id,
+        JSON.stringify({ parent_lease_id: oldParentId }),
+        JSON.stringify({ parent_lease_id: targetParentId, document_type: docType })
+      ]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.91. GET calculated effective terms for a lease hierarchy
+app.get('/api/leases/:id/effective-terms', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Fetch this lease
+    const leaseRes = await pool.query("SELECT id, filename, parent_lease_id FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+
+    const lease = leaseRes.rows[0];
+
+    // Find the root parent lease
+    let rootParentId = lease.parent_lease_id || lease.id;
+    let currentId = lease.parent_lease_id;
+    
+    // Loop to follow parent pointers to root
+    while (currentId) {
+      const pRes = await pool.query("SELECT id, parent_lease_id FROM leases WHERE id = $1", [currentId]);
+      if (pRes.rows.length > 0 && pRes.rows[0].parent_lease_id && pRes.rows[0].parent_lease_id !== currentId) {
+        rootParentId = pRes.rows[0].parent_lease_id;
+        currentId = pRes.rows[0].parent_lease_id;
+      } else {
+        break;
+      }
+    }
+
+    // 2. Fetch all leases in the hierarchy
+    const hierarchyLeasesRes = await pool.query(
+      `SELECT id, filename, document_type, created_at
+       FROM leases
+       WHERE id = $1 OR parent_lease_id = $1
+       ORDER BY created_at ASC`,
+      [rootParentId]
+    );
+    const leasesInHierarchy = hierarchyLeasesRes.rows;
+    const leaseIds = leasesInHierarchy.map(l => l.id);
+
+    // 3. Fetch all lease terms for all leases in hierarchy
+    const termsRes = await pool.query(
+      `SELECT t.*, l.filename, l.document_type
+       FROM lease_terms t
+       JOIN leases l ON t.lease_id = l.id
+       WHERE t.lease_id = ANY($1)`,
+      [leaseIds]
+    );
+    const allTerms = termsRes.rows;
+
+    // Map of term definitions
+    const standardTermNames = [
+      'tenant_name',
+      'landlord_name',
+      'commencement_date',
+      'expiration_date',
+      'initial_rent',
+      'break_clause',
+      'indemnity_covenants',
+      'repair_obligations'
+    ];
+
+    const effectiveTerms = standardTermNames.map(termName => {
+      const parentLease = leasesInHierarchy.find(l => l.id === rootParentId);
+      const parentTerm = allTerms.find(t => t.lease_id === rootParentId && t.term_name === termName);
+      const originalValue = parentTerm ? parentTerm.extracted_value : null;
+
+      // Build history of this term across the hierarchy chronologically
+      const history = leasesInHierarchy.map(l => {
+        const term = allTerms.find(t => t.lease_id === l.id && t.term_name === termName);
+        return {
+          lease_id: l.id,
+          filename: l.filename,
+          document_type: l.document_type,
+          value: term ? term.extracted_value : null,
+          reviewer_status: term ? term.reviewer_status : null,
+          confidence_score: term ? term.confidence_score : null
+        };
+      }).filter(h => h.value !== null);
+
+      let effectiveValue = originalValue;
+      let sourceLeaseId = rootParentId;
+      let sourceFilename = parentLease ? parentLease.filename : 'Parent Lease';
+      let isAmended = false;
+
+      // Apply children overrides chronologically
+      leasesInHierarchy.forEach(l => {
+        if (l.id !== rootParentId) {
+          const childTerm = allTerms.find(t => t.lease_id === l.id && t.term_name === termName);
+          if (childTerm && childTerm.extracted_value && childTerm.extracted_value.trim() !== '') {
+            effectiveValue = childTerm.extracted_value;
+            sourceLeaseId = l.id;
+            sourceFilename = l.filename;
+            isAmended = true;
+          }
+        }
+      });
+
+      return {
+        term_name: termName,
+        original_value: originalValue,
+        effective_value: effectiveValue,
+        is_amended: isAmended,
+        source_lease_id: sourceLeaseId,
+        source_filename: sourceFilename,
+        history
+      };
+    });
+
+    res.json({
+      root_parent_id: rootParentId,
+      leases: leasesInHierarchy,
+      effective_terms: effectiveTerms
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.8. Get all compliance rules
 app.get('/api/compliance/rules', async (req, res) => {
   try {
@@ -1254,6 +1426,10 @@ app.listen(port, async () => {
   try {
     console.log('Running self-healing database migrations...');
     await pool.query(`
+      ALTER TABLE leases 
+      ADD COLUMN IF NOT EXISTS parent_lease_id UUID REFERENCES leases(id) ON DELETE SET NULL,
+      ADD COLUMN IF NOT EXISTS document_type VARCHAR(50) DEFAULT 'original_lease';
+      
       ALTER TABLE abstraction_jobs 
       ADD COLUMN IF NOT EXISTS input_tokens INT DEFAULT 0,
       ADD COLUMN IF NOT EXISTS output_tokens INT DEFAULT 0,
