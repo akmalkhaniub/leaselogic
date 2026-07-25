@@ -11,6 +11,8 @@ interface Lease {
   job_progress: number;
   job_error?: string;
   created_at: string;
+  parent_lease_id?: string | null;
+  document_type?: string;
 }
 
 interface LeaseTerm {
@@ -110,8 +112,12 @@ export default function LeaseLogicApp() {
   const [redlineTextValue, setRedlineTextValue] = useState<string>('');
   const [redlineAuthorName, setRedlineAuthorName] = useState<string>('Legal Advisor');
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review'>('abstract');
+  // Relationship & Net Effective state
+  const [effectiveTermsData, setEffectiveTermsData] = useState<any>(null);
+  const [loadingEffectiveTerms, setLoadingEffectiveTerms] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -1024,6 +1030,50 @@ export default function LeaseLogicApp() {
     return grouped;
   };
 
+  // Fetch Net Effective Terms for a lease hierarchy
+  const fetchEffectiveTerms = async (leaseId: string) => {
+    setLoadingEffectiveTerms(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${leaseId}/effective-terms`);
+      if (res.ok) {
+        const data = await res.json();
+        setEffectiveTermsData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching effective terms:', err);
+    } finally {
+      setLoadingEffectiveTerms(false);
+    }
+  };
+
+  // Update lease parent-child relationship
+  const handleUpdateRelationship = async (parentLeaseId: string | null, docType: string) => {
+    if (!selectedLease) return;
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/relationship`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parent_lease_id: parentLeaseId,
+          document_type: docType
+        })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        // Refresh leases list
+        fetchLeases();
+        // Update selectedLease local state
+        setSelectedLease(prev => prev ? { ...prev, parent_lease_id: updated.parent_lease_id, document_type: updated.document_type } : null);
+        // Refresh audit logs
+        fetchLeaseAuditLogs(selectedLease.id);
+        // Refresh effective terms
+        fetchEffectiveTerms(selectedLease.id);
+      }
+    } catch (err) {
+      console.error('Error updating lease relationship:', err);
+    }
+  };
+
   // Select lease, load terms, find term, open Document Explorer and highlight
   const handleViewViolation = async (leaseId: string, ruleId: string, termNameArg?: string) => {
     const targetLease = leases.find(l => l.id === leaseId);
@@ -1090,6 +1140,7 @@ export default function LeaseLogicApp() {
     setLeaseAuditLogs([]);
     setLeaseRedlines([]);
     setEditingClauseId(null);
+    setEffectiveTermsData(null);
     
     if (lease.status === 'completed') {
       try {
@@ -1121,6 +1172,9 @@ export default function LeaseLogicApp() {
 
         // Fetch proposed redlines
         fetchLeaseRedlines(lease.id);
+
+        // Fetch net effective terms
+        fetchEffectiveTerms(lease.id);
       } catch (err) {
         console.error('Error loading lease details:', err);
       }
@@ -1450,39 +1504,67 @@ export default function LeaseLogicApp() {
 
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '12px' }}>Lease Portfolio</h3>
           
-          <div className="card-list">
-            {leases.map(lease => (
-              <div 
-                key={lease.id} 
-                className={`lease-card glass ${selectedLease?.id === lease.id ? 'active' : ''}`}
-                onClick={() => handleSelectLease(lease)}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <p style={{ fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }} title={lease.filename}>
-                    {lease.filename}
-                  </p>
-                  <span className={`badge badge-${lease.status}`}>
-                    {lease.status}
-                  </span>
-                </div>
-                
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  {(lease.file_size / 1024 / 1024).toFixed(2)} MB
-                </p>
+          <div className="card-list" style={{ overflowY: 'auto', flex: 1 }}>
+            {(() => {
+              const parents = leases.filter(l => !l.parent_lease_id || !leases.some(p => p.id === l.parent_lease_id));
+              const getChildren = (parentId: string) => leases.filter(l => l.parent_lease_id === parentId);
 
-                {lease.status === 'pending' && (
-                  <div style={{ marginTop: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
-                      <span>Extracting clauses & terms...</span>
-                      <span>{lease.job_progress || 0}%</span>
-                    </div>
-                    <div className="progress-container">
-                      <div className="progress-bar" style={{ width: `${lease.job_progress || 0}%` }}></div>
-                    </div>
+              const renderLeaseCard = (lease: Lease, isChild: boolean = false) => (
+                <div 
+                  key={lease.id} 
+                  className={`lease-card glass ${selectedLease?.id === lease.id ? 'active' : ''}`}
+                  onClick={() => handleSelectLease(lease)}
+                  style={{
+                    marginLeft: isChild ? '12px' : '0',
+                    borderLeft: isChild ? '2px solid rgba(139, 92, 246, 0.3)' : undefined,
+                    paddingLeft: isChild ? '10px' : undefined,
+                    marginBottom: '8px'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <p style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: isChild ? '140px' : '180px' }} title={lease.filename}>
+                      {isChild ? `↳ ` : ''}{lease.filename}
+                    </p>
+                    <span className={`badge badge-${lease.status}`} style={{ fontSize: '0.6rem', padding: '1px 4px' }}>
+                      {lease.status}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>
+                      {(lease.file_size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                    {lease.document_type && lease.document_type !== 'original_lease' && (
+                      <span style={{ fontSize: '0.62rem', background: 'rgba(15, 23, 42, 0.05)', padding: '2px 6px', borderRadius: '4px', textTransform: 'capitalize', color: 'var(--text-muted)' }}>
+                        {lease.document_type.replace('_', ' ')}
+                      </span>
+                    )}
+                  </div>
+
+                  {lease.status === 'pending' && (
+                    <div style={{ marginTop: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem' }}>
+                        <span>Extracting...</span>
+                        <span>{lease.job_progress || 0}%</span>
+                      </div>
+                      <div className="progress-container" style={{ height: '4px' }}>
+                        <div className="progress-bar" style={{ width: `${lease.job_progress || 0}%` }}></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+
+              return parents.map(parent => {
+                const children = getChildren(parent.id);
+                return (
+                  <div key={parent.id} style={{ marginBottom: '12px' }}>
+                    {renderLeaseCard(parent, false)}
+                    {children.map(child => renderLeaseCard(child, true))}
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       </div>
@@ -2554,6 +2636,49 @@ export default function LeaseLogicApp() {
                     </tbody>
                   </table>
 
+                  {/* Document Settings & Relationship Mapping */}
+                  <div className="glass" style={{ marginTop: '20px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', border: '1px solid rgba(139, 92, 246, 0.15)' }}>
+                    <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--primary)', margin: 0, fontWeight: 700 }}>
+                      Document Hierarchy & Classification
+                    </h4>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>Document Type</label>
+                        <select
+                          className="chat-input"
+                          style={{ padding: '6px', fontSize: '0.8rem', border: '1px solid rgba(15,23,42,0.1)', borderRadius: '4px', background: '#ffffff', color: 'var(--foreground)' }}
+                          value={selectedLease.document_type || 'original_lease'}
+                          onChange={(e) => handleUpdateRelationship(selectedLease.parent_lease_id || null, e.target.value)}
+                        >
+                          <option value="original_lease">Original Lease (Parent)</option>
+                          <option value="amendment">Amendment</option>
+                          <option value="addendum">Addendum</option>
+                          <option value="side_letter">Side Letter</option>
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>Parent Lease Mapping</label>
+                        <select
+                          className="chat-input"
+                          style={{ padding: '6px', fontSize: '0.8rem', border: '1px solid rgba(15,23,42,0.1)', borderRadius: '4px', background: '#ffffff', color: 'var(--foreground)' }}
+                          value={selectedLease.parent_lease_id || ''}
+                          onChange={(e) => handleUpdateRelationship(e.target.value || null, selectedLease.document_type || 'original_lease')}
+                          disabled={selectedLease.document_type === 'original_lease'}
+                        >
+                          <option value="">-- No Parent (Root) --</option>
+                          {leases
+                            .filter(l => l.id !== selectedLease.id && (!l.document_type || l.document_type === 'original_lease'))
+                            .map(l => (
+                              <option key={l.id} value={l.id}>{l.filename}</option>
+                            ))
+                          }
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Playwright filing console logs */}
                   {automationLogs.length > 0 && (
                     <div style={{ marginTop: '20px' }}>
@@ -2583,6 +2708,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'review' ? 'active' : ''}`} onClick={() => setActiveTab('review')}>
                   📝 Review & History
+                </div>
+                <div className={`tab ${activeTab === 'effective' ? 'active' : ''}`} onClick={() => setActiveTab('effective')}>
+                  🌿 Net Effective Terms
                 </div>
               </div>
 
@@ -3085,7 +3213,7 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : activeTab === 'review' ? (
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto', gap: '24px' }}>
                   {/* Part A: Term comments/reviewer notes */}
                   <div>
@@ -3271,6 +3399,122 @@ export default function LeaseLogicApp() {
                       )}
                     </div>
                   </div>
+                </div>
+              ) : (
+                /* activeTab === 'effective' */
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto', gap: '20px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+                      <span>🌿</span> Lease Hierarchy & Net Effective Terms
+                    </h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                      Consolidated terms sheets mapped across original parent leases and child amendments.
+                    </p>
+                  </div>
+
+                  {loadingEffectiveTerms ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Loading net effective terms sheet...
+                    </div>
+                  ) : !effectiveTermsData ? (
+                    <div className="glass" style={{ padding: '20px', textAlign: 'center', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                        Configure the document type and parent lease mapping on the left to evaluate Net Effective Terms.
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Hierarchy Summary */}
+                      <div style={{ padding: '12px 14px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.1)', fontSize: '0.82rem' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Hierarchy</span>
+                        <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {effectiveTermsData.leases.map((l: any, idx: number) => (
+                            <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: idx > 0 ? `${idx * 12}px` : '0' }}>
+                              <span>{idx === 0 ? '📁' : '↳ 📄'}</span>
+                              <strong style={{ color: l.id === selectedLease.id ? 'var(--primary)' : 'inherit' }}>{l.filename}</strong>
+                              <span style={{ fontSize: '0.65rem', background: 'rgba(15, 23, 42, 0.05)', padding: '1px 6px', borderRadius: '4px', textTransform: 'capitalize', color: 'var(--text-muted)' }}>
+                                {l.document_type.replace('_', ' ')}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Net Effective Comparison Grid */}
+                      <div>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Consolidated Terms Sheet</h4>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Term Name</th>
+                              <th>Original Value (Root Parent)</th>
+                              <th>Net Effective (Amended)</th>
+                              <th>Effective Source Document</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {effectiveTermsData.effective_terms.map((item: any) => (
+                              <tr key={item.term_name}>
+                                <td style={{ fontWeight: 600, fontSize: '0.8rem', textTransform: 'capitalize' }}>
+                                  {item.term_name.replace(/_/g, ' ')}
+                                </td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                  {item.original_value || <em style={{ color: '#ccc' }}>Not Extracted</em>}
+                                </td>
+                                <td style={{ fontSize: '0.8rem', fontWeight: item.is_amended ? 700 : 'normal', color: item.is_amended ? 'var(--primary)' : 'inherit' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>{item.effective_value || <em style={{ color: '#ccc' }}>Not Extracted</em>}</span>
+                                    {item.is_amended && (
+                                      <span style={{ fontSize: '0.62rem', background: 'rgba(139, 92, 246, 0.12)', color: 'var(--primary)', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                                        Amended
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} title={item.source_filename}>
+                                  <span style={{ display: 'inline-block', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {item.source_filename}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Timeline / History of Amendments */}
+                      <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '15px' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Chronological Override Timelines</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          {effectiveTermsData.effective_terms.map((item: any) => {
+                            if (item.history.length <= 1) return null;
+                            return (
+                              <div key={item.term_name} style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.04)' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'capitalize', color: 'var(--foreground)' }}>
+                                  {item.term_name.replace(/_/g, ' ')} Timeline
+                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                                  {item.history.map((step: any, sIdx: number) => (
+                                    <React.Fragment key={step.lease_id}>
+                                      {sIdx > 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>➔</span>}
+                                      <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 10px', background: '#ffffff', border: '1px solid rgba(15,23,42,0.06)', borderRadius: '6px', minWidth: '130px' }}>
+                                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'capitalize', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }} title={step.filename}>
+                                          {step.filename}
+                                        </span>
+                                        <strong style={{ fontSize: '0.8rem', color: sIdx === item.history.length - 1 ? 'var(--primary)' : 'inherit', marginTop: '2px' }}>
+                                          {step.value}
+                                        </strong>
+                                      </div>
+                                    </React.Fragment>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
