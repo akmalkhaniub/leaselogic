@@ -46,8 +46,12 @@ export default function LeaseLogicApp() {
   const [clauses, setClauses] = useState<Clause[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
-  // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark'>('workspace');
+  // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk'
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk'>('workspace');
+  
+  // Risk Heatmap Matrix state
+  const [riskMatrixData, setRiskMatrixData] = useState<any>(null);
+  const [loadingRiskMatrix, setLoadingRiskMatrix] = useState(false);
   
   // Observability stats state
   const [stats, setStats] = useState<any>(null);
@@ -194,6 +198,22 @@ export default function LeaseLogicApp() {
       }
     } catch (err) {
       console.error('Error updating lease property tag:', err);
+    }
+  };
+
+  // Fetch Portfolio Risk Matrix
+  const fetchRiskMatrix = async () => {
+    setLoadingRiskMatrix(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/risk-matrix`);
+      if (res.ok) {
+        const data = await res.json();
+        setRiskMatrixData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching portfolio risk matrix:', err);
+    } finally {
+      setLoadingRiskMatrix(false);
     }
   };
 
@@ -1150,9 +1170,11 @@ export default function LeaseLogicApp() {
     fetchCompliance();
     fetchRules();
     fetchTimeline();
+    fetchRiskMatrix();
     const interval = setInterval(() => {
       fetchStats();
       fetchCompliance();
+      fetchRiskMatrix();
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -1521,6 +1543,13 @@ export default function LeaseLogicApp() {
             onClick={() => setCurrentView('benchmark')}
           >
             🔬 Test
+          </button>
+          <button 
+            className={`btn ${currentView === 'risk' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => setCurrentView('risk')}
+          >
+            🔥 Risk
           </button>
         </div>
 
@@ -2573,6 +2602,151 @@ export default function LeaseLogicApp() {
                 </div>
               </div>
 
+            </div>
+          </div>
+        ) : currentView === 'risk' ? (
+          <div className="pane" style={{ overflowY: 'auto', gap: '20px' }}>
+            {/* Header */}
+            <div className="glass" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)' }}>🔥 Clause Risk & Deviation Heatmap Matrix</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                  Institutional RICS benchmark scoring matrix highlighting high-risk terms and lease clause deviations across your portfolio.
+                </p>
+              </div>
+              <button onClick={fetchRiskMatrix} className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }}>
+                🔄 Refresh Risk Scores
+              </button>
+            </div>
+
+            {/* Summary KPI Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Portfolio Risk Index</p>
+                <h3 className="gradient-text" style={{ fontSize: '2rem', fontWeight: 800 }}>
+                  {riskMatrixData ? riskMatrixData.summary.overall_risk_score : 100} / 100
+                </h3>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  Aggregate commercial safety score
+                </p>
+              </div>
+
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>High Risk Clause Flags</p>
+                <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--error)' }}>
+                  {riskMatrixData ? riskMatrixData.summary.high_risk : 0}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Deviations from market standards
+                </p>
+              </div>
+
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Medium Risk Warnings</p>
+                <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--warning)' }}>
+                  {riskMatrixData ? riskMatrixData.summary.medium_risk : 0}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Near-term or flex option alerts
+                </p>
+              </div>
+
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Low Risk Clauses</p>
+                <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--success)' }}>
+                  {riskMatrixData ? riskMatrixData.summary.low_risk : 0}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Standard institutional terms
+                </p>
+              </div>
+            </div>
+
+            {/* Heatmap Table */}
+            <div className="glass" style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '15px', color: 'var(--foreground)' }}>
+                Portfolio Risk Matrix & RICS Deviation Grid
+              </h4>
+
+              {loadingRiskMatrix ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Calculating risk heatmap matrix...
+                </div>
+              ) : !riskMatrixData || riskMatrixData.matrix.length === 0 ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No completed leases to analyze. Upload lease PDFs to generate risk heatmaps.
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto', flex: 1 }}>
+                  <table className="terms-table" style={{ margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>Lease Document</th>
+                        <th>Property Asset</th>
+                        <th style={{ textAlign: 'center' }}>Safety Score</th>
+                        <th>Liability Insurance ($5M Min)</th>
+                        <th>Commitment Expiry (2028+)</th>
+                        <th>Tenant Break Clause</th>
+                        <th>Structural Repair Obligation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {riskMatrixData.matrix.map((row: any) => {
+                        const renderBadge = (item: any) => {
+                          const level = item.level;
+                          const bg = level === 'high' ? 'rgba(239, 68, 68, 0.15)' : level === 'medium' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.12)';
+                          const color = level === 'high' ? 'var(--error)' : level === 'medium' ? 'var(--warning)' : 'var(--success)';
+                          return (
+                            <span 
+                              style={{ 
+                                padding: '3px 8px', 
+                                borderRadius: '4px', 
+                                background: bg, 
+                                color: color, 
+                                fontWeight: 700, 
+                                fontSize: '0.72rem',
+                                textTransform: 'uppercase',
+                                cursor: 'help'
+                              }}
+                              title={item.description}
+                            >
+                              {level === 'high' ? '⚠️ High Risk' : level === 'medium' ? '⚡ Med Risk' : '✅ Low Risk'}
+                            </span>
+                          );
+                        };
+
+                        return (
+                          <tr key={row.lease_id}>
+                            <td style={{ fontWeight: 600, fontSize: '0.82rem' }}>
+                              <a 
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  const target = leases.find(l => l.id === row.lease_id);
+                                  if (target) handleSelectLease(target);
+                                }}
+                                style={{ color: 'var(--primary)', textDecoration: 'none' }}
+                              >
+                                {row.filename}
+                              </a>
+                            </td>
+                            <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                              {row.property_name}
+                            </td>
+                            <td style={{ textAlign: 'center', fontWeight: 800, fontSize: '0.9rem', color: row.score >= 80 ? 'var(--success)' : row.score >= 60 ? 'var(--warning)' : 'var(--error)' }}>
+                              {row.score}%
+                            </td>
+                            <td>{renderBadge(row.risks.insurance)}</td>
+                            <td>{renderBadge(row.risks.expiration)}</td>
+                            <td>{renderBadge(row.risks.break_clause)}</td>
+                            <td>{renderBadge(row.risks.repair)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         ) : !selectedLease ? (
