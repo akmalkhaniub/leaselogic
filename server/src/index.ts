@@ -673,6 +673,134 @@ app.get('/api/portfolio/critical-dates/ics', async (req, res) => {
   }
 });
 
+// 4.765. GET portfolio risk matrix and clause deviation heatmap
+app.get('/api/portfolio/risk-matrix', async (req, res) => {
+  try {
+    const leasesRes = await pool.query(
+      "SELECT id, filename, property_name FROM leases WHERE status = 'completed' ORDER BY created_at DESC"
+    );
+
+    const leases = leasesRes.rows;
+    const leaseIds = leases.map(l => l.id);
+
+    if (leaseIds.length === 0) {
+      res.json({
+        summary: { high_risk: 0, medium_risk: 0, low_risk: 0, overall_risk_score: 100 },
+        matrix: []
+      });
+      return;
+    }
+
+    const termsRes = await pool.query(
+      "SELECT lease_id, term_name, extracted_value FROM lease_terms WHERE lease_id = ANY($1)",
+      [leaseIds]
+    );
+
+    const termsByLease = new Map<string, Map<string, string>>();
+    termsRes.rows.forEach(t => {
+      if (!termsByLease.has(t.lease_id)) {
+        termsByLease.set(t.lease_id, new Map<string, string>());
+      }
+      termsByLease.get(t.lease_id)!.set(t.term_name, t.extracted_value);
+    });
+
+    let totalHigh = 0;
+    let totalMedium = 0;
+    let totalLow = 0;
+
+    const matrix = leases.map(lease => {
+      const termMap = termsByLease.get(lease.id) || new Map<string, string>();
+
+      // 1. Insurance Risk
+      const insRaw = termMap.get('indemnity_covenants') || '';
+      const insNum = parseFloat(insRaw.replace(/[^0-9.]/g, '')) || 0;
+      let insRisk: 'low' | 'medium' | 'high' = 'low';
+      let insDesc = 'Standard $5M+ coverage limit';
+      if (insNum > 0 && insNum < 5000000) {
+        insRisk = 'high';
+        insDesc = `Sub-standard limit: $${insNum.toLocaleString()} (Below $5M RICS benchmark)`;
+        totalHigh++;
+      } else {
+        totalLow++;
+      }
+
+      // 2. Commitment Expiration Risk
+      const expRaw = termMap.get('expiration_date') || '';
+      const expYearMatch = expRaw.match(/20\d\d/);
+      const expYear = expYearMatch ? parseInt(expYearMatch[0]) : 0;
+      let expRisk: 'low' | 'medium' | 'high' = 'low';
+      let expDesc = 'Long-term commitment (2028+)';
+      if (expYear > 0 && expYear < 2028) {
+        expRisk = 'medium';
+        expDesc = `Near-term expiry (${expYear}): Renewal risk`;
+        totalMedium++;
+      } else {
+        totalLow++;
+      }
+
+      // 3. Break Option Risk
+      const breakRaw = termMap.get('break_clause') || '';
+      let breakRisk: 'low' | 'medium' | 'high' = 'low';
+      let breakDesc = 'Tenant break option active';
+      if (!breakRaw || breakRaw.toLowerCase().includes('none') || breakRaw.toLowerCase().includes('no break')) {
+        breakRisk = 'medium';
+        breakDesc = 'No tenant break clause included';
+        totalMedium++;
+      } else {
+        totalLow++;
+      }
+
+      // 4. Structural Repair Risk
+      const repairRaw = termMap.get('repair_obligations') || '';
+      let repairRisk: 'low' | 'medium' | 'high' = 'low';
+      let repairDesc = 'Landlord structural repair responsibility';
+      if (repairRaw.toLowerCase().includes('tenant') && (repairRaw.toLowerCase().includes('structural') || repairRaw.toLowerCase().includes('roof') || repairRaw.toLowerCase().includes('exterior'))) {
+        repairRisk = 'high';
+        repairDesc = 'High Risk: Structural/roof repair assigned to tenant';
+        totalHigh++;
+      } else {
+        totalLow++;
+      }
+
+      // Calculate composite score (100 - (high * 25) - (medium * 10))
+      let leaseScore = 100;
+      if (insRisk === 'high') leaseScore -= 25;
+      if (repairRisk === 'high') leaseScore -= 25;
+      if (expRisk === 'medium') leaseScore -= 10;
+      if (breakRisk === 'medium') leaseScore -= 10;
+
+      return {
+        lease_id: lease.id,
+        filename: lease.filename,
+        property_name: lease.property_name || 'General Portfolio',
+        score: Math.max(0, leaseScore),
+        risks: {
+          insurance: { level: insRisk, description: insDesc, value: insRaw },
+          expiration: { level: expRisk, description: expDesc, value: expRaw },
+          break_clause: { level: breakRisk, description: breakDesc, value: breakRaw },
+          repair: { level: repairRisk, description: repairDesc, value: repairRaw }
+        }
+      };
+    });
+
+    const overallScore = matrix.length > 0 
+      ? Math.round(matrix.reduce((acc, curr) => acc + curr.score, 0) / matrix.length)
+      : 100;
+
+    res.json({
+      summary: {
+        high_risk: totalHigh,
+        medium_risk: totalMedium,
+        low_risk: totalLow,
+        overall_risk_score: overallScore
+      },
+      matrix
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
