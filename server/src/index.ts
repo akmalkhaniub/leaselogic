@@ -122,13 +122,61 @@ app.post('/api/leases/upload', upload.single('file'), async (req, res) => {
 // 2. List Leases API
 app.get('/api/leases', async (req, res) => {
   try {
-    const result = await pool.query(`
+    const { property_name } = req.query;
+    let queryText = `
       SELECT l.*, j.status as job_status, j.progress as job_progress, j.error_message as job_error
       FROM leases l
       LEFT JOIN abstraction_jobs j ON l.id = j.lease_id
-      ORDER BY l.created_at DESC
-    `);
+    `;
+    const params: any[] = [];
+    if (property_name && typeof property_name === 'string' && property_name.trim() !== '') {
+      queryText += ` WHERE l.property_name = $1`;
+      params.push(property_name);
+    }
+    queryText += ` ORDER BY l.created_at DESC`;
+
+    const result = await pool.query(queryText, params);
     res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Set or update lease building/property tag
+app.put('/api/leases/:id/property', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { property_name } = req.body;
+
+    const propName = property_name && property_name.trim() !== '' ? property_name.trim() : 'General Portfolio';
+
+    const result = await pool.query(
+      `UPDATE leases 
+       SET property_name = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING *`,
+      [propName, id]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+
+    // Create Audit Log entry
+    await pool.query(
+      `INSERT INTO audit_logs (lease_id, action, table_name, record_id, old_values, new_values)
+       VALUES ($1, $2, 'leases', $3, $4, $5)`,
+      [
+        id,
+        'update_property',
+        id,
+        JSON.stringify({}),
+        JSON.stringify({ property_name: propName })
+      ]
+    );
+
+    res.json(result.rows[0]);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1561,6 +1609,12 @@ app.listen(port, async () => {
       `);
       console.log('Default compliance rules seeded successfully.');
     }
+
+    // Add property_name column to leases table if it does not exist
+    await pool.query(`
+      ALTER TABLE leases 
+      ADD COLUMN IF NOT EXISTS property_name VARCHAR(255) DEFAULT 'General Portfolio';
+    `);
 
     console.log('Database migrations verified/completed successfully.');
   } catch (err) {

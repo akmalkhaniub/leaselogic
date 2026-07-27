@@ -116,7 +116,7 @@ async function runVerification() {
     const parentExpTerm = allTerms.find(t => t.lease_id === parentId && t.term_name === 'expiration_date');
     let effectiveExp = parentExpTerm ? parentExpTerm.extracted_value : null;
     let expSource = parentId;
-    let expAmended = false;
+    let expAmended: boolean = false;
 
     leasesInHierarchy.forEach(l => {
       if (l.id !== parentId) {
@@ -132,7 +132,7 @@ async function runVerification() {
     console.log(`- Rent Effective Value: "${effectiveRent}" (Source ID: ${rentSource})`);
     console.log(`- Expiration Effective Value: "${effectiveExp}" (Source ID: ${expSource}, Amended: ${expAmended})`);
 
-    if (effectiveRent === '$5,000/month' && rentSource === parentId && effectiveExp === 'December 31, 2028' && expSource === childId && expAmended === true) {
+    if (effectiveRent === '$5,000/month' && rentSource === parentId && effectiveExp === 'December 31, 2028' && expSource === childId && expAmended) {
       console.log('✅ Net Effective Term merging calculations PASSED.');
     } else {
       await cleanUp();
