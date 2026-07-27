@@ -13,6 +13,7 @@ interface Lease {
   created_at: string;
   parent_lease_id?: string | null;
   document_type?: string;
+  property_name?: string;
 }
 
 interface LeaseTerm {
@@ -116,6 +117,10 @@ export default function LeaseLogicApp() {
   const [effectiveTermsData, setEffectiveTermsData] = useState<any>(null);
   const [loadingEffectiveTerms, setLoadingEffectiveTerms] = useState(false);
 
+  // Property Asset filter state
+  const [selectedPropertyFilter, setSelectedPropertyFilter] = useState<string>('all');
+  const [customPropertyName, setCustomPropertyName] = useState<string>('');
+
   // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective'
   const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective'>('abstract');
   
@@ -143,10 +148,15 @@ export default function LeaseLogicApp() {
 
   const API_BASE = 'http://localhost:5000/api';
 
-  // Fetch Leases
-  const fetchLeases = async () => {
+  // Fetch Leases (with optional property filter)
+  const fetchLeases = async (propertyFilter?: string) => {
     try {
-      const res = await fetch(`${API_BASE}/leases`);
+      const targetFilter = propertyFilter !== undefined ? propertyFilter : selectedPropertyFilter;
+      let url = `${API_BASE}/leases`;
+      if (targetFilter && targetFilter !== 'all') {
+        url += `?property_name=${encodeURIComponent(targetFilter)}`;
+      }
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setLeases(data);
@@ -161,6 +171,29 @@ export default function LeaseLogicApp() {
       }
     } catch (err) {
       console.error('Error fetching leases:', err);
+    }
+  };
+
+  // Update lease property tag
+  const handleUpdateProperty = async (propertyName: string) => {
+    if (!selectedLease) return;
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/property`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ property_name: propertyName })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        // Update local selectedLease state
+        setSelectedLease(prev => prev ? { ...prev, property_name: updated.property_name } : null);
+        // Refresh leases list
+        fetchLeases();
+        // Refresh audit logs
+        fetchLeaseAuditLogs(selectedLease.id);
+      }
+    } catch (err) {
+      console.error('Error updating lease property tag:', err);
     }
   };
 
@@ -1107,10 +1140,10 @@ export default function LeaseLogicApp() {
   };
 
   useEffect(() => {
-    fetchLeases();
-    const interval = setInterval(fetchLeases, 3000);
+    fetchLeases(selectedPropertyFilter);
+    const interval = setInterval(() => fetchLeases(selectedPropertyFilter), 3000);
     return () => clearInterval(interval);
-  }, [selectedLease]);
+  }, [selectedLease, selectedPropertyFilter]);
 
   useEffect(() => {
     fetchStats();
@@ -1501,6 +1534,24 @@ export default function LeaseLogicApp() {
             <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>Upload Lease PDF</p>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Click to browse</p>
           </label>
+
+          {/* Building Asset Filter */}
+          <div style={{ marginTop: '12px', marginBottom: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              🏢 Building Asset Filter
+            </label>
+            <select
+              className="chat-input"
+              style={{ padding: '6px 8px', fontSize: '0.78rem', border: '1px solid rgba(15,23,42,0.1)', borderRadius: '6px', background: '#ffffff', color: 'var(--foreground)' }}
+              value={selectedPropertyFilter}
+              onChange={(e) => setSelectedPropertyFilter(e.target.value)}
+            >
+              <option value="all">🏢 All Properties & Assets</option>
+              {Array.from(new Set(leases.map(l => l.property_name || 'General Portfolio'))).map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
 
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '12px' }}>Lease Portfolio</h3>
           
@@ -2675,6 +2726,28 @@ export default function LeaseLogicApp() {
                             ))
                           }
                         </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2', marginTop: '4px' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>Building Asset / Property Tag</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            className="chat-input"
+                            style={{ flex: 1, padding: '6px 8px', fontSize: '0.8rem', border: '1px solid rgba(15,23,42,0.1)', borderRadius: '4px', background: '#ffffff', color: 'var(--foreground)' }}
+                            value={selectedLease.property_name || 'General Portfolio'}
+                            onChange={(e) => setSelectedLease(prev => prev ? { ...prev, property_name: e.target.value } : null)}
+                            placeholder="e.g. Oxford Street Retail Complex"
+                          />
+                          <button
+                            type="button"
+                            className="btn"
+                            style={{ padding: '4px 12px', fontSize: '0.78rem' }}
+                            onClick={() => handleUpdateProperty(selectedLease.property_name || 'General Portfolio')}
+                          >
+                            Save Tag
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
