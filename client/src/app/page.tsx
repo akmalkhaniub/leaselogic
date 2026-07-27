@@ -2785,17 +2785,28 @@ export default function LeaseLogicApp() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Lease Terms Sheet</h3>
                 
-                <button 
-                  onClick={triggerRegistryAutomation}
-                  disabled={automationRunning}
-                  className="btn btn-accent"
-                  style={{ padding: '8px 14px', fontSize: '0.85rem' }}
-                >
-                  <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                  </svg>
-                  {automationRunning ? 'Filing...' : 'Submit to Registry'}
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {selectedLease && selectedLease.status === 'completed' && (
+                    <button
+                      onClick={() => window.open(`${API_BASE}/leases/${selectedLease.id}/export-memo`, '_blank')}
+                      className="btn btn-secondary"
+                      style={{ padding: '8px 12px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      📄 Executive Memo
+                    </button>
+                  )}
+                  <button 
+                    onClick={triggerRegistryAutomation}
+                    disabled={automationRunning}
+                    className="btn btn-accent"
+                    style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+                  >
+                    <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    {automationRunning ? 'Filing...' : 'Submit to Registry'}
+                  </button>
+                </div>
               </div>
 
               {selectedLease.status !== 'completed' ? (
