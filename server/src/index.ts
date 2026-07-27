@@ -606,6 +606,73 @@ app.get('/api/portfolio/timeline', async (req, res) => {
   }
 });
 
+// 4.76. GET export portfolio critical dates in iCal (.ics) format
+app.get('/api/portfolio/critical-dates/ics', async (req, res) => {
+  try {
+    const leasesRes = await pool.query(
+      "SELECT id, filename FROM leases WHERE status = 'completed'"
+    );
+
+    let icsContent = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//LeaseLogic//Commercial Property Milestone Calendar//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:LeaseLogic Critical Dates\r\n";
+
+    for (const lease of leasesRes.rows) {
+      const termsRes = await pool.query(
+        "SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1",
+        [lease.id]
+      );
+
+      const termMap = new Map<string, string>();
+      termsRes.rows.forEach(t => termMap.set(t.term_name, t.extracted_value));
+
+      const commencementRaw = termMap.get('commencement_date');
+      const expirationRaw = termMap.get('expiration_date');
+      const breakRaw = termMap.get('break_clause');
+
+      const addEvent = (title: string, dateStr: string, description: string) => {
+        const parsedDate = new Date(dateStr);
+        if (isNaN(parsedDate.getTime())) return;
+
+        const yyyy = parsedDate.getFullYear();
+        const mm = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(parsedDate.getDate()).padStart(2, '0');
+        const dtStamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        const dtStart = `${yyyy}${mm}${dd}`;
+
+        icsContent += "BEGIN:VEVENT\r\n";
+        icsContent += `UID:leaselogic-${lease.id}-${title.replace(/\s+/g, '-')}-${dtStart}@leaselogic.internal\r\n`;
+        icsContent += `DTSTAMP:${dtStamp}\r\n`;
+        icsContent += `DTSTART;VALUE=DATE:${dtStart}\r\n`;
+        icsContent += `SUMMARY:LeaseLogic: ${title} (${lease.filename})\r\n`;
+        icsContent += `DESCRIPTION:${description.replace(/\r?\n/g, ' ')}\r\n`;
+        icsContent += "END:VEVENT\r\n";
+      };
+
+      if (commencementRaw) {
+        const d = extractTimelineDate(commencementRaw);
+        if (d) addEvent("Lease Commencement", d, `Commencement date for ${lease.filename}`);
+      }
+
+      if (expirationRaw) {
+        const d = extractTimelineDate(expirationRaw);
+        if (d) addEvent("Lease Expiration", d, `Lease expiration date for ${lease.filename}`);
+      }
+
+      if (breakRaw) {
+        const d = extractTimelineDate(breakRaw);
+        if (d) addEvent("Break Option Notice Deadline", d, `Break option clause: ${breakRaw}`);
+      }
+    }
+
+    icsContent += "END:VCALENDAR\r\n";
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="LeaseLogic_Critical_Dates.ics"');
+    res.send(icsContent);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
