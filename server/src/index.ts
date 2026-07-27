@@ -1236,7 +1236,76 @@ app.get('/api/leases/:id/export-redlines', async (req, res) => {
     });
 
     res.setHeader('Content-Type', 'text/markdown');
-    res.setHeader('Content-Disposition', `attachment; filename="Amended_Lease_${leaseFilename.replace(/\\.[^/.]+$/, "")}.md"`);
+    res.setHeader('Content-Disposition', `attachment; filename="Amended_Lease_${leaseFilename.replace(/\.[^/.]+$/, "")}.md"`);
+    res.send(md);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.95. GET export executive one-pager investment summary memo
+app.get('/api/leases/:id/export-memo', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Fetch lease info
+    const leaseRes = await pool.query("SELECT * FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // 2. Fetch lease terms
+    const termsRes = await pool.query(
+      "SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1",
+      [id]
+    );
+
+    const termMap = new Map<string, string>();
+    termsRes.rows.forEach(t => termMap.set(t.term_name, t.extracted_value));
+
+    const initialRent = termMap.get('initial_rent') || 'Not Extracted';
+    const commencement = termMap.get('commencement_date') || 'Not Extracted';
+    const expiration = termMap.get('expiration_date') || 'Not Extracted';
+    const breakClause = termMap.get('break_clause') || 'None / Not Extracted';
+    const insurance = termMap.get('indemnity_covenants') || 'Not Extracted';
+    const repair = termMap.get('repair_obligations') || 'Not Extracted';
+
+    // 3. Format Executive Investment Memo (Markdown)
+    let md = `# EXECUTIVE LEASE INVESTMENT MEMO\n\n`;
+    md += `**Document Name**: ${lease.filename}\n`;
+    md += `**Building Asset / Property**: ${lease.property_name || 'General Portfolio'}\n`;
+    md += `**Document Type**: ${(lease.document_type || 'original_lease').replace('_', ' ').toUpperCase()}\n`;
+    md += `**Date Generated**: ${new Date().toLocaleDateString()}\n\n`;
+
+    md += `---\n\n`;
+    md += `## 1. Commercial Summary & Financial Commitments\n\n`;
+    md += `| Parameter | Summary Value |\n`;
+    md += `| :--- | :--- |\n`;
+    md += `| **Initial Rent** | ${initialRent.split(' (Citation:')[0]} |\n`;
+    md += `| **Commencement Date** | ${commencement.split(' (Citation:')[0]} |\n`;
+    md += `| **Expiration Date** | ${expiration.split(' (Citation:')[0]} |\n`;
+    md += `| **Tenant Break Option** | ${breakClause.split(' (Citation:')[0]} |\n\n`;
+
+    md += `## 2. Risk Assessment & Legal Obligations\n\n`;
+    md += `- **Liability Insurance**: ${insurance.split(' (Citation:')[0]}\n`;
+    md += `- **Maintenance & Repair**: ${repair.split(' (Citation:')[0]}\n\n`;
+
+    md += `## 3. Executive Assessment & Action Items\n\n`;
+    if (insurance.toLowerCase().includes('tenant') || parseFloat(insurance.replace(/[^0-9.]/g, '')) < 5000000) {
+      md += `> ⚠️ **Risk Flag**: Confirm insurance coverage meets institutional requirements ($5M+).\n\n`;
+    }
+    if (repair.toLowerCase().includes('tenant') && repair.toLowerCase().includes('structural')) {
+      md += `> ⚠️ **Critical Risk Flag**: Tenant is assigned structural/roof repair obligations.\n\n`;
+    }
+    md += `- Review upcoming critical milestone dates in the LeaseLogic Smart Hub.\n`;
+    md += `- Verify ground citations in Document Explorer prior to final execution.\n\n`;
+
+    md += `---\n*Generated automatically by LeaseLogic AI Lease Abstraction Platform*\n`;
+
+    res.setHeader('Content-Type', 'text/markdown');
+    res.setHeader('Content-Disposition', `attachment; filename="Executive_Memo_${lease.filename.replace(/\.[^/.]+$/, "")}.md"`);
     res.send(md);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
