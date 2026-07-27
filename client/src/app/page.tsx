@@ -1920,9 +1920,18 @@ export default function LeaseLogicApp() {
             <div className="pane pane-border" style={{ flex: 2, overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Upcoming Portfolio Key Date Milestones</h3>
-                <button onClick={fetchTimeline} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-                  🔄 Refresh Timeline
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={() => window.open(`${API_BASE}/portfolio/critical-dates/ics`, '_blank')} 
+                    className="btn btn-primary" 
+                    style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    📅 Export iCal (.ics)
+                  </button>
+                  <button onClick={fetchTimeline} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                    🔄 Refresh Timeline
+                  </button>
+                </div>
               </div>
 
               {loadingTimeline ? (
