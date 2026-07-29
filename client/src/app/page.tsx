@@ -46,9 +46,15 @@ export default function LeaseLogicApp() {
   const [clauses, setClauses] = useState<Clause[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
-  // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking'>('workspace');
+  // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare'
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare'>('workspace');
   
+  // Comparison Engine state
+  const [compareLeaseId1, setCompareLeaseId1] = useState<string>('');
+  const [compareLeaseId2, setCompareLeaseId2] = useState<string>('');
+  const [comparisonData, setComparisonData] = useState<any>(null);
+  const [loadingComparison, setLoadingComparison] = useState(false);
+
   // Stacking Plan & Rent Roll state
   const [stackingPlanData, setStackingPlanData] = useState<any>(null);
   const [loadingStackingPlan, setLoadingStackingPlan] = useState(false);
@@ -202,6 +208,27 @@ export default function LeaseLogicApp() {
       }
     } catch (err) {
       console.error('Error updating lease property tag:', err);
+    }
+  };
+
+  // Run AI Lease Comparison
+  const handleRunComparison = async (id1: string = compareLeaseId1, id2: string = compareLeaseId2) => {
+    if (!id1 || !id2) return;
+    setLoadingComparison(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/compare`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lease_id_1: id1, lease_id_2: id2 })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComparisonData(data);
+      }
+    } catch (err) {
+      console.error('Error running lease comparison:', err);
+    } finally {
+      setLoadingComparison(false);
     }
   };
 
@@ -1580,6 +1607,13 @@ export default function LeaseLogicApp() {
           >
             🏢 Stacking
           </button>
+          <button 
+            className={`btn ${currentView === 'compare' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => setCurrentView('compare')}
+          >
+            ⚖️ Diff
+          </button>
         </div>
 
         <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -2927,6 +2961,156 @@ export default function LeaseLogicApp() {
                 ))
               )}
             </div>
+          </div>
+        ) : currentView === 'compare' ? (
+          <div className="pane" style={{ overflowY: 'auto', gap: '20px' }}>
+            {/* Selector Panel */}
+            <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)' }}>⚖️ AI Lease Comparison & Redline Diff Engine</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                  Select any two lease documents or amendments to generate side-by-side covenant comparison matrices and commercial variance scores.
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '15px', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Base Lease Document</label>
+                  <select 
+                    value={compareLeaseId1}
+                    onChange={(e) => setCompareLeaseId1(e.target.value)}
+                    style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: '#ffffff', fontSize: '0.85rem' }}
+                  >
+                    <option value="">-- Select Base Lease Document --</option>
+                    {leases.map(l => (
+                      <option key={l.id} value={l.id}>{l.filename} ({l.property_name || 'General'})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Comparison Document / Amendment</label>
+                  <select 
+                    value={compareLeaseId2}
+                    onChange={(e) => setCompareLeaseId2(e.target.value)}
+                    style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: '#ffffff', fontSize: '0.85rem' }}
+                  >
+                    <option value="">-- Select Comparison Lease --</option>
+                    {leases.map(l => (
+                      <option key={l.id} value={l.id}>{l.filename} ({l.property_name || 'General'})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button 
+                  onClick={() => handleRunComparison()}
+                  disabled={!compareLeaseId1 || !compareLeaseId2 || loadingComparison}
+                  className="btn btn-primary"
+                  style={{ padding: '10px 20px', fontSize: '0.85rem' }}
+                >
+                  {loadingComparison ? 'Comparing...' : '⚡ Compare Leases'}
+                </button>
+              </div>
+            </div>
+
+            {/* Results Grid */}
+            {comparisonData && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* KPI Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                  <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Commercial Variance Index</p>
+                    <h3 className="gradient-text" style={{ fontSize: '2rem', fontWeight: 800 }}>
+                      {comparisonData.summary.commercial_variance_score}%
+                    </h3>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      Overall clause divergence rate
+                    </p>
+                  </div>
+
+                  <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Modified Terms</p>
+                    <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--warning)' }}>
+                      {comparisonData.summary.modified_count}
+                    </h3>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Terms with language/value shifts
+                    </p>
+                  </div>
+
+                  <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Added Provisions</p>
+                    <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--success)' }}>
+                      {comparisonData.summary.added_count}
+                    </h3>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      New covenants introduced
+                    </p>
+                  </div>
+
+                  <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Removed Provisions</p>
+                    <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--error)' }}>
+                      {comparisonData.summary.removed_count}
+                    </h3>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Covenants omitted from comparison
+                    </p>
+                  </div>
+                </div>
+
+                {/* Diff Table */}
+                <div className="glass" style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '15px', color: 'var(--foreground)' }}>
+                    Comparative Redline Matrix: {comparisonData.lease_1.filename} vs {comparisonData.lease_2.filename}
+                  </h4>
+
+                  <div style={{ overflowX: 'auto', flex: 1 }}>
+                    <table className="terms-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Term Provision</th>
+                          <th>Status</th>
+                          <th>{comparisonData.lease_1.filename} (Base)</th>
+                          <th>{comparisonData.lease_2.filename} (Comparison)</th>
+                          <th>Variance & Commercial Impact</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {comparisonData.diff_matrix.map((row: any, idx: number) => {
+                          const status = row.status;
+                          const bg = status === 'modified' ? 'rgba(245, 158, 11, 0.06)' : status === 'added' ? 'rgba(16, 185, 129, 0.06)' : status === 'removed' ? 'rgba(239, 68, 68, 0.06)' : 'transparent';
+                          const badgeBg = status === 'modified' ? 'rgba(245, 158, 11, 0.2)' : status === 'added' ? 'rgba(16, 185, 129, 0.2)' : status === 'removed' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(15, 23, 42, 0.08)';
+                          const badgeColor = status === 'modified' ? 'var(--warning)' : status === 'added' ? 'var(--success)' : status === 'removed' ? 'var(--error)' : 'var(--text-muted)';
+
+                          return (
+                            <tr key={idx} style={{ background: bg }}>
+                              <td style={{ fontWeight: 700, fontSize: '0.82rem', textTransform: 'capitalize' }}>
+                                {row.term_name.replace(/_/g, ' ')}
+                              </td>
+                              <td>
+                                <span style={{ padding: '3px 8px', borderRadius: '4px', background: badgeBg, color: badgeColor, fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                                  {status}
+                                </span>
+                              </td>
+                              <td style={{ fontSize: '0.8rem', color: status === 'removed' ? 'var(--error)' : 'var(--foreground)' }}>
+                                {row.lease_1_value}
+                              </td>
+                              <td style={{ fontSize: '0.8rem', color: status === 'added' ? 'var(--success)' : 'var(--foreground)', fontWeight: status === 'added' || status === 'modified' ? 700 : 400 }}>
+                                {row.lease_2_value}
+                              </td>
+                              <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                {row.delta_summary}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : !selectedLease ? (
           <div className="pane" style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
