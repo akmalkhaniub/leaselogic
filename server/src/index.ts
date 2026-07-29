@@ -1094,6 +1094,76 @@ app.post('/api/leases/:id/cam-audit', async (req, res) => {
   }
 });
 
+// 4.771. POST multi-currency conversion and CPI inflation rent adjuster
+app.post('/api/leases/:id/fx-cpi-adjust', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { target_currency = 'EUR', cpi_annual_rate = 3.5 } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const termsRes = await pool.query("SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1", [id]);
+    const termMap = new Map<string, string>();
+    termsRes.rows.forEach((t: any) => termMap.set(t.term_name, t.extracted_value));
+
+    const rentRaw = termMap.get('initial_rent') || '$10,000/month';
+    const rentNum = parseFloat(rentRaw.replace(/[^0-9.]/g, '')) || 10000;
+    const annualUsdRent = rentRaw.toLowerCase().includes('month') ? rentNum * 12 : (rentNum < 20000 ? rentNum * 12 : rentNum);
+
+    const fxRates: Record<string, { symbol: string, rate: number }> = {
+      USD: { symbol: '$', rate: 1.0 },
+      EUR: { symbol: '€', rate: 0.92 },
+      GBP: { symbol: '£', rate: 0.78 },
+      JPY: { symbol: '¥', rate: 155.0 },
+      AUD: { symbol: 'A$', rate: 1.52 }
+    };
+
+    const targetFx = fxRates[target_currency] || fxRates['EUR'];
+    const convertedAnnualRent = Math.round(annualUsdRent * targetFx.rate);
+    const convertedMonthlyRent = Math.round((annualUsdRent / 12) * targetFx.rate);
+
+    const currentYear = new Date().getFullYear();
+    const cpiMultiplier = 1 + (cpi_annual_rate / 100);
+    const cpiTimeline = [];
+    let runningRent = convertedAnnualRent;
+
+    for (let i = 0; i < 10; i++) {
+      const yr = currentYear + i;
+      cpiTimeline.push({
+        year: yr,
+        annual_rent: Math.round(runningRent),
+        currency: target_currency,
+        currency_symbol: targetFx.symbol,
+        cpi_rate: i === 0 ? 0 : cpi_annual_rate,
+        cumulative_growth_pct: parseFloat((((runningRent - convertedAnnualRent) / convertedAnnualRent) * 100).toFixed(1))
+      });
+      runningRent = runningRent * cpiMultiplier;
+    }
+
+    res.json({
+      lease_id: lease.id,
+      filename: lease.filename,
+      property_name: lease.property_name || 'General Portfolio',
+      base_currency: 'USD',
+      target_currency,
+      currency_symbol: targetFx.symbol,
+      fx_rate: targetFx.rate,
+      converted_initial_annual_rent: convertedAnnualRent,
+      converted_initial_monthly_rent: convertedMonthlyRent,
+      cpi_annual_rate,
+      ten_year_projected_total: Math.round(cpiTimeline.reduce((acc, curr) => acc + curr.annual_rent, 0)),
+      cpi_timeline: cpiTimeline
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
