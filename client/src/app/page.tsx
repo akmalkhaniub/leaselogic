@@ -135,8 +135,19 @@ export default function LeaseLogicApp() {
   const [selectedPropertyFilter, setSelectedPropertyFilter] = useState<string>('all');
   const [customPropertyName, setCustomPropertyName] = useState<string>('');
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective'>('abstract');
+  // CAM Reconciliation state
+  const [camInputs, setCamInputs] = useState({
+    total_building_opex: 500000,
+    building_gross_area_sqft: 50000,
+    tenant_leased_area_sqft: 5000,
+    cap_percentage: 5,
+    cap_type: 'non_cumulative'
+  });
+  const [camAuditData, setCamAuditData] = useState<any>(null);
+  const [loadingCamAudit, setLoadingCamAudit] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -208,6 +219,27 @@ export default function LeaseLogicApp() {
       }
     } catch (err) {
       console.error('Error updating lease property tag:', err);
+    }
+  };
+
+  // Run CAM Reconciliation Audit
+  const handleRunCamAudit = async () => {
+    if (!selectedLease) return;
+    setLoadingCamAudit(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/cam-audit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(camInputs)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCamAuditData(data);
+      }
+    } catch (err) {
+      console.error('Error running CAM audit:', err);
+    } finally {
+      setLoadingCamAudit(false);
     }
   };
 
@@ -3342,6 +3374,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'effective' ? 'active' : ''}`} onClick={() => setActiveTab('effective')}>
                   🌿 Net Effective Terms
                 </div>
+                <div className={`tab ${activeTab === 'cam_audit' ? 'active' : ''}`} onClick={() => { setActiveTab('cam_audit'); handleRunCamAudit(); }}>
+                  💰 CAM Audit
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -4030,7 +4065,7 @@ export default function LeaseLogicApp() {
                     </div>
                   </div>
                 </div>
-              ) : (
+              ) : activeTab === 'effective' ? (
                 /* activeTab === 'effective' */
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto', gap: '20px' }}>
                   <div>
@@ -4142,6 +4177,170 @@ export default function LeaseLogicApp() {
                             );
                           })}
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* activeTab === 'cam_audit' */
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto', gap: '20px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+                      <span>💰</span> Common Area Maintenance (CAM) & Service Charge Reconciliation Audit
+                    </h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                      Audit pro-rata tenant expense allocations against contractually agreed cap limits (e.g. 5% non-cumulative cap).
+                    </p>
+                  </div>
+
+                  {/* Audit Input Form */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Building Total OpEx ($)</label>
+                      <input 
+                        type="number" 
+                        value={camInputs.total_building_opex}
+                        onChange={(e) => setCamInputs({ ...camInputs, total_building_opex: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Building Gross Area (Sq Ft)</label>
+                      <input 
+                        type="number" 
+                        value={camInputs.building_gross_area_sqft}
+                        onChange={(e) => setCamInputs({ ...camInputs, building_gross_area_sqft: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tenant Leased Area (Sq Ft)</label>
+                      <input 
+                        type="number" 
+                        value={camInputs.tenant_leased_area_sqft}
+                        onChange={(e) => setCamInputs({ ...camInputs, tenant_leased_area_sqft: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>CAM Expense Cap %</label>
+                      <input 
+                        type="number" 
+                        value={camInputs.cap_percentage}
+                        onChange={(e) => setCamInputs({ ...camInputs, cap_percentage: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Cap Calculation Structure</label>
+                      <select 
+                        value={camInputs.cap_type}
+                        onChange={(e) => setCamInputs({ ...camInputs, cap_type: e.target.value })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem', background: '#ffffff' }}
+                      >
+                        <option value="non_cumulative">5% Non-Cumulative Cap</option>
+                        <option value="cumulative">5% Cumulative Compounded Cap</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <button onClick={handleRunCamAudit} disabled={loadingCamAudit} className="btn btn-primary" style={{ width: '100%', padding: '9px', fontSize: '0.82rem' }}>
+                        {loadingCamAudit ? 'Auditing...' : '🔍 Audit Reconciliation'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Audit Results */}
+                  {camAuditData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      {/* Alert Card */}
+                      <div style={{
+                        padding: '16px',
+                        borderRadius: '8px',
+                        background: camAuditData.audit_status === 'OVERBILLING_ANOMALY_DETECTED' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                        border: `1px solid ${camAuditData.audit_status === 'OVERBILLING_ANOMALY_DETECTED' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(16, 185, 129, 0.25)'}`,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            background: camAuditData.audit_status === 'OVERBILLING_ANOMALY_DETECTED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                            color: camAuditData.audit_status === 'OVERBILLING_ANOMALY_DETECTED' ? 'var(--error)' : 'var(--success)',
+                            fontWeight: 800,
+                            fontSize: '0.75rem',
+                            textTransform: 'uppercase'
+                          }}>
+                            {camAuditData.audit_status === 'OVERBILLING_ANOMALY_DETECTED' ? '⚠️ Overbilling Anomaly Detected' : '✅ Audit Passed Cleanly'}
+                          </span>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: '8px 0 2px 0' }}>
+                            Pro-Rata Share: {camAuditData.pro_rata_share_pct}%
+                          </h4>
+                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
+                            {camAuditData.tenant_leased_area_sqft.toLocaleString()} Sq Ft leased out of {camAuditData.building_gross_area_sqft.toLocaleString()} Sq Ft total building area
+                          </p>
+                        </div>
+
+                        {camAuditData.audit_status === 'OVERBILLING_ANOMALY_DETECTED' && (
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Disputed Overbill Amount</span>
+                            <h3 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--error)', margin: 0 }}>
+                              ${camAuditData.overbilled_anomaly_amount.toLocaleString()}
+                            </h3>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Summary Metrics */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                        <div style={{ padding: '12px', background: '#ffffff', borderRadius: '6px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Uncapped Tenant Share</span>
+                          <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--foreground)', margin: '4px 0 0 0' }}>
+                            ${camAuditData.uncapped_tenant_share.toLocaleString()}
+                          </h4>
+                        </div>
+
+                        <div style={{ padding: '12px', background: '#ffffff', borderRadius: '6px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Contractual Cap Rule</span>
+                          <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)', margin: '4px 0 0 0' }}>
+                            {camAuditData.cap_rule}
+                          </h4>
+                        </div>
+
+                        <div style={{ padding: '12px', background: '#ffffff', borderRadius: '6px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Max Allowed Capped Share</span>
+                          <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)', margin: '4px 0 0 0' }}>
+                            ${camAuditData.max_allowed_share.toLocaleString()}
+                          </h4>
+                        </div>
+                      </div>
+
+                      {/* Line Item Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>OpEx Category</th>
+                              <th style={{ textAlign: 'right' }}>Building Total Cost</th>
+                              <th style={{ textAlign: 'right' }}>Tenant Pro-Rata Share ({camAuditData.pro_rata_share_pct}%)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {camAuditData.line_items.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 600, fontSize: '0.82rem' }}>{item.category}</td>
+                                <td style={{ textAlign: 'right', fontSize: '0.8rem' }}>${item.building_cost.toLocaleString()}</td>
+                                <td style={{ textAlign: 'right', fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>${item.tenant_share.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
