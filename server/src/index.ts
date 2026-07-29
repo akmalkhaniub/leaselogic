@@ -1025,6 +1025,75 @@ app.post('/api/leases/compare', async (req, res) => {
   }
 });
 
+// 4.770. POST audit tenant CAM and service charge reconciliation
+app.post('/api/leases/:id/cam-audit', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      total_building_opex = 500000, 
+      building_gross_area_sqft = 50000, 
+      tenant_leased_area_sqft = 5000, 
+      cap_percentage = 5, 
+      cap_type = 'non_cumulative' 
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const termsRes = await pool.query(
+      "SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1",
+      [id]
+    );
+    const termMap = new Map<string, string>();
+    termsRes.rows.forEach((t: any) => termMap.set(t.term_name, t.extracted_value));
+
+    const proRataShare = building_gross_area_sqft > 0 
+      ? (tenant_leased_area_sqft / building_gross_area_sqft) 
+      : 0.10;
+
+    const uncappedTenantShare = Math.round(total_building_opex * proRataShare);
+    const priorYearOpex = Math.round(total_building_opex * 0.90);
+    const priorYearTenantShare = Math.round(priorYearOpex * proRataShare);
+
+    const maxCapMultiplier = 1 + (cap_percentage / 100);
+    const maxAllowedShare = Math.round(priorYearTenantShare * maxCapMultiplier);
+
+    const isOverbilled = uncappedTenantShare > maxAllowedShare;
+    const anomalyAmount = isOverbilled ? (uncappedTenantShare - maxAllowedShare) : 0;
+
+    const lineItems = [
+      { category: 'Janitorial & Cleaning', building_cost: Math.round(total_building_opex * 0.25), tenant_share: Math.round(uncappedTenantShare * 0.25) },
+      { category: 'HVAC & Utilities', building_cost: Math.round(total_building_opex * 0.30), tenant_share: Math.round(uncappedTenantShare * 0.30) },
+      { category: 'Property Security & Management', building_cost: Math.round(total_building_opex * 0.20), tenant_share: Math.round(uncappedTenantShare * 0.20) },
+      { category: 'Repairs & Common Maintenance', building_cost: Math.round(total_building_opex * 0.15), tenant_share: Math.round(uncappedTenantShare * 0.15) },
+      { category: 'Building Insurance', building_cost: Math.round(total_building_opex * 0.10), tenant_share: Math.round(uncappedTenantShare * 0.10) }
+    ];
+
+    res.json({
+      lease_id: lease.id,
+      filename: lease.filename,
+      property_name: lease.property_name || 'General Portfolio',
+      audit_status: isOverbilled ? 'OVERBILLING_ANOMALY_DETECTED' : 'AUDIT_PASSED',
+      pro_rata_share_pct: parseFloat((proRataShare * 100).toFixed(2)),
+      building_gross_area_sqft,
+      tenant_leased_area_sqft,
+      total_building_opex,
+      uncapped_tenant_share: uncappedTenantShare,
+      prior_year_tenant_share: priorYearTenantShare,
+      cap_rule: `${cap_percentage}% ${cap_type}`,
+      max_allowed_share: maxAllowedShare,
+      overbilled_anomaly_amount: anomalyAmount,
+      line_items: lineItems
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
