@@ -925,6 +925,106 @@ app.get('/api/properties/:propertyName/stacking-plan', async (req, res) => {
   }
 });
 
+// 4.769. POST compare two leases side-by-side and generate term variance matrix
+app.post('/api/leases/compare', async (req, res) => {
+  try {
+    const { lease_id_1, lease_id_2 } = req.body;
+
+    if (!lease_id_1 || !lease_id_2) {
+      res.status(400).json({ error: 'Both lease_id_1 and lease_id_2 are required' });
+      return;
+    }
+
+    const leasesRes = await pool.query(
+      "SELECT id, filename, property_name, document_type FROM leases WHERE id = ANY($1)",
+      [[lease_id_1, lease_id_2]]
+    );
+
+    if (leasesRes.rows.length < 2) {
+      res.status(404).json({ error: 'One or both target leases were not found' });
+      return;
+    }
+
+    const lease1 = leasesRes.rows.find((l: any) => l.id === lease_id_1);
+    const lease2 = leasesRes.rows.find((l: any) => l.id === lease_id_2);
+
+    const terms1Res = await pool.query("SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1", [lease_id_1]);
+    const terms2Res = await pool.query("SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1", [lease_id_2]);
+
+    const terms1Map = new Map<string, string>();
+    terms1Res.rows.forEach((t: any) => terms1Map.set(t.term_name, t.extracted_value));
+
+    const terms2Map = new Map<string, string>();
+    terms2Res.rows.forEach((t: any) => terms2Map.set(t.term_name, t.extracted_value));
+
+    const allTermKeys = Array.from(new Set([...Array.from(terms1Map.keys()), ...Array.from(terms2Map.keys())]));
+
+    let modifiedCount = 0;
+    let addedCount = 0;
+    let removedCount = 0;
+    let identicalCount = 0;
+
+    const diffMatrix = allTermKeys.map(key => {
+      const val1 = terms1Map.get(key) || null;
+      const val2 = terms2Map.get(key) || null;
+
+      let status: 'identical' | 'modified' | 'added' | 'removed' = 'identical';
+      let deltaSummary = 'No change in term provision';
+
+      if (!val1 && val2) {
+        status = 'added';
+        deltaSummary = 'New covenant provision introduced';
+        addedCount++;
+      } else if (val1 && !val2) {
+        status = 'removed';
+        deltaSummary = 'Covenant provision omitted';
+        removedCount++;
+      } else if (val1 && val2 && val1.trim() !== val2.trim()) {
+        status = 'modified';
+        modifiedCount++;
+
+        const num1 = parseFloat(val1.replace(/[^0-9.]/g, ''));
+        const num2 = parseFloat(val2.replace(/[^0-9.]/g, ''));
+        if (num1 > 0 && num2 > 0) {
+          const diffPct = (((num2 - num1) / num1) * 100).toFixed(1);
+          deltaSummary = `Value shift: ${diffPct.startsWith('-') ? '' : '+'}${diffPct}% variance`;
+        } else {
+          deltaSummary = 'Clause language modified';
+        }
+      } else {
+        identicalCount++;
+      }
+
+      return {
+        term_name: key,
+        status,
+        lease_1_value: val1 ? val1.split(' (Citation:')[0] : 'N/A',
+        lease_2_value: val2 ? val2.split(' (Citation:')[0] : 'N/A',
+        delta_summary: deltaSummary
+      };
+    });
+
+    const totalTerms = diffMatrix.length || 1;
+    const varianceScore = Math.round(((modifiedCount + addedCount + removedCount) / totalTerms) * 100);
+
+    res.json({
+      lease_1: { id: lease1.id, filename: lease1.filename, property_name: lease1.property_name },
+      lease_2: { id: lease2.id, filename: lease2.filename, property_name: lease2.property_name },
+      summary: {
+        total_terms_compared: totalTerms,
+        identical_count: identicalCount,
+        modified_count: modifiedCount,
+        added_count: addedCount,
+        removed_count: removedCount,
+        commercial_variance_score: varianceScore
+      },
+      diff_matrix: diffMatrix
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
