@@ -46,9 +46,13 @@ export default function LeaseLogicApp() {
   const [clauses, setClauses] = useState<Clause[]>([]);
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
-  // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk'>('workspace');
+  // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking'
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking'>('workspace');
   
+  // Stacking Plan & Rent Roll state
+  const [stackingPlanData, setStackingPlanData] = useState<any>(null);
+  const [loadingStackingPlan, setLoadingStackingPlan] = useState(false);
+
   // Risk Heatmap Matrix state
   const [riskMatrixData, setRiskMatrixData] = useState<any>(null);
   const [loadingRiskMatrix, setLoadingRiskMatrix] = useState(false);
@@ -198,6 +202,22 @@ export default function LeaseLogicApp() {
       }
     } catch (err) {
       console.error('Error updating lease property tag:', err);
+    }
+  };
+
+  // Fetch Multi-Tenant Stacking Plan & Rent Roll
+  const fetchStackingPlan = async (propertyFilter: string = 'all') => {
+    setLoadingStackingPlan(true);
+    try {
+      const res = await fetch(`${API_BASE}/properties/${encodeURIComponent(propertyFilter)}/stacking-plan`);
+      if (res.ok) {
+        const data = await res.json();
+        setStackingPlanData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching stacking plan:', err);
+    } finally {
+      setLoadingStackingPlan(false);
     }
   };
 
@@ -1171,13 +1191,15 @@ export default function LeaseLogicApp() {
     fetchRules();
     fetchTimeline();
     fetchRiskMatrix();
+    fetchStackingPlan(selectedPropertyFilter);
     const interval = setInterval(() => {
       fetchStats();
       fetchCompliance();
       fetchRiskMatrix();
+      fetchStackingPlan(selectedPropertyFilter);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedPropertyFilter]);
 
   // Load lease details
   const handleSelectLease = async (lease: Lease) => {
@@ -1550,6 +1572,13 @@ export default function LeaseLogicApp() {
             onClick={() => setCurrentView('risk')}
           >
             🔥 Risk
+          </button>
+          <button 
+            className={`btn ${currentView === 'stacking' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => setCurrentView('stacking')}
+          >
+            🏢 Stacking
           </button>
         </div>
 
@@ -2746,6 +2775,156 @@ export default function LeaseLogicApp() {
                     </tbody>
                   </table>
                 </div>
+              )}
+            </div>
+          </div>
+        ) : currentView === 'stacking' ? (
+          <div className="pane" style={{ overflowY: 'auto', gap: '20px' }}>
+            {/* Header */}
+            <div className="glass" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)' }}>🏢 Multi-Tenant Rent Roll & Visual Stacking Plan</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                  Floor-by-floor visual suite allocation, annual rent rolls ($/sq ft), occupancy percentages, and expiration heatmaps.
+                </p>
+              </div>
+              <button onClick={() => fetchStackingPlan(selectedPropertyFilter)} className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }}>
+                🔄 Refresh Stacking Plan
+              </button>
+            </div>
+
+            {/* KPI Summary Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Annual Revenue</p>
+                <h3 className="gradient-text" style={{ fontSize: '1.8rem', fontWeight: 800 }}>
+                  ${stackingPlanData ? stackingPlanData.total_annual_revenue.toLocaleString() : '0'}
+                </h3>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  Aggregate annual gross rent roll
+                </p>
+              </div>
+
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Building Occupancy Rate</p>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--success)' }}>
+                  {stackingPlanData ? stackingPlanData.occupancy_rate : 100}%
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {stackingPlanData ? stackingPlanData.leased_sqft.toLocaleString() : '0'} / {stackingPlanData ? stackingPlanData.total_sqft.toLocaleString() : '0'} Sq Ft
+                </p>
+              </div>
+
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Avg Rent / Sq Ft</p>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary)' }}>
+                  ${stackingPlanData ? stackingPlanData.avg_rent_per_sqft : 0} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>/ sq ft</span>
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Weighted portfolio average rate
+                </p>
+              </div>
+
+              <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Asset Portfolio</p>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {stackingPlanData ? stackingPlanData.property_name : 'All Portfolio Assets'}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Filtered building asset
+                </p>
+              </div>
+            </div>
+
+            {/* Stacking Floors Container */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {loadingStackingPlan ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Loading stacking plan floor data...
+                </div>
+              ) : !stackingPlanData || stackingPlanData.floors.length === 0 ? (
+                <div className="glass" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No tenant suite leases found for this property asset. Upload lease PDFs to generate visual floor stacking plans.
+                </div>
+              ) : (
+                stackingPlanData.floors.map((floor: any, fIdx: number) => (
+                  <div key={fIdx} className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Floor Header Bar */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(15,23,42,0.06)', paddingBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '1.2rem', fontWeight: 800, background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 10px', borderRadius: '6px' }}>
+                          {floor.floor_name}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          Total Area: {floor.total_sqft.toLocaleString()} Sq Ft
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '20px', fontSize: '0.82rem', fontWeight: 600 }}>
+                        <span>Annual Roll: <strong style={{ color: 'var(--success)' }}>${floor.annual_revenue.toLocaleString()}</strong></span>
+                        <span>Avg Rate: <strong style={{ color: 'var(--primary)' }}>${floor.avg_rent_per_sqft}/sq ft</strong></span>
+                      </div>
+                    </div>
+
+                    {/* Suite Cards Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                      {floor.suites.map((suite: any, sIdx: number) => (
+                        <div 
+                          key={sIdx}
+                          style={{
+                            padding: '14px',
+                            borderRadius: '8px',
+                            background: suite.risk_flag === 'expiring_soon' ? 'rgba(245, 158, 11, 0.08)' : '#ffffff',
+                            border: `1px solid ${suite.risk_flag === 'expiring_soon' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(15, 23, 42, 0.08)'}`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            cursor: 'pointer',
+                            transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                          }}
+                          onClick={() => {
+                            const target = leases.find(l => l.id === suite.lease_id);
+                            if (target) handleSelectLease(target);
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0px)'}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--primary)' }}>{suite.suite_number}</span>
+                            <span style={{ 
+                              fontSize: '0.7rem', 
+                              fontWeight: 700, 
+                              padding: '2px 6px', 
+                              borderRadius: '4px',
+                              background: suite.risk_flag === 'expiring_soon' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.15)',
+                              color: suite.risk_flag === 'expiring_soon' ? 'var(--warning)' : 'var(--success)'
+                            }}>
+                              {suite.risk_flag === 'expiring_soon' ? '⚡ Expiring Soon' : '✅ Occupied'}
+                            </span>
+                          </div>
+
+                          <p style={{ fontWeight: 700, fontSize: '0.9rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={suite.tenant_name}>
+                            👤 {suite.tenant_name}
+                          </p>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                            <span>Area: <strong>{suite.sqft.toLocaleString()} sq ft</strong></span>
+                            <span>Rate: <strong>${suite.rent_per_sqft}/sq ft</strong></span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', borderTop: '1px solid rgba(15,23,42,0.06)', paddingTop: '6px', marginTop: '2px' }}>
+                            <span>Annual: <strong style={{ color: 'var(--success)' }}>${suite.annual_rent.toLocaleString()}</strong></span>
+                            <span>Expires: <strong style={{ fontFamily: 'monospace' }}>{suite.expiration_date}</strong></span>
+                          </div>
+                        </div>
+                      ))}
+                      {floor.suites.length === 0 && (
+                        <div style={{ gridColumn: '1 / -1', padding: '15px', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                          No suites assigned to this floor yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>
