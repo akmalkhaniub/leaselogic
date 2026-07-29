@@ -91,6 +91,12 @@ export default function LeaseLogicApp() {
   const [loadingProjection, setLoadingProjection] = useState(false);
   const [activeChartYear, setActiveChartYear] = useState<number | null>(null);
 
+  // Multi-Currency & CPI Adjuster state
+  const [targetCurrency, setTargetCurrency] = useState<string>('EUR');
+  const [cpiAnnualRate, setCpiAnnualRate] = useState<number>(3.5);
+  const [fxCpiData, setFxCpiData] = useState<any>(null);
+  const [loadingFxCpi, setLoadingFxCpi] = useState(false);
+
   // Timeline and alerts state
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
   const [loadingTimeline, setLoadingTimeline] = useState(false);
@@ -240,6 +246,27 @@ export default function LeaseLogicApp() {
       console.error('Error running CAM audit:', err);
     } finally {
       setLoadingCamAudit(false);
+    }
+  };
+
+  // Run FX Currency & CPI Inflation Adjuster
+  const handleRunFxCpiAdjustment = async () => {
+    if (!selectedLease) return;
+    setLoadingFxCpi(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/fx-cpi-adjust`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_currency: targetCurrency, cpi_annual_rate: cpiAnnualRate })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFxCpiData(data);
+      }
+    } catch (err) {
+      console.error('Error running FX CPI adjustment:', err);
+    } finally {
+      setLoadingFxCpi(false);
     }
   };
 
@@ -3688,6 +3715,50 @@ export default function LeaseLogicApp() {
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
                       
+                      {/* Multi-Currency & CPI Adjuster Control Bar */}
+                      <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>🌐 Target FX Currency:</span>
+                          <select 
+                            value={targetCurrency}
+                            onChange={(e) => setTargetCurrency(e.target.value)}
+                            style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: '#ffffff', fontSize: '0.8rem' }}
+                          >
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="JPY">JPY (¥)</option>
+                            <option value="AUD">AUD (A$)</option>
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>📈 Annual CPI Inflation %:</span>
+                          <input 
+                            type="number" 
+                            value={cpiAnnualRate}
+                            onChange={(e) => setCpiAnnualRate(parseFloat(e.target.value) || 0)}
+                            style={{ padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.8rem', width: '70px' }}
+                          />
+                        </div>
+
+                        <button 
+                          onClick={handleRunFxCpiAdjustment}
+                          disabled={loadingFxCpi}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                        >
+                          {loadingFxCpi ? 'Converting...' : '⚡ Convert FX & CPI Projections'}
+                        </button>
+
+                        {fxCpiData && (
+                          <div style={{ marginLeft: 'auto', display: 'flex', gap: '15px', fontSize: '0.78rem', fontWeight: 700 }}>
+                            <span>FX Rate: <strong>1 USD = {fxCpiData.fx_rate} {fxCpiData.target_currency}</strong></span>
+                            <span>Converted Annual: <strong style={{ color: 'var(--success)' }}>{fxCpiData.currency_symbol}{fxCpiData.converted_initial_annual_rent.toLocaleString()}</strong></span>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Metric summary boxes */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
                         <div className="glass" style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border)' }}>
