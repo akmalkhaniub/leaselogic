@@ -160,8 +160,16 @@ export default function LeaseLogicApp() {
   const [negotiationData, setNegotiationData] = useState<any>(null);
   const [loadingNegotiation, setLoadingNegotiation] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation'>('abstract');
+  // Sublease state
+  const [subleaseInputs, setSubleaseInputs] = useState({
+    unutilized_sqft: 2500,
+    estimated_market_rate_sqft: 45
+  });
+  const [subleaseData, setSubleaseData] = useState<any>(null);
+  const [loadingSublease, setLoadingSublease] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -313,6 +321,27 @@ export default function LeaseLogicApp() {
       console.error('Error generating counter offer:', err);
     } finally {
       setLoadingNegotiation(false);
+    }
+  };
+
+  // Run Sublease Rights & Space Monetization Analysis
+  const handleRunSubleaseAnalysis = async () => {
+    if (!selectedLease) return;
+    setLoadingSublease(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/sublease-analysis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(subleaseInputs)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSubleaseData(data);
+      }
+    } catch (err) {
+      console.error('Error running sublease analysis:', err);
+    } finally {
+      setLoadingSublease(false);
     }
   };
 
@@ -3456,6 +3485,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'negotiation' ? 'active' : ''}`} onClick={() => { setActiveTab('negotiation'); handleGenerateCounterOffer(); }}>
                   🤖 Negotiation
                 </div>
+                <div className={`tab ${activeTab === 'sublease' ? 'active' : ''}`} onClick={() => { setActiveTab('sublease'); handleRunSubleaseAnalysis(); }}>
+                  🏢 Sublease
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -4608,6 +4640,104 @@ export default function LeaseLogicApp() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'sublease' ? (
+                /* activeTab === 'sublease' */
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto', gap: '20px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+                      <span>🏢</span> Sublease Rights & Secondary Space Monetization Calculator
+                    </h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                      Evaluate tenant subletting covenanted rights, landlord profit share splits, and potential revenue from unutilized square footage.
+                    </p>
+                  </div>
+
+                  {/* Calculator Form */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Unutilized Vacant Space (Sq Ft)</label>
+                      <input 
+                        type="number" 
+                        value={subleaseInputs.unutilized_sqft}
+                        onChange={(e) => setSubleaseInputs({ ...subleaseInputs, unutilized_sqft: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Market Sublease Rent ($/Sq Ft)</label>
+                      <input 
+                        type="number" 
+                        value={subleaseInputs.estimated_market_rate_sqft}
+                        onChange={(e) => setSubleaseInputs({ ...subleaseInputs, estimated_market_rate_sqft: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <button onClick={handleRunSubleaseAnalysis} disabled={loadingSublease} className="btn btn-primary" style={{ width: '100%', padding: '9px', fontSize: '0.82rem' }}>
+                        {loadingSublease ? 'Calculating...' : '📊 Calculate Revenue'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Results */}
+                  {subleaseData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      {/* Governance Alert Card */}
+                      <div style={{
+                        padding: '14px 16px',
+                        borderRadius: '8px',
+                        background: subleaseData.subletting_status === 'PROHIBITED' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                        border: `1px solid ${subleaseData.subletting_status === 'PROHIBITED' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(16, 185, 129, 0.25)'}`,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            background: subleaseData.subletting_status === 'PROHIBITED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                            color: subleaseData.subletting_status === 'PROHIBITED' ? 'var(--error)' : 'var(--success)',
+                            fontWeight: 800,
+                            fontSize: '0.75rem',
+                            textTransform: 'uppercase'
+                          }}>
+                            {subleaseData.subletting_status.replace(/_/g, ' ')}
+                          </span>
+                          <p style={{ fontSize: '0.82rem', fontWeight: 600, margin: '6px 0 0 0', color: 'var(--foreground)' }}>
+                            {subleaseData.governance_notes}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Revenue Financial Summary */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                        <div style={{ padding: '14px', background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Gross Annual Revenue</span>
+                          <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)', margin: '4px 0 0 0' }}>
+                            ${subleaseData.gross_annual_sublease_income.toLocaleString()}
+                          </h3>
+                        </div>
+
+                        <div style={{ padding: '14px', background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Landlord Profit Share ({subleaseData.landlord_profit_share_pct}%)</span>
+                          <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--warning)', margin: '4px 0 0 0' }}>
+                            ${subleaseData.landlord_annual_profit_share.toLocaleString()}
+                          </h3>
+                        </div>
+
+                        <div style={{ padding: '14px', background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Tenant Net Retained Income</span>
+                          <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)', margin: '4px 0 0 0' }}>
+                            ${subleaseData.tenant_net_retained_annual_income.toLocaleString()}
+                          </h3>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
