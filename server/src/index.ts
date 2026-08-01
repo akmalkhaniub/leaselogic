@@ -1164,6 +1164,79 @@ app.post('/api/leases/:id/fx-cpi-adjust', async (req, res) => {
   }
 });
 
+// 4.772. GET audit ESG and Green Lease environmental compliance
+app.get('/api/leases/:id/esg-audit', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const termsRes = await pool.query("SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1", [id]);
+    const termMap = new Map<string, string>();
+    termsRes.rows.forEach((t: any) => termMap.set(t.term_name, t.extracted_value));
+
+    const repairRaw = termMap.get('repair_obligations') || '';
+    const useRaw = termMap.get('use_clause') || '';
+    const covenantsRaw = termMap.get('indemnity_covenants') || '';
+    const combinedText = (repairRaw + ' ' + useRaw + ' ' + covenantsRaw).toLowerCase();
+
+    // 1. Energy Efficiency
+    const hasEnergy = combinedText.includes('led') || combinedText.includes('hvac') || combinedText.includes('epc') || combinedText.includes('energy');
+    const energyScore = hasEnergy ? 25 : 10;
+    const energyStatus = hasEnergy ? 'COMPLIANT' : 'MISSING_COVENANT';
+
+    // 2. Renewable Energy
+    const hasRenewable = combinedText.includes('renewable') || combinedText.includes('solar') || combinedText.includes('green tariff') || combinedText.includes('carbon');
+    const renewableScore = hasRenewable ? 25 : 5;
+    const renewableStatus = hasRenewable ? 'COMPLIANT' : 'MISSING_COVENANT';
+
+    // 3. Waste Management
+    const hasWaste = combinedText.includes('waste') || combinedText.includes('recycle') || combinedText.includes('disposal');
+    const wasteScore = hasWaste ? 25 : 15;
+    const wasteStatus = hasWaste ? 'COMPLIANT' : 'PARTIAL_COMPLIANT';
+
+    // 4. Sustainable Materials
+    const hasMaterials = combinedText.includes('sustainable') || combinedText.includes('eco') || combinedText.includes('breeam') || combinedText.includes('leed');
+    const materialsScore = hasMaterials ? 25 : 10;
+    const materialsStatus = hasMaterials ? 'COMPLIANT' : 'MISSING_COVENANT';
+
+    const totalScore = energyScore + renewableScore + wasteScore + materialsScore;
+    let esgGrade = 'F';
+    if (totalScore >= 90) esgGrade = 'A+';
+    else if (totalScore >= 75) esgGrade = 'A';
+    else if (totalScore >= 60) esgGrade = 'B';
+    else if (totalScore >= 45) esgGrade = 'C';
+
+    const recommendations = [];
+    if (!hasEnergy) recommendations.push('Add Energy Performance Certificate (EPC B+) rating covenant mandate.');
+    if (!hasRenewable) recommendations.push('Insert Green Electricity Tariff & 100% renewable power procurement clause.');
+    if (!hasWaste) recommendations.push('Include mandatory zero-waste-to-landfill tenant recycling covenants.');
+    if (!hasMaterials) recommendations.push('Require SKA / BREEAM Refurbishment certified sustainable fit-out materials.');
+
+    res.json({
+      lease_id: lease.id,
+      filename: lease.filename,
+      property_name: lease.property_name || 'General Portfolio',
+      esg_score: totalScore,
+      esg_grade: esgGrade,
+      compliance_categories: {
+        energy_efficiency: { score: energyScore, max: 25, status: energyStatus, detail: 'Energy Performance & HVAC Efficiency' },
+        renewable_power: { score: renewableScore, max: 25, status: renewableStatus, detail: 'Renewable Electricity & Carbon Tariff' },
+        waste_recycling: { score: wasteScore, max: 25, status: wasteStatus, detail: 'Waste Diversion & Recycling Mandate' },
+        sustainable_fitout: { score: materialsScore, max: 25, status: materialsStatus, detail: 'Eco-Certified Alteration Materials' }
+      },
+      recommendations
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
