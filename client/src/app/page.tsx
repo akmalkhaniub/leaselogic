@@ -152,8 +152,12 @@ export default function LeaseLogicApp() {
   const [camAuditData, setCamAuditData] = useState<any>(null);
   const [loadingCamAudit, setLoadingCamAudit] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit'>('abstract');
+  // ESG Audit state
+  const [esgAuditData, setEsgAuditData] = useState<any>(null);
+  const [loadingEsgAudit, setLoadingEsgAudit] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -267,6 +271,23 @@ export default function LeaseLogicApp() {
       console.error('Error running FX CPI adjustment:', err);
     } finally {
       setLoadingFxCpi(false);
+    }
+  };
+
+  // Fetch ESG & Green Lease Environmental Audit
+  const handleFetchEsgAudit = async () => {
+    if (!selectedLease) return;
+    setLoadingEsgAudit(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/esg-audit`);
+      if (res.ok) {
+        const data = await res.json();
+        setEsgAuditData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching ESG audit:', err);
+    } finally {
+      setLoadingEsgAudit(false);
     }
   };
 
@@ -3404,6 +3425,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'cam_audit' ? 'active' : ''}`} onClick={() => { setActiveTab('cam_audit'); handleRunCamAudit(); }}>
                   💰 CAM Audit
                 </div>
+                <div className={`tab ${activeTab === 'esg' ? 'active' : ''}`} onClick={() => { setActiveTab('esg'); handleFetchEsgAudit(); }}>
+                  🌱 ESG Audit
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -4252,7 +4276,7 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : activeTab === 'cam_audit' ? (
                 /* activeTab === 'cam_audit' */
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto', gap: '20px' }}>
                   <div>
@@ -4416,7 +4440,96 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
-              )}
+              ) : activeTab === 'esg' ? (
+                /* activeTab === 'esg' */
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto', gap: '20px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+                      <span>🌱</span> ESG & Green Lease Environmental Audit
+                    </h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                      Evaluate lease agreement compliance against GRESB, BREEAM, and Energy Performance Certificate (EPC) sustainability standards.
+                    </p>
+                  </div>
+
+                  {loadingEsgAudit ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Evaluating Green Lease compliance & ESG metrics...
+                    </div>
+                  ) : !esgAuditData ? (
+                    <div className="glass" style={{ padding: '20px', textAlign: 'center', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                        Select a lease document on the left to view ESG compliance metrics.
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Grade Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: esgAuditData.esg_score >= 75 ? 'rgba(16, 185, 129, 0.08)' : esgAuditData.esg_score >= 50 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                        border: `1px solid ${esgAuditData.esg_score >= 75 ? 'rgba(16, 185, 129, 0.25)' : esgAuditData.esg_score >= 50 ? 'rgba(245, 158, 11, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Overall ESG Rating</span>
+                          <h2 style={{ fontSize: '2rem', fontWeight: 900, margin: '2px 0 0 0', color: esgAuditData.esg_score >= 75 ? 'var(--success)' : esgAuditData.esg_score >= 50 ? 'var(--warning)' : 'var(--error)' }}>
+                            Grade {esgAuditData.esg_grade}
+                          </h2>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Sustainability Index Score</span>
+                          <h2 style={{ fontSize: '2rem', fontWeight: 900, margin: '2px 0 0 0', color: 'var(--foreground)' }}>
+                            {esgAuditData.esg_score} / 100
+                          </h2>
+                        </div>
+                      </div>
+
+                      {/* 4 Pillar Breakdown */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {Object.entries(esgAuditData.compliance_categories).map(([key, cat]: [string, any]) => (
+                          <div key={key} style={{ padding: '14px', background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--foreground)' }}>{cat.detail}</span>
+                              <span style={{
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontSize: '0.68rem',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                background: cat.status === 'COMPLIANT' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                color: cat.status === 'COMPLIANT' ? 'var(--success)' : 'var(--warning)'
+                              }}>
+                                {cat.status.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--primary)' }}>
+                              Score: {cat.score} / {cat.max} pts
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Recommendations */}
+                      {esgAuditData.recommendations.length > 0 && (
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <h4 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '10px' }}>🌱 Green Lease Upgrade Recommendations</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {esgAuditData.recommendations.map((rec: string, idx: number) => (
+                              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'var(--foreground)' }}>
+                                <span style={{ color: 'var(--primary)', fontWeight: 800 }}>•</span> {rec}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         )}
