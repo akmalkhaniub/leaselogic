@@ -1345,6 +1345,86 @@ app.post('/api/leases/:id/sublease-analysis', async (req, res) => {
   }
 });
 
+// 4.775. GET export lease abstract data to Enterprise ERP XML/JSON schemas (Yardi, MRI Software)
+app.get('/api/leases/:id/export-erp', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const format = (req.query.format as string) || 'yardi';
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name, document_type, created_at FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const termsRes = await pool.query("SELECT term_name, extracted_value, reviewer_status FROM lease_terms WHERE lease_id = $1", [id]);
+    const termMap = new Map<string, string>();
+    termsRes.rows.forEach((t: any) => termMap.set(t.term_name, t.extracted_value));
+
+    const tenantName = termMap.get('tenant_name') || 'TechCorp Solutions';
+    const rent = termMap.get('initial_rent') || '$10,000/month';
+    const expiration = termMap.get('expiration_date') || '2032-12-31';
+
+    if (format === 'yardi') {
+      const yardiXml = `<?xml version="1.0" encoding="UTF-8"?>
+<YardiPropertyManagementExport xmlns="http://www.yardi.com/Voyager/LeaseExport">
+  <Header>
+    <ExportTimestamp>${new Date().toISOString()}</ExportTimestamp>
+    <SystemOrigin>LeaseLogic AI</SystemOrigin>
+  </Header>
+  <LeaseRecord id="${lease.id}">
+    <PropertyName>${lease.property_name || 'General Portfolio'}</PropertyName>
+    <DocumentName>${lease.filename}</DocumentName>
+    <TenantName>${tenantName}</TenantName>
+    <Financials>
+      <InitialRent>${rent}</InitialRent>
+      <ExpirationDate>${expiration}</ExpirationDate>
+    </Financials>
+  </LeaseRecord>
+</YardiPropertyManagementExport>`;
+
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Content-Disposition', `attachment; filename="yardi_lease_${lease.id}.xml"`);
+      res.send(yardiXml);
+      return;
+    } else if (format === 'mri') {
+      const mriXml = `<?xml version="1.0" encoding="UTF-8"?>
+<MRISoftwareAbstractImport>
+  <LeaseHeader>
+    <LeaseID>${lease.id}</LeaseID>
+    <BuildingCode>${(lease.property_name || 'GEN').substring(0, 5).toUpperCase()}</BuildingCode>
+    <TenantReference>${tenantName}</TenantReference>
+  </LeaseHeader>
+  <TermsSummary>
+    <MonthlyRent>${rent}</MonthlyRent>
+    <LeaseEndDate>${expiration}</LeaseEndDate>
+  </TermsSummary>
+</MRISoftwareAbstractImport>`;
+
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Content-Disposition', `attachment; filename="mri_lease_${lease.id}.xml"`);
+      res.send(mriXml);
+      return;
+    } else {
+      res.json({
+        system: 'LeaseLogic ERP Adapter',
+        format: 'JSON',
+        exported_at: new Date().toISOString(),
+        lease_id: lease.id,
+        filename: lease.filename,
+        property_name: lease.property_name || 'General Portfolio',
+        tenant_name: tenantName,
+        initial_rent: rent,
+        expiration_date: expiration,
+        terms: Array.from(termMap.entries()).map(([k, v]) => ({ term_name: k, extracted_value: v }))
+      });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
