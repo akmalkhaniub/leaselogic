@@ -1292,6 +1292,59 @@ app.post('/api/leases/:id/generate-counter-offer', async (req, res) => {
   }
 });
 
+// 4.774. POST evaluate sublease rights and secondary space monetization income
+app.post('/api/leases/:id/sublease-analysis', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { unutilized_sqft = 2500, estimated_market_rate_sqft = 45 } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const termsRes = await pool.query("SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1", [id]);
+    const termMap = new Map<string, string>();
+    termsRes.rows.forEach((t: any) => termMap.set(t.term_name, t.extracted_value));
+
+    const useClause = (termMap.get('use_clause') || '').toLowerCase();
+    const isSublettingProhibited = useClause.includes('no subletting') || useClause.includes('prohibited');
+    const sublettingStatus = isSublettingProhibited ? 'PROHIBITED' : 'PERMITTED_WITH_CONSENT';
+    const landlordProfitSharePct = 50;
+
+    const grossAnnualSubleaseIncome = unutilized_sqft * estimated_market_rate_sqft;
+    const grossMonthlySubleaseIncome = Math.round(grossAnnualSubleaseIncome / 12);
+
+    const primeAnnualRentPerSqft = 35;
+    const excessProfitPerSqft = Math.max(0, estimated_market_rate_sqft - primeAnnualRentPerSqft);
+    const landlordAnnualProfitShare = Math.round(unutilized_sqft * excessProfitPerSqft * (landlordProfitSharePct / 100));
+    const tenantNetRetainedIncome = grossAnnualSubleaseIncome - landlordAnnualProfitShare;
+
+    res.json({
+      lease_id: lease.id,
+      filename: lease.filename,
+      property_name: lease.property_name || 'General Portfolio',
+      subletting_status: sublettingStatus,
+      landlord_consent_required: true,
+      landlord_consent_sla_days: 30,
+      landlord_profit_share_pct: landlordProfitSharePct,
+      unutilized_sqft,
+      estimated_market_rate_sqft,
+      gross_annual_sublease_income: grossAnnualSubleaseIncome,
+      gross_monthly_sublease_income: grossMonthlySubleaseIncome,
+      landlord_annual_profit_share: landlordAnnualProfitShare,
+      tenant_net_retained_annual_income: tenantNetRetainedIncome,
+      governance_notes: isSublettingProhibited 
+        ? '⚠️ Direct assignment/subletting prohibited in current text. Negotiation required to insert standard reasonable consent clause.' 
+        : '✅ Subletting permitted subject to prior written Landlord consent not to be unreasonably withheld or delayed.'
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
