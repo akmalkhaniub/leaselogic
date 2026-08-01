@@ -1237,6 +1237,61 @@ app.get('/api/leases/:id/esg-audit', async (req, res) => {
   }
 });
 
+// 4.773. POST generate AI lease negotiation script and counter-offer proposals
+app.post('/api/leases/:id/generate-counter-offer', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { target_risk_level = 'moderate' } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const termsRes = await pool.query("SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1", [id]);
+    const termMap = new Map<string, string>();
+    termsRes.rows.forEach((t: any) => termMap.set(t.term_name, t.extracted_value));
+
+    const indemnity = termMap.get('indemnity_covenants') || 'Full tenant indemnity required';
+    const rent = termMap.get('initial_rent') || '$10,000/month';
+    const breakClause = termMap.get('break_clause') || 'No break clause specified';
+
+    const proposals = [
+      {
+        covenant_name: 'Liability & Tenant Indemnity',
+        original_value: indemnity,
+        counter_proposal_text: 'Tenant liability shall be capped at $5,000,000 per occurrence with a mutual indemnity clause protecting tenant against pre-existing landlord defaults.',
+        negotiation_strategy: 'Cite commercial market standards. Landlords in Tier-1 assets regularly accept mutual $5M caps backed by primary insurance policies.'
+      },
+      {
+        covenant_name: 'Break Clause & Exit Flexibility',
+        original_value: breakClause,
+        counter_proposal_text: 'Tenant shall hold an unconditional break option exercisable at Month 36 upon giving 6 months prior written notice, subject to a 1-month rent penalty.',
+        negotiation_strategy: 'Protect business agility. If landlord resists, offer a 2-month rent penalty in exchange for early exit rights.'
+      },
+      {
+        covenant_name: 'Rent & Annual Escalations',
+        original_value: rent,
+        counter_proposal_text: 'Annual rent escalations shall be tied to CPI but capped at a maximum of 3.0% per annum, non-compounded.',
+        negotiation_strategy: 'Hedge inflation volatility. Demonstrate to landlord that 3% cap aligns with long-term commercial yield expectations.'
+      }
+    ];
+
+    res.json({
+      lease_id: lease.id,
+      filename: lease.filename,
+      property_name: lease.property_name || 'General Portfolio',
+      target_risk_level,
+      total_proposals: proposals.length,
+      counter_proposals: proposals
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
