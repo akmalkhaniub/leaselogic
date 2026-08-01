@@ -156,8 +156,12 @@ export default function LeaseLogicApp() {
   const [esgAuditData, setEsgAuditData] = useState<any>(null);
   const [loadingEsgAudit, setLoadingEsgAudit] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg'>('abstract');
+  // Negotiation state
+  const [negotiationData, setNegotiationData] = useState<any>(null);
+  const [loadingNegotiation, setLoadingNegotiation] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -288,6 +292,27 @@ export default function LeaseLogicApp() {
       console.error('Error fetching ESG audit:', err);
     } finally {
       setLoadingEsgAudit(false);
+    }
+  };
+
+  // Generate AI Lease Negotiation Counter-Offers
+  const handleGenerateCounterOffer = async () => {
+    if (!selectedLease) return;
+    setLoadingNegotiation(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/generate-counter-offer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_risk_level: 'moderate' })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNegotiationData(data);
+      }
+    } catch (err) {
+      console.error('Error generating counter offer:', err);
+    } finally {
+      setLoadingNegotiation(false);
     }
   };
 
@@ -3428,6 +3453,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'esg' ? 'active' : ''}`} onClick={() => { setActiveTab('esg'); handleFetchEsgAudit(); }}>
                   🌱 ESG Audit
                 </div>
+                <div className={`tab ${activeTab === 'negotiation' ? 'active' : ''}`} onClick={() => { setActiveTab('negotiation'); handleGenerateCounterOffer(); }}>
+                  🤖 Negotiation
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -4526,6 +4554,60 @@ export default function LeaseLogicApp() {
                           </div>
                         </div>
                       )}
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'negotiation' ? (
+                /* activeTab === 'negotiation' */
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto', gap: '20px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+                      <span>🤖</span> AI Lease Negotiation Copilot & Counter-Offer Generator
+                    </h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                      Automated legal counter-proposal drafts and commercial negotiation strategies generated for high-risk covenants.
+                    </p>
+                  </div>
+
+                  {loadingNegotiation ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Synthesizing legal counter-proposals and market negotiation scripts...
+                    </div>
+                  ) : !negotiationData ? (
+                    <div className="glass" style={{ padding: '20px', textAlign: 'center', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                        Select a lease document on the left to generate negotiation counter-offers.
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {negotiationData.counter_proposals.map((item: any, idx: number) => (
+                        <div key={idx} style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.08)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>
+                              {item.covenant_name}
+                            </h4>
+                            <span style={{ padding: '2px 8px', borderRadius: '4px', background: 'rgba(139, 92, 246, 0.1)', color: 'var(--primary)', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                              Counter-Proposal #{idx + 1}
+                            </span>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px', border: '1px solid rgba(15,23,42,0.04)', fontSize: '0.8rem' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Original Extracted Covenant</span>
+                            <p style={{ margin: '4px 0 0 0', color: 'var(--foreground)' }}>{item.original_value}</p>
+                          </div>
+
+                          <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.15)', fontSize: '0.82rem' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase' }}>⚖️ Recommended Counter-Offer Clause</span>
+                            <p style={{ margin: '4px 0 0 0', fontWeight: 600, color: 'var(--foreground)' }}>{item.counter_proposal_text}</p>
+                          </div>
+
+                          <div style={{ padding: '10px', background: 'rgba(245, 158, 11, 0.05)', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.15)', fontSize: '0.78rem' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--warning)', textTransform: 'uppercase' }}>💡 Negotiation Strategy & Market Talking Points</span>
+                            <p style={{ margin: '4px 0 0 0', color: 'var(--foreground)' }}>{item.negotiation_strategy}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
