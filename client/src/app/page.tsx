@@ -3284,13 +3284,31 @@ export default function LeaseLogicApp() {
                 
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {selectedLease && selectedLease.status === 'completed' && (
-                    <button
-                      onClick={() => window.open(`${API_BASE}/leases/${selectedLease.id}/export-memo`, '_blank')}
-                      className="btn btn-secondary"
-                      style={{ padding: '8px 12px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                    >
-                      📄 Executive Memo
-                    </button>
+                    <>
+                      <button
+                        onClick={() => window.open(`${API_BASE}/leases/${selectedLease.id}/export-memo`, '_blank')}
+                        className="btn btn-secondary"
+                        style={{ padding: '8px 12px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        📄 Executive Memo
+                      </button>
+                      <button
+                        onClick={() => window.open(`${API_BASE}/leases/${selectedLease.id}/export-erp?format=yardi`, '_blank')}
+                        className="btn btn-secondary"
+                        style={{ padding: '8px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        title="Export Yardi Voyager XML Schema"
+                      >
+                        ⚡ Yardi XML
+                      </button>
+                      <button
+                        onClick={() => window.open(`${API_BASE}/leases/${selectedLease.id}/export-erp?format=mri`, '_blank')}
+                        className="btn btn-secondary"
+                        style={{ padding: '8px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        title="Export MRI Software XML Schema"
+                      >
+                        ⚡ MRI XML
+                      </button>
+                    </>
                   )}
                   <button 
                     onClick={triggerRegistryAutomation}
