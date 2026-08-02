@@ -47,7 +47,11 @@ export default function LeaseLogicApp() {
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
   // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare'>('workspace');
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies'>('workspace');
+  
+  // Portfolio Anomaly Auditor state
+  const [portfolioAnomaliesData, setPortfolioAnomaliesData] = useState<any>(null);
+  const [loadingAnomalies, setLoadingAnomalies] = useState(false);
   
   // Comparison Engine state
   const [compareLeaseId1, setCompareLeaseId1] = useState<string>('');
@@ -241,6 +245,22 @@ export default function LeaseLogicApp() {
       }
     } catch (err) {
       console.error('Error updating lease property tag:', err);
+    }
+  };
+
+  // Fetch Portfolio-Wide Anomaly Audit
+  const fetchPortfolioAnomalies = async () => {
+    setLoadingAnomalies(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/audit-anomalies`);
+      if (res.ok) {
+        const data = await res.json();
+        setPortfolioAnomaliesData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching portfolio anomalies:', err);
+    } finally {
+      setLoadingAnomalies(false);
     }
   };
 
@@ -1748,6 +1768,13 @@ export default function LeaseLogicApp() {
           >
             ⚖️ Diff
           </button>
+          <button 
+            className={`btn ${currentView === 'anomalies' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => { setCurrentView('anomalies'); fetchPortfolioAnomalies(); }}
+          >
+            ⚡ Audit
+          </button>
         </div>
 
         <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -3245,6 +3272,105 @@ export default function LeaseLogicApp() {
                 </div>
               </div>
             )}
+          </div>
+        ) : currentView === 'anomalies' ? (
+          <div className="pane" style={{ overflowY: 'auto', gap: '20px' }}>
+            <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)' }}>⚡ Portfolio-Wide Anomaly & Data Discrepancy Auditor</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                    Automated audit scanning across all portfolio leases to detect missing terms, uncapped liabilities, and covenant risks.
+                  </p>
+                </div>
+                <button onClick={fetchPortfolioAnomalies} disabled={loadingAnomalies} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                  {loadingAnomalies ? 'Auditing...' : '🔄 Re-scan Portfolio'}
+                </button>
+              </div>
+
+              {loadingAnomalies ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Scanning portfolio leases for data discrepancies...
+                </div>
+              ) : !portfolioAnomaliesData ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Click Re-scan Portfolio to evaluate anomaly health.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Health Banner */}
+                  <div style={{
+                    padding: '16px 20px',
+                    borderRadius: '8px',
+                    background: portfolioAnomaliesData.portfolio_health_score >= 80 ? 'rgba(16, 185, 129, 0.08)' : portfolioAnomaliesData.portfolio_health_score >= 60 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                    border: `1px solid ${portfolioAnomaliesData.portfolio_health_score >= 80 ? 'rgba(16, 185, 129, 0.25)' : portfolioAnomaliesData.portfolio_health_score >= 60 ? 'rgba(245, 158, 11, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Portfolio Anomaly Health Index</span>
+                      <h2 style={{ fontSize: '2rem', fontWeight: 900, margin: '2px 0 0 0', color: portfolioAnomaliesData.portfolio_health_score >= 80 ? 'var(--success)' : portfolioAnomaliesData.portfolio_health_score >= 60 ? 'var(--warning)' : 'var(--error)' }}>
+                        {portfolioAnomaliesData.portfolio_health_score} / 100
+                      </h2>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Leases Audited</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0' }}>{portfolioAnomaliesData.total_leases_audited}</h4>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--error)', textTransform: 'uppercase', fontWeight: 700 }}>High Severity</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--error)', margin: '2px 0 0 0' }}>{portfolioAnomaliesData.high_severity_anomalies}</h4>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--warning)', textTransform: 'uppercase', fontWeight: 700 }}>Medium Severity</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--warning)', margin: '2px 0 0 0' }}>{portfolioAnomaliesData.medium_severity_anomalies}</h4>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Anomalies Table */}
+                  <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                    <table className="terms-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Severity</th>
+                          <th>Lease Document</th>
+                          <th>Property Asset</th>
+                          <th>Issue Classification</th>
+                          <th>Discrepancy Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {portfolioAnomaliesData.anomalies.map((item: any, idx: number) => (
+                          <tr key={idx}>
+                            <td>
+                              <span style={{
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                background: item.severity === 'high' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                color: item.severity === 'high' ? 'var(--error)' : 'var(--warning)'
+                              }}>
+                                {item.severity}
+                              </span>
+                            </td>
+                            <td style={{ fontWeight: 700, fontSize: '0.82rem' }}>{item.filename}</td>
+                            <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.property_name}</td>
+                            <td style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)' }}>{item.issue_type.replace(/_/g, ' ')}</td>
+                            <td style={{ fontSize: '0.8rem', color: 'var(--foreground)' }}>{item.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ) : !selectedLease ? (
           <div className="pane" style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
