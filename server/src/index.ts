@@ -1425,6 +1425,78 @@ app.get('/api/leases/:id/export-erp', async (req, res) => {
   }
 });
 
+// 4.776. GET scan portfolio-wide for data discrepancies and covenant anomalies
+app.get('/api/portfolio/audit-anomalies', async (req, res) => {
+  try {
+    const leasesRes = await pool.query("SELECT id, filename, property_name FROM leases ORDER BY created_at DESC");
+    const leases = leasesRes.rows;
+
+    const anomalies: any[] = [];
+    let highSeverityCount = 0;
+    let mediumSeverityCount = 0;
+
+    for (const lease of leases) {
+      const termsRes = await pool.query("SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1", [lease.id]);
+      const termMap = new Map<string, string>();
+      termsRes.rows.forEach((t: any) => termMap.set(t.term_name, t.extracted_value));
+
+      const rent = termMap.get('initial_rent');
+      const expiration = termMap.get('expiration_date');
+      const tenant = termMap.get('tenant_name');
+      const indemnity = (termMap.get('indemnity_covenants') || '').toLowerCase();
+      const breakClause = termMap.get('break_clause');
+
+      if (!rent || !expiration || !tenant) {
+        highSeverityCount++;
+        anomalies.push({
+          lease_id: lease.id,
+          filename: lease.filename,
+          property_name: lease.property_name || 'General Portfolio',
+          severity: 'high',
+          issue_type: 'MISSING_CRITICAL_TERMS',
+          description: 'Key financial or identity terms (Rent, Expiration, Tenant Name) are unextracted or incomplete.'
+        });
+      }
+
+      if (indemnity.includes('full') || indemnity.includes('unlimited') || indemnity.includes('without cap')) {
+        highSeverityCount++;
+        anomalies.push({
+          lease_id: lease.id,
+          filename: lease.filename,
+          property_name: lease.property_name || 'General Portfolio',
+          severity: 'high',
+          issue_type: 'UNCAPPED_LIABILITY_RISK',
+          description: 'Indemnity covenant specifies uncapped tenant liability without standard $5M ceiling.'
+        });
+      }
+
+      if (!breakClause) {
+        mediumSeverityCount++;
+        anomalies.push({
+          lease_id: lease.id,
+          filename: lease.filename,
+          property_name: lease.property_name || 'General Portfolio',
+          severity: 'medium',
+          issue_type: 'NO_BREAK_OPTION',
+          description: 'Long-term commitment lacks early break option or exit flexibility clause.'
+        });
+      }
+    }
+
+    const healthScore = Math.max(0, 100 - (highSeverityCount * 15 + mediumSeverityCount * 5));
+
+    res.json({
+      total_leases_audited: leases.length,
+      portfolio_health_score: healthScore,
+      high_severity_anomalies: highSeverityCount,
+      medium_severity_anomalies: mediumSeverityCount,
+      anomalies
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
