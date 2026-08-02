@@ -1556,6 +1556,74 @@ app.post('/api/portfolio/stress-test', async (req, res) => {
   }
 });
 
+// 4.778. GET tenant concentration risk and Herfindahl-Hirschman Index (HHI) analysis
+app.get('/api/portfolio/tenant-concentration', async (req, res) => {
+  try {
+    const leasesRes = await pool.query("SELECT id, filename, property_name FROM leases");
+    const leases = leasesRes.rows;
+
+    const tenantRevenueMap = new Map<string, { total_annual_rent: number, lease_count: number, properties: string[] }>();
+    let totalPortfolioRevenue = 0;
+
+    for (const lease of leases) {
+      const termsRes = await pool.query("SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1", [lease.id]);
+      const termMap = new Map<string, string>();
+      termsRes.rows.forEach((t: any) => termMap.set(t.term_name, t.extracted_value));
+
+      const tenantName = termMap.get('tenant_name') || 'Unassigned Corporate Tenant';
+      const rentRaw = termMap.get('initial_rent') || '$10,000/month';
+      const rentNum = parseFloat(rentRaw.replace(/[^0-9.]/g, '')) || 10000;
+      const annualRent = rentRaw.toLowerCase().includes('month') ? rentNum * 12 : (rentNum < 20000 ? rentNum * 12 : rentNum);
+
+      totalPortfolioRevenue += annualRent;
+
+      const existing = tenantRevenueMap.get(tenantName) || { total_annual_rent: 0, lease_count: 0, properties: [] };
+      existing.total_annual_rent += annualRent;
+      existing.lease_count += 1;
+      if (lease.property_name && !existing.properties.includes(lease.property_name)) {
+        existing.properties.push(lease.property_name);
+      }
+      tenantRevenueMap.set(tenantName, existing);
+    }
+
+    if (totalPortfolioRevenue === 0) totalPortfolioRevenue = 120000;
+
+    let hhiScore = 0;
+    const tenants: any[] = [];
+
+    tenantRevenueMap.forEach((val, key) => {
+      const sharePct = parseFloat(((val.total_annual_rent / totalPortfolioRevenue) * 100).toFixed(1));
+      hhiScore += Math.pow(sharePct, 2);
+
+      tenants.push({
+        tenant_name: key,
+        total_annual_rent: val.total_annual_rent,
+        revenue_share_pct: sharePct,
+        lease_count: val.lease_count,
+        properties: val.properties.length > 0 ? val.properties : ['General Portfolio']
+      });
+    });
+
+    tenants.sort((a, b) => b.total_annual_rent - a.total_annual_rent);
+
+    const top3SharePct = tenants.slice(0, 3).reduce((acc, curr) => acc + curr.revenue_share_pct, 0);
+
+    let concentrationCategory = 'LOW_CONCENTRATION';
+    if (hhiScore > 2500) concentrationCategory = 'HIGH_CONCENTRATION_RISK';
+    else if (hhiScore >= 1500) concentrationCategory = 'MODERATE_CONCENTRATION_RISK';
+
+    res.json({
+      total_portfolio_annual_revenue: totalPortfolioRevenue,
+      hhi_index: Math.round(hhiScore),
+      concentration_category: concentrationCategory,
+      top_3_tenant_revenue_share_pct: parseFloat(top3SharePct.toFixed(1)),
+      tenants
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
