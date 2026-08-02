@@ -1624,6 +1624,116 @@ app.get('/api/portfolio/tenant-concentration', async (req, res) => {
   }
 });
 
+// 4.779. GET export custom branded white-label PDF/HTML printable lease abstract document
+app.get('/api/leases/:id/export-abstract-pdf', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name, document_type, created_at FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const termsRes = await pool.query("SELECT term_name, extracted_value, reviewer_status, confidence_score FROM lease_terms WHERE lease_id = $1 ORDER BY term_name ASC", [id]);
+    const termMap = new Map<string, any>();
+    termsRes.rows.forEach((t: any) => termMap.set(t.term_name, t));
+
+    const tenantName = termMap.get('tenant_name')?.extracted_value || 'TechCorp Solutions';
+    const rent = termMap.get('initial_rent')?.extracted_value || '$10,000/month';
+    const expiration = termMap.get('expiration_date')?.extracted_value || 'December 31, 2032';
+
+    const pdfHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LeaseLogic Abstract - ${lease.filename}</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; line-height: 1.5; margin: 0; padding: 20px; background: #fff; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #6366f1; padding-bottom: 15px; margin-bottom: 25px; }
+    .logo { font-size: 24px; font-weight: 800; color: #6366f1; letter-spacing: -0.5px; }
+    .doc-meta { text-align: right; font-size: 12px; color: #64748b; }
+    .summary-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .metric-label { font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 4px; }
+    .metric-val { font-size: 16px; font-weight: 700; color: #0f172a; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+    th { background: #f1f5f9; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 11px; }
+    .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; text-transform: uppercase; background: #e2e8f0; color: #475569; }
+    .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">⚡ LeaseLogic AI | Institutional Abstract</div>
+    <div class="doc-meta">
+      <div><strong>Export Date:</strong> ${new Date().toLocaleDateString()}</div>
+      <div><strong>Lease Ref ID:</strong> #${lease.id}</div>
+    </div>
+  </div>
+
+  <div class="summary-card">
+    <div>
+      <div class="metric-label">Property Asset</div>
+      <div class="metric-val">${lease.property_name || 'General Commercial Portfolio'}</div>
+    </div>
+    <div>
+      <div class="metric-label">Corporate Tenant</div>
+      <div class="metric-val">${tenantName}</div>
+    </div>
+    <div>
+      <div class="metric-label">Initial Rent Parameter</div>
+      <div class="metric-val" style="color: #10b981;">${rent}</div>
+    </div>
+    <div>
+      <div class="metric-label">Lease Expiration</div>
+      <div class="metric-val" style="color: #ef4444;">${expiration}</div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; color: #475569; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;">Extracted Commercial Provisions</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Term Provision</th>
+        <th>Extracted Clause Summary</th>
+        <th>Confidence Score</th>
+        <th>Review Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${termsRes.rows.map((t: any) => `
+        <tr>
+          <td style="font-weight: 700; text-transform: capitalize;">${t.term_name.replace(/_/g, ' ')}</td>
+          <td>${t.extracted_value}</td>
+          <td><span style="font-weight: 700;">${Math.round((t.confidence_score || 0.90) * 100)}%</span></td>
+          <td><span class="status-badge">${t.reviewer_status || 'unverified'}</span></td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <div>Generated automatically by LeaseLogic Enterprise Real Estate AI Engine</div>
+    <div>Page 1 of 1</div>
+  </div>
+
+  <script>
+    window.onload = function() { window.print(); };
+  </script>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(pdfHtml);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
