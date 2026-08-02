@@ -1497,6 +1497,65 @@ app.get('/api/portfolio/audit-anomalies', async (req, res) => {
   }
 });
 
+// 4.777. POST portfolio rent roll stress-testing and economic vacancy scenario simulator
+app.post('/api/portfolio/stress-test', async (req, res) => {
+  try {
+    const { default_rate_pct = 15, vacancy_rate_pct = 10, inflation_surge_pct = 5 } = req.body;
+
+    const termsRes = await pool.query("SELECT extracted_value FROM lease_terms WHERE term_name = 'initial_rent'");
+    let baselineGrossRevenue = 0;
+
+    termsRes.rows.forEach((t: any) => {
+      const rentRaw = t.extracted_value || '';
+      const rentNum = parseFloat(rentRaw.replace(/[^0-9.]/g, '')) || 10000;
+      const annualRent = rentRaw.toLowerCase().includes('month') ? rentNum * 12 : (rentNum < 20000 ? rentNum * 12 : rentNum);
+      baselineGrossRevenue += annualRent;
+    });
+
+    if (baselineGrossRevenue === 0) baselineGrossRevenue = 1200000;
+
+    const baselineOpex = Math.round(baselineGrossRevenue * 0.35);
+    const baselineNoi = baselineGrossRevenue - baselineOpex;
+    const debtServiceAnnual = Math.round(baselineGrossRevenue * 0.50);
+    const baselineDscr = parseFloat((baselineNoi / debtServiceAnnual).toFixed(2));
+
+    const defaultLoss = baselineGrossRevenue * (default_rate_pct / 100);
+    const vacancyLoss = baselineGrossRevenue * (vacancy_rate_pct / 100);
+    const stressRevenue = Math.max(0, baselineGrossRevenue - defaultLoss - vacancyLoss);
+
+    const stressOpex = Math.round(baselineOpex * (1 + inflation_surge_pct / 100));
+    const stressNoi = Math.round(stressRevenue - stressOpex);
+    const stressDscr = parseFloat((stressNoi / debtServiceAnnual).toFixed(2));
+
+    let solvencyStatus = 'SAFE';
+    if (stressDscr < 1.0) solvencyStatus = 'CRITICAL_DEFAULT_RISK';
+    else if (stressDscr < 1.25) solvencyStatus = 'MODERATE_RISK';
+
+    res.json({
+      baseline: {
+        annual_gross_revenue: Math.round(baselineGrossRevenue),
+        operating_expenses: baselineOpex,
+        net_operating_income: baselineNoi,
+        annual_debt_service: debtServiceAnnual,
+        dscr: baselineDscr
+      },
+      stress_test: {
+        default_rate_pct,
+        vacancy_rate_pct,
+        inflation_surge_pct,
+        stress_annual_revenue: Math.round(stressRevenue),
+        stress_operating_expenses: stressOpex,
+        stress_net_operating_income: stressNoi,
+        stress_dscr: stressDscr,
+        noi_variance_pct: parseFloat((((stressNoi - baselineNoi) / baselineNoi) * 100).toFixed(1)),
+        solvency_status: solvencyStatus
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
