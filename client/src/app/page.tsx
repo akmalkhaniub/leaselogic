@@ -47,7 +47,16 @@ export default function LeaseLogicApp() {
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
   // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies'>('workspace');
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest'>('workspace');
+  
+  // Stress-Testing Simulator state
+  const [stressTestParams, setStressTestParams] = useState({
+    default_rate_pct: 15,
+    vacancy_rate_pct: 10,
+    inflation_surge_pct: 5
+  });
+  const [stressTestData, setStressTestData] = useState<any>(null);
+  const [loadingStressTest, setLoadingStressTest] = useState(false);
   
   // Portfolio Anomaly Auditor state
   const [portfolioAnomaliesData, setPortfolioAnomaliesData] = useState<any>(null);
@@ -261,6 +270,26 @@ export default function LeaseLogicApp() {
       console.error('Error fetching portfolio anomalies:', err);
     } finally {
       setLoadingAnomalies(false);
+    }
+  };
+
+  // Run Portfolio Rent Roll Stress Test
+  const handleRunStressTest = async () => {
+    setLoadingStressTest(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/stress-test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stressTestParams)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStressTestData(data);
+      }
+    } catch (err) {
+      console.error('Error running portfolio stress-test:', err);
+    } finally {
+      setLoadingStressTest(false);
     }
   };
 
@@ -1774,6 +1803,13 @@ export default function LeaseLogicApp() {
             onClick={() => { setCurrentView('anomalies'); fetchPortfolioAnomalies(); }}
           >
             ⚡ Audit
+          </button>
+          <button 
+            className={`btn ${currentView === 'stresstest' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => { setCurrentView('stresstest'); handleRunStressTest(); }}
+          >
+            📊 Shock
           </button>
         </div>
 
@@ -3367,6 +3403,151 @@ export default function LeaseLogicApp() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : currentView === 'stresstest' ? (
+          <div className="pane" style={{ overflowY: 'auto', gap: '20px' }}>
+            <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)' }}>📊 Rent Roll Stress-Testing & Vacancy Risk Scenario Simulator</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                  Simulate economic shocks (Tenant Defaults %, Vacancy Spikes %, OpEx Inflation %) to stress-test Portfolio Net Operating Income (NOI) and Debt Service Coverage Ratios (DSCR).
+                </p>
+              </div>
+
+              {/* Stress Test Input Controls */}
+              <div style={{ background: '#ffffff', padding: '16px 20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '20px', alignItems: 'center' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tenant Default Shock: {stressTestParams.default_rate_pct}%</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="50"
+                    value={stressTestParams.default_rate_pct}
+                    onChange={(e) => setStressTestParams({ ...stressTestParams, default_rate_pct: parseInt(e.target.value) })}
+                    style={{ width: '100%', marginTop: '6px' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Vacancy Rate Shock: {stressTestParams.vacancy_rate_pct}%</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="40"
+                    value={stressTestParams.vacancy_rate_pct}
+                    onChange={(e) => setStressTestParams({ ...stressTestParams, vacancy_rate_pct: parseInt(e.target.value) })}
+                    style={{ width: '100%', marginTop: '6px' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>OpEx Inflation Surge: {stressTestParams.inflation_surge_pct}%</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="30"
+                    value={stressTestParams.inflation_surge_pct}
+                    onChange={(e) => setStressTestParams({ ...stressTestParams, inflation_surge_pct: parseInt(e.target.value) })}
+                    style={{ width: '100%', marginTop: '6px' }}
+                  />
+                </div>
+                <button onClick={handleRunStressTest} disabled={loadingStressTest} className="btn btn-accent" style={{ padding: '10px 18px', fontSize: '0.85rem' }}>
+                  {loadingStressTest ? 'Simulating...' : '⚡ Run Simulation'}
+                </button>
+              </div>
+
+              {/* Simulation Output */}
+              {loadingStressTest ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Calculating economic scenario shocks on portfolio NOI & DSCR...
+                </div>
+              ) : !stressTestData ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Adjust parameters and click Run Simulation to view financial stress metrics.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Solvency Status Banner */}
+                  <div style={{
+                    padding: '16px 20px',
+                    borderRadius: '8px',
+                    background: stressTestData.stress_test.solvency_status === 'SAFE' ? 'rgba(16, 185, 129, 0.08)' : stressTestData.stress_test.solvency_status === 'MODERATE_RISK' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                    border: `1px solid ${stressTestData.stress_test.solvency_status === 'SAFE' ? 'rgba(16, 185, 129, 0.25)' : stressTestData.stress_test.solvency_status === 'MODERATE_RISK' ? 'rgba(245, 158, 11, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Portfolio Solvency & Debt Service Status</span>
+                      <h2 style={{ fontSize: '1.6rem', fontWeight: 900, margin: '2px 0 0 0', color: stressTestData.stress_test.solvency_status === 'SAFE' ? 'var(--success)' : stressTestData.stress_test.solvency_status === 'MODERATE_RISK' ? 'var(--warning)' : 'var(--error)' }}>
+                        {stressTestData.stress_test.solvency_status === 'SAFE' ? '✅ SOLVENT (DSCR > 1.25x)' : stressTestData.stress_test.solvency_status === 'MODERATE_RISK' ? '⚠️ MODERATE COVENANT RISK' : '🚨 CRITICAL DEBT DEFAULT RISK'}
+                      </h2>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Baseline DSCR</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0' }}>{stressTestData.baseline.dscr}x</h4>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: stressTestData.stress_test.stress_dscr < 1.25 ? 'var(--error)' : 'var(--success)', textTransform: 'uppercase', fontWeight: 700 }}>Stressed DSCR</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: stressTestData.stress_test.stress_dscr < 1.25 ? 'var(--error)' : 'var(--success)', margin: '2px 0 0 0' }}>{stressTestData.stress_test.stress_dscr}x</h4>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Financial Comparison Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                    <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Gross Revenue</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '8px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Baseline: </span>
+                          <strong style={{ fontSize: '0.9rem' }}>${stressTestData.baseline.annual_gross_revenue.toLocaleString()}</strong>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--error)' }}>Stressed: </span>
+                          <strong style={{ fontSize: '1rem', color: 'var(--error)' }}>${stressTestData.stress_test.stress_annual_revenue.toLocaleString()}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Operating Income (NOI)</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '8px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Baseline: </span>
+                          <strong style={{ fontSize: '0.9rem' }}>${stressTestData.baseline.net_operating_income.toLocaleString()}</strong>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--error)' }}>Stressed: </span>
+                          <strong style={{ fontSize: '1rem', color: 'var(--error)' }}>${stressTestData.stress_test.stress_net_operating_income.toLocaleString()}</strong>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--error)', marginTop: '4px', fontWeight: 700 }}>
+                        NOI Variance: {stressTestData.stress_test.noi_variance_pct}%
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual OpEx & Debt Obligations</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px', fontSize: '0.8rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Baseline OpEx (35%):</span>
+                          <strong>${stressTestData.baseline.operating_expenses.toLocaleString()}</strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--warning)' }}>Stressed OpEx:</span>
+                          <strong style={{ color: 'var(--warning)' }}>${stressTestData.stress_test.stress_operating_expenses.toLocaleString()}</strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '4px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Annual Debt Service:</span>
+                          <strong>${stressTestData.baseline.annual_debt_service.toLocaleString()}</strong>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
