@@ -47,7 +47,11 @@ export default function LeaseLogicApp() {
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
   // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest'>('workspace');
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration'>('workspace');
+  
+  // Tenant Concentration state
+  const [tenantConcentrationData, setTenantConcentrationData] = useState<any>(null);
+  const [loadingConcentration, setLoadingConcentration] = useState(false);
   
   // Stress-Testing Simulator state
   const [stressTestParams, setStressTestParams] = useState({
@@ -290,6 +294,22 @@ export default function LeaseLogicApp() {
       console.error('Error running portfolio stress-test:', err);
     } finally {
       setLoadingStressTest(false);
+    }
+  };
+
+  // Fetch Tenant Concentration Analysis
+  const fetchTenantConcentration = async () => {
+    setLoadingConcentration(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/tenant-concentration`);
+      if (res.ok) {
+        const data = await res.json();
+        setTenantConcentrationData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching tenant concentration:', err);
+    } finally {
+      setLoadingConcentration(false);
     }
   };
 
@@ -1810,6 +1830,13 @@ export default function LeaseLogicApp() {
             onClick={() => { setCurrentView('stresstest'); handleRunStressTest(); }}
           >
             📊 Shock
+          </button>
+          <button 
+            className={`btn ${currentView === 'concentration' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => { setCurrentView('concentration'); fetchTenantConcentration(); }}
+          >
+            🏢 Risk
           </button>
         </div>
 
@@ -3548,6 +3575,96 @@ export default function LeaseLogicApp() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : currentView === 'concentration' ? (
+          <div className="pane" style={{ overflowY: 'auto', gap: '20px' }}>
+            <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)' }}>🏢 Tenant Concentration & Credit Risk Exposure Engine</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                    Herfindahl-Hirschman Index (HHI) concentration scoring and corporate tenant revenue reliance analysis across portfolio assets.
+                  </p>
+                </div>
+                <button onClick={fetchTenantConcentration} disabled={loadingConcentration} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                  {loadingConcentration ? 'Analyzing...' : '🔄 Refresh Risk Data'}
+                </button>
+              </div>
+
+              {loadingConcentration ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Calculating corporate tenant concentration & HHI index...
+                </div>
+              ) : !tenantConcentrationData ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Click Refresh Risk Data to load tenant exposure analysis.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* HHI Scorecard Banner */}
+                  <div style={{
+                    padding: '16px 20px',
+                    borderRadius: '8px',
+                    background: tenantConcentrationData.hhi_index < 1500 ? 'rgba(16, 185, 129, 0.08)' : tenantConcentrationData.hhi_index <= 2500 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                    border: `1px solid ${tenantConcentrationData.hhi_index < 1500 ? 'rgba(16, 185, 129, 0.25)' : tenantConcentrationData.hhi_index <= 2500 ? 'rgba(245, 158, 11, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Herfindahl-Hirschman Index (HHI Score)</span>
+                      <h2 style={{ fontSize: '1.8rem', fontWeight: 900, margin: '2px 0 0 0', color: tenantConcentrationData.hhi_index < 1500 ? 'var(--success)' : tenantConcentrationData.hhi_index <= 2500 ? 'var(--warning)' : 'var(--error)' }}>
+                        {tenantConcentrationData.hhi_index} - {tenantConcentrationData.concentration_category.replace(/_/g, ' ')}
+                      </h2>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Annual Revenue</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0' }}>${tenantConcentrationData.total_portfolio_annual_revenue.toLocaleString()}</h4>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: tenantConcentrationData.top_3_tenant_revenue_share_pct > 50 ? 'var(--error)' : 'var(--primary)', textTransform: 'uppercase', fontWeight: 700 }}>Top 3 Tenant Share</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: tenantConcentrationData.top_3_tenant_revenue_share_pct > 50 ? 'var(--error)' : 'var(--primary)', margin: '2px 0 0 0' }}>{tenantConcentrationData.top_3_tenant_revenue_share_pct}%</h4>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tenant Table */}
+                  <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                    <table className="terms-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Corporate Tenant Name</th>
+                          <th>Annual Rent Value</th>
+                          <th>Portfolio Revenue Share (%)</th>
+                          <th>Active Leases</th>
+                          <th>Property Assets Occupied</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tenantConcentrationData.tenants.map((item: any, idx: number) => (
+                          <tr key={idx}>
+                            <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.tenant_name}</td>
+                            <td style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--success)' }}>${item.total_annual_rent.toLocaleString()}/yr</td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ flex: 1, height: '8px', background: 'rgba(15,23,42,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${Math.min(100, item.revenue_share_pct)}%`, background: item.revenue_share_pct > 30 ? 'var(--error)' : item.revenue_share_pct > 15 ? 'var(--warning)' : 'var(--primary)' }} />
+                                </div>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 800 }}>{item.revenue_share_pct}%</span>
+                              </div>
+                            </td>
+                            <td style={{ fontSize: '0.8rem', fontWeight: 600 }}>{item.lease_count} lease(s)</td>
+                            <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{item.properties.join(', ')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
