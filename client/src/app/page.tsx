@@ -3717,6 +3717,14 @@ export default function LeaseLogicApp() {
                         📄 Executive Memo
                       </button>
                       <button
+                        onClick={() => window.open(`${API_BASE}/leases/${selectedLease.id}/export-abstract-pdf`, '_blank')}
+                        className="btn btn-secondary"
+                        style={{ padding: '8px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        title="Export Printable White-Label PDF Abstract"
+                      >
+                        📄 PDF Abstract
+                      </button>
+                      <button
                         onClick={() => window.open(`${API_BASE}/leases/${selectedLease.id}/export-erp?format=yardi`, '_blank')}
                         className="btn btn-secondary"
                         style={{ padding: '8px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
