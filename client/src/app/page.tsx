@@ -185,8 +185,16 @@ export default function LeaseLogicApp() {
   const [subleaseData, setSubleaseData] = useState<any>(null);
   const [loadingSublease, setLoadingSublease] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease'>('abstract');
+  // Lease Accounting state
+  const [accountingParams, setAccountingParams] = useState({
+    discount_rate_pct: 4.5,
+    lease_term_months: 60
+  });
+  const [accountingData, setAccountingData] = useState<any>(null);
+  const [loadingAccounting, setLoadingAccounting] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -411,6 +419,27 @@ export default function LeaseLogicApp() {
       console.error('Error running sublease analysis:', err);
     } finally {
       setLoadingSublease(false);
+    }
+  };
+
+  // Run IFRS 16 / ASC 842 Lease Accounting Calculator
+  const handleRunLeaseAccounting = async () => {
+    if (!selectedLease) return;
+    setLoadingAccounting(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/lease-accounting`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(accountingParams)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAccountingData(data);
+      }
+    } catch (err) {
+      console.error('Error running lease accounting:', err);
+    } finally {
+      setLoadingAccounting(false);
     }
   };
 
@@ -3938,6 +3967,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'sublease' ? 'active' : ''}`} onClick={() => { setActiveTab('sublease'); handleRunSubleaseAnalysis(); }}>
                   🏢 Sublease
                 </div>
+                <div className={`tab ${activeTab === 'accounting' ? 'active' : ''}`} onClick={() => { setActiveTab('accounting'); handleRunLeaseAccounting(); }}>
+                  ⚖️ Accounting
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -5187,6 +5219,98 @@ export default function LeaseLogicApp() {
                             ${subleaseData.tenant_net_retained_annual_income.toLocaleString()}
                           </h3>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'accounting' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>⚖️ IFRS 16 / ASC 842 Lease Accounting & Balance Sheet Calculator</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                      Automated Right-of-Use (ROU) Asset valuation, discounted lease liabilities, interest expense amortization, and monthly depreciation schedules.
+                    </p>
+                  </div>
+
+                  {/* Inputs */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Discount Rate / Incremental Borrowing Rate (%)</label>
+                      <input 
+                        type="number" 
+                        step="0.1"
+                        value={accountingParams.discount_rate_pct}
+                        onChange={(e) => setAccountingParams({ ...accountingParams, discount_rate_pct: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lease Commitment Duration (Months)</label>
+                      <input 
+                        type="number" 
+                        value={accountingParams.lease_term_months}
+                        onChange={(e) => setAccountingParams({ ...accountingParams, lease_term_months: parseInt(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+                    <button onClick={handleRunLeaseAccounting} disabled={loadingAccounting} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingAccounting ? 'Calculating...' : '⚖️ Recalculate Balance Sheet'}
+                    </button>
+                  </div>
+
+                  {/* Summary Cards */}
+                  {accountingData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px' }}>
+                        <div style={{ background: '#ffffff', padding: '14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Initial ROU Asset</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--primary)' }}>${accountingData.rou_asset_initial.toLocaleString()}</h3>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Initial Lease Liability</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--error)' }}>${accountingData.lease_liability_initial.toLocaleString()}</h3>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Year 1 Interest Expense</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--warning)' }}>${accountingData.annual_first_year_interest.toLocaleString()}</h3>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Monthly ROU Depreciation</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--foreground)' }}>${accountingData.monthly_depreciation.toLocaleString()}/mo</h3>
+                        </div>
+                      </div>
+
+                      {/* Amortization Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, padding: '12px 16px', margin: 0, borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          12-Month Lease Amortization & Depreciation Schedule
+                        </h4>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Month</th>
+                              <th>Beg. Liability</th>
+                              <th>Payment</th>
+                              <th>Interest Exp.</th>
+                              <th>Principal Red.</th>
+                              <th>End. Liability</th>
+                              <th>ROU Balance</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {accountingData.schedule.map((row: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700 }}>M{row.month}</td>
+                                <td>${row.beginning_liability.toLocaleString()}</td>
+                                <td>${row.payment.toLocaleString()}</td>
+                                <td style={{ color: 'var(--warning)', fontWeight: 600 }}>${row.interest_expense.toLocaleString()}</td>
+                                <td style={{ color: 'var(--success)', fontWeight: 600 }}>${row.principal_reduction.toLocaleString()}</td>
+                                <td style={{ fontWeight: 700 }}>${row.ending_liability.toLocaleString()}</td>
+                                <td style={{ color: 'var(--primary)', fontWeight: 600 }}>${row.rou_asset_balance.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
