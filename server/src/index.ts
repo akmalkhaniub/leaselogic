@@ -1797,6 +1797,61 @@ app.post('/api/leases/:id/lease-accounting', async (req, res) => {
   }
 });
 
+// 4.781. POST AI lease renewal vs relocation strategy decision matrix
+app.post('/api/leases/:id/renewal-strategy', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { market_rent_sqft = 48, fitout_capex_sqft = 35, lease_sqft = 5000 } = req.body;
+
+    const termsRes = await pool.query("SELECT extracted_value FROM lease_terms WHERE lease_id = $1 AND term_name = 'initial_rent'", [id]);
+    let currentAnnualRent = 180000;
+    if (termsRes.rows.length > 0) {
+      const raw = termsRes.rows[0].extracted_value || '';
+      const num = parseFloat(raw.replace(/[^0-9.]/g, '')) || 15000;
+      currentAnnualRent = raw.toLowerCase().includes('month') ? num * 12 : (num < 20000 ? num * 12 : num);
+    }
+
+    // 5-Year Renewal Model (+3% escalation per year)
+    let totalRenewalCost = 0;
+    let yearRent = currentAnnualRent;
+    for (let y = 1; y <= 5; y++) {
+      totalRenewalCost += yearRent;
+      yearRent *= 1.03;
+    }
+    totalRenewalCost = Math.round(totalRenewalCost);
+
+    // 5-Year Relocation Model
+    const annualMarketRent = market_rent_sqft * lease_sqft;
+    const totalMarketRent5Yr = annualMarketRent * 5;
+    const fitoutCapexTotal = fitout_capex_sqft * lease_sqft;
+    const movingLegalCost = 15000;
+    const totalRelocationCost = Math.round(totalMarketRent5Yr + fitoutCapexTotal + movingLegalCost);
+
+    const netSavings = Math.abs(totalRenewalCost - totalRelocationCost);
+    const recommendRenewal = totalRenewalCost <= totalRelocationCost;
+    const verdict = recommendRenewal ? 'RECOMMEND_RENEWAL' : 'RECOMMEND_RELOCATION';
+
+    const reasoning = recommendRenewal
+      ? `Staying & renewing saves $${netSavings.toLocaleString()} over 5 years by avoiding upfront fit-out CAPEX ($${fitoutCapexTotal.toLocaleString()}) and relocation downtime.`
+      : `Relocating saves $${netSavings.toLocaleString()} over 5 years despite fit-out CAPEX due to lower market rent rates ($${market_rent_sqft}/sqft vs current rate).`;
+
+    res.json({
+      lease_sqft,
+      current_annual_rent: Math.round(currentAnnualRent),
+      market_rent_sqft,
+      fitout_capex_sqft,
+      renewal_5yr_total: totalRenewalCost,
+      relocation_5yr_total: totalRelocationCost,
+      fitout_capex_total: fitoutCapexTotal,
+      net_savings_5yr: netSavings,
+      verdict,
+      reasoning
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
