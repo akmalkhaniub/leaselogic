@@ -1893,6 +1893,60 @@ app.get('/api/leases/:id/spatial-analytics', async (req, res) => {
   }
 });
 
+// 4.783. POST multi-lease portfolio cross-document term search and natural language query
+app.post('/api/portfolio/cross-query', async (req, res) => {
+  try {
+    const { query = '' } = req.body;
+    const lowerQuery = query.toLowerCase();
+
+    const leasesRes = await pool.query("SELECT id, filename, property_name, created_at FROM leases ORDER BY created_at DESC");
+    const leases = leasesRes.rows;
+
+    const matchedLeases: any[] = [];
+
+    for (const lease of leases) {
+      const termsRes = await pool.query("SELECT term_name, extracted_value, confidence_score FROM lease_terms WHERE lease_id = $1", [lease.id]);
+      const matches: any[] = [];
+
+      termsRes.rows.forEach((t: any) => {
+        const val = (t.extracted_value || '').toLowerCase();
+        const name = (t.term_name || '').toLowerCase();
+
+        if (lowerQuery === '' || val.includes(lowerQuery) || name.includes(lowerQuery) || (lease.property_name && lease.property_name.toLowerCase().includes(lowerQuery))) {
+          matches.push({
+            term_name: t.term_name,
+            extracted_value: t.extracted_value,
+            confidence_score: t.confidence_score
+          });
+        }
+      });
+
+      if (matches.length > 0 || lowerQuery === '') {
+        matchedLeases.push({
+          lease_id: lease.id,
+          filename: lease.filename,
+          property_name: lease.property_name || 'General Commercial Asset',
+          match_count: matches.length,
+          matched_terms: matches
+        });
+      }
+    }
+
+    const aiSummary = lowerQuery.length > 0
+      ? `Found ${matchedLeases.length} matching lease agreement(s) across your portfolio matching criteria "${query}".`
+      : `Displaying all ${matchedLeases.length} indexed lease agreement(s) across portfolio.`;
+
+    res.json({
+      query,
+      total_matches: matchedLeases.length,
+      ai_summary: aiSummary,
+      results: matchedLeases
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
