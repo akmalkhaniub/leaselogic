@@ -209,6 +209,10 @@ export default function LeaseLogicApp() {
   // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial'
   const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial'>('abstract');
   
+  // Portfolio Cross-Query Copilot state
+  const [crossQueryData, setCrossQueryData] = useState<any>(null);
+  const [loadingCrossQuery, setLoadingCrossQuery] = useState(false);
+
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -491,6 +495,26 @@ export default function LeaseLogicApp() {
       console.error('Error fetching spatial analytics:', err);
     } finally {
       setLoadingSpatial(false);
+    }
+  };
+
+  // Multi-Lease Portfolio Cross-Query Copilot
+  const handleRunCrossQuery = async (queryText: string) => {
+    setLoadingCrossQuery(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/cross-query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: queryText })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCrossQueryData(data);
+      }
+    } catch (err) {
+      console.error('Error running cross query:', err);
+    } finally {
+      setLoadingCrossQuery(false);
     }
   };
 
@@ -4282,6 +4306,31 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
 
+                  {/* Cross-Query Search Results Overlay Card */}
+                  {crossQueryData && (
+                    <div style={{ background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.2)', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase' }}>
+                          🔍 Cross-Portfolio Search Synthesis ({crossQueryData.total_matches} Matched Leases)
+                        </span>
+                        <button onClick={() => setCrossQueryData(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          ✕ Clear
+                        </button>
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--foreground)', margin: '0 0 8px 0', fontWeight: 600 }}>
+                        {crossQueryData.ai_summary}
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '120px', overflowY: 'auto' }}>
+                        {crossQueryData.results.map((res: any, idx: number) => (
+                          <div key={idx} style={{ background: '#ffffff', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                            <span style={{ fontWeight: 700 }}>📄 {res.property_name || res.filename}</span>
+                            <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{res.match_count} Term Match(es)</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Chat Input */}
                   <div className="chat-input-area">
                     <input 
@@ -4304,6 +4353,16 @@ export default function LeaseLogicApp() {
                       <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                       </svg>
+                    </button>
+
+                    <button 
+                      onClick={() => handleRunCrossQuery(chatQuery)} 
+                      disabled={loadingCrossQuery} 
+                      className="btn btn-secondary"
+                      style={{ padding: '8px 14px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      title="Run cross-portfolio natural language term search"
+                    >
+                      🤖 {loadingCrossQuery ? 'Searching...' : 'Cross-Query'}
                     </button>
 
                     <button 
