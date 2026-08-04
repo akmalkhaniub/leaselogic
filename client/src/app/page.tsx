@@ -202,8 +202,12 @@ export default function LeaseLogicApp() {
   const [strategyData, setStrategyData] = useState<any>(null);
   const [loadingStrategy, setLoadingStrategy] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy'>('abstract');
+  // Geo-Spatial Analytics state
+  const [spatialData, setSpatialData] = useState<any>(null);
+  const [loadingSpatial, setLoadingSpatial] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -470,6 +474,23 @@ export default function LeaseLogicApp() {
       console.error('Error running renewal strategy:', err);
     } finally {
       setLoadingStrategy(false);
+    }
+  };
+
+  // Fetch Geo-Spatial Micro-Market Analytics
+  const handleFetchSpatialAnalytics = async () => {
+    if (!selectedLease) return;
+    setLoadingSpatial(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/spatial-analytics`);
+      if (res.ok) {
+        const data = await res.json();
+        setSpatialData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching spatial analytics:', err);
+    } finally {
+      setLoadingSpatial(false);
     }
   };
 
@@ -4003,6 +4024,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'strategy' ? 'active' : ''}`} onClick={() => { setActiveTab('strategy'); handleRunRenewalStrategy(); }}>
                   📈 Strategy
                 </div>
+                <div className={`tab ${activeTab === 'spatial' ? 'active' : ''}`} onClick={() => { setActiveTab('spatial'); handleFetchSpatialAnalytics(); }}>
+                  📍 Spatial
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -5431,6 +5455,90 @@ export default function LeaseLogicApp() {
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net 5-Year Savings</span>
                           <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--success)' }}>${strategyData.net_savings_5yr.toLocaleString()}</h3>
                           <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700 }}>Optimal Strategy Benefit</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'spatial' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>📍 Geo-Spatial Micro-Market Rent & Location Analytics Hub</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Geo-spatial location metrics, micro-market rent per sq ft benchmark comparisons, and transit accessibility scores.
+                      </p>
+                    </div>
+                    <button onClick={handleFetchSpatialAnalytics} disabled={loadingSpatial} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                      {loadingSpatial ? 'Loading...' : '🔄 Refresh Location Data'}
+                    </button>
+                  </div>
+
+                  {loadingSpatial ? (
+                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Fetching geo-spatial micro-market location data...
+                    </div>
+                  ) : !spatialData ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Click Refresh Location Data to load spatial benchmarks.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Location Badge Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(99, 102, 241, 0.08)',
+                        border: '1px solid rgba(99, 102, 241, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Sub-Market Geographic Zone</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            📍 {spatialData.property_name} - {spatialData.submarket_zone}
+                          </h2>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Sub-Market Vacancy Rate</span>
+                          <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--foreground)' }}>{spatialData.submarket_vacancy_rate_pct}%</h4>
+                        </div>
+                      </div>
+
+                      {/* Rent Benchmarks Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Current Lease Rate</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--foreground)' }}>${spatialData.current_rent_sqft}/sqft</h3>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Sub-Market Benchmark</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--primary)' }}>${spatialData.submarket_benchmark_rent_sqft}/sqft</h3>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Transit Accessibility</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--success)' }}>{spatialData.transit_score} / 100</h3>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Walkability Score</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--success)' }}>{spatialData.walk_score} / 100</h3>
+                        </div>
+                      </div>
+
+                      {/* Nearby Transit Hubs */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 10px 0', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Nearby Major Transit Nodes</h4>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          {spatialData.nearby_transit_nodes.map((node: string, idx: number) => (
+                            <span key={idx} style={{ padding: '6px 12px', background: '#f1f5f9', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                              🚆 {node}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     </div>
