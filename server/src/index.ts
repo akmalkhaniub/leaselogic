@@ -1734,6 +1734,69 @@ app.get('/api/leases/:id/export-abstract-pdf', async (req, res) => {
   }
 });
 
+// 4.780. POST IFRS 16 / ASC 842 lease accounting and balance sheet calculator
+app.post('/api/leases/:id/lease-accounting', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { discount_rate_pct = 4.5, lease_term_months = 60 } = req.body;
+
+    const termsRes = await pool.query("SELECT extracted_value FROM lease_terms WHERE lease_id = $1 AND term_name = 'initial_rent'", [id]);
+    let monthlyRent = 15000;
+    if (termsRes.rows.length > 0) {
+      const raw = termsRes.rows[0].extracted_value || '';
+      const num = parseFloat(raw.replace(/[^0-9.]/g, '')) || 15000;
+      monthlyRent = raw.toLowerCase().includes('annual') || raw.toLowerCase().includes('/yr') ? num / 12 : (num > 50000 ? num / 12 : num);
+    }
+
+    const r = (discount_rate_pct / 100) / 12;
+    let presentValue = 0;
+    for (let t = 1; t <= lease_term_months; t++) {
+      presentValue += monthlyRent / Math.pow(1 + r, t);
+    }
+
+    const rouAssetInitial = Math.round(presentValue);
+    const leaseLiabilityInitial = Math.round(presentValue);
+    const monthlyDepreciation = Math.round(rouAssetInitial / lease_term_months);
+
+    // Build 12-Month Amortization Schedule
+    const schedule: any[] = [];
+    let currentLiability = leaseLiabilityInitial;
+    let currentRou = rouAssetInitial;
+
+    for (let month = 1; month <= 12; month++) {
+      const interestExpense = Math.round(currentLiability * r);
+      const principalReduction = monthlyRent - interestExpense;
+      const endingLiability = Math.max(0, Math.round(currentLiability - principalReduction));
+      currentRou = Math.max(0, Math.round(currentRou - monthlyDepreciation));
+
+      schedule.push({
+        month,
+        beginning_liability: currentLiability,
+        payment: Math.round(monthlyRent),
+        interest_expense: interestExpense,
+        principal_reduction: Math.round(principalReduction),
+        ending_liability: endingLiability,
+        rou_asset_balance: currentRou
+      });
+
+      currentLiability = endingLiability;
+    }
+
+    res.json({
+      discount_rate_pct,
+      lease_term_months,
+      monthly_rent: Math.round(monthlyRent),
+      rou_asset_initial: rouAssetInitial,
+      lease_liability_initial: leaseLiabilityInitial,
+      annual_first_year_interest: schedule.reduce((acc, curr) => acc + curr.interest_expense, 0),
+      monthly_depreciation: monthlyDepreciation,
+      schedule
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
