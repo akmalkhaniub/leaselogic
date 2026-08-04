@@ -193,8 +193,17 @@ export default function LeaseLogicApp() {
   const [accountingData, setAccountingData] = useState<any>(null);
   const [loadingAccounting, setLoadingAccounting] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting'>('abstract');
+  // Renewal Strategy state
+  const [strategyParams, setStrategyParams] = useState({
+    market_rent_sqft: 48,
+    fitout_capex_sqft: 35,
+    lease_sqft: 5000
+  });
+  const [strategyData, setStrategyData] = useState<any>(null);
+  const [loadingStrategy, setLoadingStrategy] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy'>('abstract');
   
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
@@ -440,6 +449,27 @@ export default function LeaseLogicApp() {
       console.error('Error running lease accounting:', err);
     } finally {
       setLoadingAccounting(false);
+    }
+  };
+
+  // Run AI Lease Renewal vs Relocation Strategy Decision Matrix
+  const handleRunRenewalStrategy = async () => {
+    if (!selectedLease) return;
+    setLoadingStrategy(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/renewal-strategy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(strategyParams)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStrategyData(data);
+      }
+    } catch (err) {
+      console.error('Error running renewal strategy:', err);
+    } finally {
+      setLoadingStrategy(false);
     }
   };
 
@@ -3970,6 +4000,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'accounting' ? 'active' : ''}`} onClick={() => { setActiveTab('accounting'); handleRunLeaseAccounting(); }}>
                   ⚖️ Accounting
                 </div>
+                <div className={`tab ${activeTab === 'strategy' ? 'active' : ''}`} onClick={() => { setActiveTab('strategy'); handleRunRenewalStrategy(); }}>
+                  📈 Strategy
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -5311,6 +5344,94 @@ export default function LeaseLogicApp() {
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'strategy' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>📈 AI Lease Renewal vs. Relocation Strategy Decision Matrix</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                      Comparative 5-year financial modeling contrasting stay & renew escalations against relocation market rates and tenant fit-out CAPEX.
+                    </p>
+                  </div>
+
+                  {/* Inputs */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Sub-Market Benchmark Rent ($/Sq Ft)</label>
+                      <input 
+                        type="number" 
+                        value={strategyParams.market_rent_sqft}
+                        onChange={(e) => setStrategyParams({ ...strategyParams, market_rent_sqft: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Fit-Out CAPEX ($/Sq Ft)</label>
+                      <input 
+                        type="number" 
+                        value={strategyParams.fitout_capex_sqft}
+                        onChange={(e) => setStrategyParams({ ...strategyParams, fitout_capex_sqft: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Leased Space (Sq Ft)</label>
+                      <input 
+                        type="number" 
+                        value={strategyParams.lease_sqft}
+                        onChange={(e) => setStrategyParams({ ...strategyParams, lease_sqft: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+                    <button onClick={handleRunRenewalStrategy} disabled={loadingStrategy} className="btn btn-accent" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingStrategy ? 'Evaluating...' : '📈 Evaluate Strategy'}
+                    </button>
+                  </div>
+
+                  {/* Verdict & Financial Cards */}
+                  {strategyData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Verdict Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: strategyData.verdict === 'RECOMMEND_RENEWAL' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(99, 102, 241, 0.08)',
+                        border: `1px solid ${strategyData.verdict === 'RECOMMEND_RENEWAL' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(99, 102, 241, 0.25)'}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px'
+                      }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>AI Strategic Recommendation</span>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: strategyData.verdict === 'RECOMMEND_RENEWAL' ? 'var(--success)' : 'var(--primary)' }}>
+                          {strategyData.verdict === 'RECOMMEND_RENEWAL' ? '✅ RECOMMEND RENEWAL & STAY' : '🚀 RECOMMEND RELOCATION'}
+                        </h2>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--foreground)', margin: 0, lineHeight: 1.5 }}>
+                          {strategyData.reasoning}
+                        </p>
+                      </div>
+
+                      {/* Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>5-Year Stay & Renew Cost</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--foreground)' }}>${strategyData.renewal_5yr_total.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Assumes +3% annual escalation</span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>5-Year Relocate & Fit-Out Cost</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--foreground)' }}>${strategyData.relocation_5yr_total.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>Includes CAPEX: ${strategyData.fitout_capex_total.toLocaleString()}</span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net 5-Year Savings</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--success)' }}>${strategyData.net_savings_5yr.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700 }}>Optimal Strategy Benefit</span>
+                        </div>
                       </div>
                     </div>
                   )}
