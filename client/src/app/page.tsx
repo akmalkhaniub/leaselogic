@@ -47,7 +47,11 @@ export default function LeaseLogicApp() {
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
   // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration'>('workspace');
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration' | 'dispatcher'>('workspace');
+  
+  // Notification Dispatcher state
+  const [dispatchData, setDispatchData] = useState<any>(null);
+  const [loadingDispatch, setLoadingDispatch] = useState(false);
   
   // Tenant Concentration state
   const [tenantConcentrationData, setTenantConcentrationData] = useState<any>(null);
@@ -606,6 +610,37 @@ export default function LeaseLogicApp() {
       console.error('Error running buyout optimizer:', err);
     } finally {
       setLoadingBuyout(false);
+    }
+  };
+
+  // Notification Dispatcher helper methods
+  const fetchDispatchList = async () => {
+    setLoadingDispatch(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/notifications/dispatch-list`);
+      if (res.ok) {
+        const data = await res.json();
+        setDispatchData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching dispatch list:', err);
+    } finally {
+      setLoadingDispatch(false);
+    }
+  };
+
+  const handleTriggerTestAlert = async (leaseId: string, channel: 'webhook' | 'email') => {
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/notifications/trigger-alert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lease_id: leaseId, channel: channel })
+      });
+      if (res.ok) {
+        fetchDispatchList();
+      }
+    } catch (err) {
+      console.error('Error triggering test alert:', err);
     }
   };
 
@@ -2032,6 +2067,13 @@ export default function LeaseLogicApp() {
             onClick={() => { setCurrentView('concentration'); fetchTenantConcentration(); }}
           >
             🏢 Risk
+          </button>
+          <button 
+            className={`btn ${currentView === 'dispatcher' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => { setCurrentView('dispatcher'); fetchDispatchList(); }}
+          >
+            ⚡ Dispatch
           </button>
         </div>
 
@@ -3856,6 +3898,102 @@ export default function LeaseLogicApp() {
                             </td>
                             <td style={{ fontSize: '0.8rem', fontWeight: 600 }}>{item.lease_count} lease(s)</td>
                             <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{item.properties.join(', ')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : currentView === 'dispatcher' ? (
+          <div className="pane" style={{ overflowY: 'auto', gap: '20px' }}>
+            <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)' }}>⚡ Automated Renewal & Critical Date Notification Dispatcher</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                    Real-time webhook and email dispatch engine monitoring 90/60/30-day lease option deadlines.
+                  </p>
+                </div>
+                <button onClick={fetchDispatchList} disabled={loadingDispatch} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                  {loadingDispatch ? 'Loading Queue...' : '🔄 Refresh Queue'}
+                </button>
+              </div>
+
+              {loadingDispatch ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Scanning portfolio for scheduled notification dispatches...
+                </div>
+              ) : !dispatchData ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Click Refresh Queue to view automated dispatch schedule.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Summary Banner */}
+                  <div style={{
+                    padding: '16px 20px',
+                    borderRadius: '8px',
+                    background: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Dispatch Engine Queue Status</span>
+                      <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                        ⚡ {dispatchData.total_queued} Dispatches Enqueued ({dispatchData.upcoming_30_days} Urgent &lt;30 Days)
+                      </h2>
+                    </div>
+
+                    <button 
+                      onClick={() => handleTriggerTestAlert('', 'webhook')} 
+                      className="btn btn-secondary" 
+                      style={{ padding: '8px 14px', fontSize: '0.8rem' }}
+                    >
+                      🚀 Test Dispatch Webhook
+                    </button>
+                  </div>
+
+                  {/* Dispatch Table */}
+                  <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                    <table className="terms-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Property Asset / File</th>
+                          <th>Critical Notice Event</th>
+                          <th>Deadline Date</th>
+                          <th>Window Countdown</th>
+                          <th>Status</th>
+                          <th style={{ width: '150px' }}>Instant Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dispatchData.queue.map((item: any, idx: number) => (
+                          <tr key={idx}>
+                            <td style={{ fontSize: '0.85rem', fontWeight: 600 }}>{item.property_name}</td>
+                            <td style={{ fontSize: '0.82rem', color: 'var(--foreground)' }}>{item.notice_event}</td>
+                            <td style={{ fontSize: '0.82rem', fontFamily: 'monospace' }}>{item.notice_deadline}</td>
+                            <td style={{ fontSize: '0.85rem', fontWeight: 800, color: item.days_remaining <= 30 ? 'var(--error)' : 'var(--warning)' }}>
+                              ⏳ {item.days_remaining} Days
+                            </td>
+                            <td>
+                              <span className={`badge badge-${item.status.includes('DISPATCHED') ? 'completed' : 'pending'}`} style={{ fontSize: '0.7rem' }}>
+                                {item.status}
+                              </span>
+                            </td>
+                            <td>
+                              <button 
+                                onClick={() => handleTriggerTestAlert(item.lease_id, 'email')} 
+                                className="btn btn-secondary" 
+                                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                              >
+                                ✉️ Email Alert
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
