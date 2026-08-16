@@ -2080,6 +2080,48 @@ app.get('/api/portfolio/carbon-footprint', async (req, res) => {
   }
 });
 
+// 4.788. POST lease buyout & early termination penalty optimizer
+app.post('/api/leases/:id/buyout-optimizer', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { notice_months_given = 6, landlord_penalty_months = 3, restoration_cost = 25000 } = req.body;
+
+    const termsRes = await pool.query("SELECT extracted_value FROM lease_terms WHERE lease_id = $1 AND term_name = 'initial_rent'", [id]);
+    let monthlyRent = 15000;
+    if (termsRes.rows.length > 0) {
+      const raw = termsRes.rows[0].extracted_value || '';
+      const num = parseFloat(raw.replace(/[^0-9.]/g, '')) || 15000;
+      monthlyRent = raw.toLowerCase().includes('month') ? num : (num < 20000 ? num : Math.round(num / 12));
+    }
+
+    const remainingMonths = 36; // 3 years remaining
+    const remainingLiability = monthlyRent * remainingMonths;
+
+    const penaltyFee = monthlyRent * landlord_penalty_months;
+    const totalSurrenderCost = penaltyFee + restoration_cost;
+    const netNpvSavings = Math.round(remainingLiability - totalSurrenderCost);
+
+    const feasibility = netNpvSavings > 50000 ? 'HIGHLY_FAVORABLE_BUYOUT' : netNpvSavings > 0 ? 'NEUTRAL_BUYOUT' : 'UNFAVORABLE_BUYOUT';
+
+    const reasoning = `Early lease surrender avoids $${remainingLiability.toLocaleString()} in future rent liability at a total surrender cost of $${totalSurrenderCost.toLocaleString()} (Penalty: $${penaltyFee.toLocaleString()}, Dilapidations: $${restoration_cost.toLocaleString()}), producing a Net NPV savings of $${netNpvSavings.toLocaleString()}.`;
+
+    res.json({
+      monthly_rent: monthlyRent,
+      remaining_months: remainingMonths,
+      remaining_lease_liability: remainingLiability,
+      notice_months_given: notice_months_given,
+      landlord_penalty_fee: penaltyFee,
+      space_restoration_cost: restoration_cost,
+      total_surrender_cost: totalSurrenderCost,
+      net_npv_savings: netNpvSavings,
+      feasibility_rating: feasibility,
+      reasoning: reasoning
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
