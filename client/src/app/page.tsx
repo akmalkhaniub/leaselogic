@@ -211,8 +211,12 @@ export default function LeaseLogicApp() {
   const [loadingApprovals, setLoadingApprovals] = useState(false);
   const [approverNameInput, setApproverNameInput] = useState('Chief Legal Officer');
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals'>('abstract');
+  // Carbon Emissions state
+  const [carbonData, setCarbonData] = useState<any>(null);
+  const [loadingCarbon, setLoadingCarbon] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -555,6 +559,23 @@ export default function LeaseLogicApp() {
       }
     } catch (err) {
       console.error('Error signing approval stage:', err);
+    }
+  };
+
+  // Fetch Real Estate Portfolio Carbon Footprint & Scope 1/2/3 Emissions
+  const handleFetchCarbonEmissions = async () => {
+    if (!selectedLease) return;
+    setLoadingCarbon(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/carbon-emissions`);
+      if (res.ok) {
+        const data = await res.json();
+        setCarbonData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching carbon emissions:', err);
+    } finally {
+      setLoadingCarbon(false);
     }
   };
 
@@ -4094,6 +4115,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'approvals' ? 'active' : ''}`} onClick={() => { setActiveTab('approvals'); handleFetchApprovalWorkflow(); }}>
                   🏢 Approvals
                 </div>
+                <div className={`tab ${activeTab === 'carbon' ? 'active' : ''}`} onClick={() => { setActiveTab('carbon'); handleFetchCarbonEmissions(); }}>
+                  📊 Carbon
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -5745,6 +5769,91 @@ export default function LeaseLogicApp() {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'carbon' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>📊 Real Estate Carbon Footprint & Scope 1/2/3 Emissions Hub</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Automated conversion of lease utility covenants, square footage, and energy intensity into metric tons of CO2e emissions.
+                      </p>
+                    </div>
+                    <button onClick={handleFetchCarbonEmissions} disabled={loadingCarbon} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                      {loadingCarbon ? 'Loading...' : '🔄 Refresh Carbon Data'}
+                    </button>
+                  </div>
+
+                  {loadingCarbon ? (
+                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Calculating lease carbon footprint emissions...
+                    </div>
+                  ) : !carbonData ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Click Refresh Carbon Data to load emissions breakdown.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Rating Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>ESG Decarbonization Rating</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            🌱 {carbonData.sustainability_rating.replace(/_/g, ' ')}
+                          </h2>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Decarbonization Goal</span>
+                          <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            -{carbonData.decarbonization_target_reduction_pct}% Net-Zero Target
+                          </h4>
+                        </div>
+                      </div>
+
+                      {/* Carbon Intensity & Totals Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Carbon Footprint</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--foreground)' }}>{carbonData.total_emissions_co2e_tons} Tons CO2e</h3>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Scope 1 Direct Gas</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--primary)' }}>{carbonData.scope1_direct_gas_tons} Tons</h3>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Scope 2 Electricity</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--warning)' }}>{carbonData.scope2_indirect_electricity_tons} Tons</h3>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Scope 3 Supply Chain</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--success)' }}>{carbonData.scope3_tenant_supply_chain_tons} Tons</h3>
+                        </div>
+                      </div>
+
+                      {/* Energy Intensity Banner */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Lease Energy Intensity Benchmark</h4>
+                          <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--foreground)' }}>{carbonData.energy_intensity_kg_co2e_sqft} kg CO2e / sqft / year</span>
+                        </div>
+                        <span className="badge badge-success" style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+                          Passes GRESB Benchmark
+                        </span>
                       </div>
                     </div>
                   )}
