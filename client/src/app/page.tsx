@@ -206,8 +206,13 @@ export default function LeaseLogicApp() {
   const [spatialData, setSpatialData] = useState<any>(null);
   const [loadingSpatial, setLoadingSpatial] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial'>('abstract');
+  // Approval Workflow state
+  const [approvalData, setApprovalData] = useState<any>(null);
+  const [loadingApprovals, setLoadingApprovals] = useState(false);
+  const [approverNameInput, setApproverNameInput] = useState('Chief Legal Officer');
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -515,6 +520,41 @@ export default function LeaseLogicApp() {
       console.error('Error running cross query:', err);
     } finally {
       setLoadingCrossQuery(false);
+    }
+  };
+
+  // Fetch Lease Approval Workflow & E-Signatures
+  const handleFetchApprovalWorkflow = async () => {
+    if (!selectedLease) return;
+    setLoadingApprovals(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/approval-workflow`);
+      if (res.ok) {
+        const data = await res.json();
+        setApprovalData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching approval workflow:', err);
+    } finally {
+      setLoadingApprovals(false);
+    }
+  };
+
+  // Sign approval stage and generate e-signature hash
+  const handleSignApprovalStage = async (stageId: string) => {
+    if (!selectedLease) return;
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/approval-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage_id: stageId, status: 'approved', approver_name: approverNameInput })
+      });
+      if (res.ok) {
+        handleFetchApprovalWorkflow();
+        fetchLeaseAuditLogs(selectedLease.id);
+      }
+    } catch (err) {
+      console.error('Error signing approval stage:', err);
     }
   };
 
@@ -4051,6 +4091,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'spatial' ? 'active' : ''}`} onClick={() => { setActiveTab('spatial'); handleFetchSpatialAnalytics(); }}>
                   📍 Spatial
                 </div>
+                <div className={`tab ${activeTab === 'approvals' ? 'active' : ''}`} onClick={() => { setActiveTab('approvals'); handleFetchApprovalWorkflow(); }}>
+                  🏢 Approvals
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -5599,6 +5642,109 @@ export default function LeaseLogicApp() {
                             </span>
                           ))}
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'approvals' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🏢 Enterprise Lease Approval Workflow & E-Signatures</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Multi-tiered sign-off matrix for Legal, Finance, and Executive approval stages with digital signature SHA-256 hashes.
+                      </p>
+                    </div>
+                    <button onClick={handleFetchApprovalWorkflow} disabled={loadingApprovals} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                      {loadingApprovals ? 'Loading...' : '🔄 Refresh Workflow'}
+                    </button>
+                  </div>
+
+                  {loadingApprovals ? (
+                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Fetching lease approval workflow stages...
+                    </div>
+                  ) : !approvalData ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Click Refresh Workflow to load approval stages.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Overall Status Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: approvalData.overall_status === 'FULLY_APPROVED' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                        border: `1px solid ${approvalData.overall_status === 'FULLY_APPROVED' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Workflow Governance Status</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: approvalData.overall_status === 'FULLY_APPROVED' ? 'var(--success)' : 'var(--warning)' }}>
+                            {approvalData.overall_status === 'FULLY_APPROVED' ? '✅ FULLY APPROVED & SIGNED' : `⏳ IN PROGRESS (${approvalData.approved_stages} of ${approvalData.total_stages} Stages Approved)`}
+                          </h2>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Signatory Identity:</span>
+                          <input 
+                            type="text" 
+                            value={approverNameInput} 
+                            onChange={(e) => setApproverNameInput(e.target.value)} 
+                            style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Stages Cards List */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {approvalData.stages.map((st: any, idx: number) => (
+                          <div key={idx} style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                              <div style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                background: st.status === 'approved' ? 'var(--success)' : 'rgba(15,23,42,0.1)',
+                                color: '#ffffff',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                fontWeight: 800,
+                                fontSize: '0.85rem'
+                              }}>
+                                {st.status === 'approved' ? '✓' : idx + 1}
+                              </div>
+                              <div>
+                                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>{st.stage_name}</h4>
+                                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Role: {st.approver_name}</span>
+                                {st.signature_hash && (
+                                  <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 600, marginTop: '2px', fontFamily: 'monospace' }}>
+                                    🔏 Hash: {st.signature_hash} ({new Date(st.approved_at).toLocaleString()})
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div>
+                              {st.status === 'approved' ? (
+                                <span className="badge badge-success" style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+                                  ✅ Approved
+                                </span>
+                              ) : (
+                                <button 
+                                  onClick={() => handleSignApprovalStage(st.id)} 
+                                  className="btn btn-primary" 
+                                  style={{ padding: '6px 14px', fontSize: '0.8rem' }}
+                                >
+                                  ✍️ Sign & Approve
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
