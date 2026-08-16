@@ -1947,6 +1947,77 @@ app.post('/api/portfolio/cross-query', async (req, res) => {
   }
 });
 
+// 4.784. GET lease approval workflow & multi-party e-signature log
+app.get('/api/leases/:id/approval-workflow', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let result = await pool.query("SELECT * FROM lease_approvals WHERE lease_id = $1 ORDER BY created_at ASC", [id]);
+    if (result.rows.length === 0) {
+      // Seed default 3-stage approval workflow
+      const defaultStages = [
+        { stage_name: 'Legal Review & Compliance Risk', approver_name: 'Chief Legal Officer' },
+        { stage_name: 'Finance Audit & Rent Budgeting', approver_name: 'Head of Financial Control' },
+        { stage_name: 'Executive & Board Sign-off', approver_name: 'Managing Director' }
+      ];
+
+      for (const st of defaultStages) {
+        await pool.query(
+          "INSERT INTO lease_approvals (lease_id, stage_name, approver_name, status) VALUES ($1, $2, $3, 'pending')",
+          [id, st.stage_name, st.approver_name]
+        );
+      }
+      result = await pool.query("SELECT * FROM lease_approvals WHERE lease_id = $1 ORDER BY created_at ASC", [id]);
+    }
+
+    const rows = result.rows;
+    const approvedCount = rows.filter((r: any) => r.status === 'approved').length;
+    const overallStatus = approvedCount === rows.length ? 'FULLY_APPROVED' : approvedCount > 0 ? 'IN_PROGRESS' : 'PENDING_REVIEW';
+
+    res.json({
+      lease_id: id,
+      overall_status: overallStatus,
+      approved_stages: approvedCount,
+      total_stages: rows.length,
+      stages: rows
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.785. POST update approval stage status and log e-signature
+app.post('/api/leases/:id/approval-status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { stage_id, status = 'approved', approver_name = 'Authorized Signatory' } = req.body;
+
+    const sigHash = `SIG-SHA256-${Date.now()}-${Math.floor(Math.random() * 899999 + 100000)}`;
+
+    const updateRes = await pool.query(
+      `UPDATE lease_approvals 
+       SET status = $1, approver_name = $2, signature_hash = $3, approved_at = CURRENT_TIMESTAMP 
+       WHERE id = $4 AND lease_id = $5 RETURNING *`,
+      [status, approver_name, sigHash, stage_id, id]
+    );
+
+    if (updateRes.rows.length === 0) {
+      res.status(404).json({ error: 'Approval stage not found' });
+      return;
+    }
+
+    // Log audit log
+    await pool.query(
+      "INSERT INTO audit_logs (lease_id, user_name, action_type, description) VALUES ($1, $2, $3, $4)",
+      [id, approver_name, 'APPROVAL_SIGNATURE', `Signed approval stage '${updateRes.rows[0].stage_name}' with digital hash ${sigHash}`]
+    );
+
+    res.json({ success: true, stage: updateRes.rows[0] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
@@ -2969,6 +3040,20 @@ app.listen(port, async () => {
           status VARCHAR(50) DEFAULT 'draft',
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create lease_approvals table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lease_approvals (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          lease_id UUID REFERENCES leases(id) ON DELETE CASCADE,
+          stage_name VARCHAR(255) NOT NULL,
+          approver_name VARCHAR(255) NOT NULL,
+          status VARCHAR(50) DEFAULT 'pending',
+          signature_hash VARCHAR(255),
+          approved_at TIMESTAMP WITH TIME ZONE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
