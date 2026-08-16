@@ -2008,8 +2008,8 @@ app.post('/api/leases/:id/approval-status', async (req, res) => {
 
     // Log audit log
     await pool.query(
-      "INSERT INTO audit_logs (lease_id, user_name, action_type, description) VALUES ($1, $2, $3, $4)",
-      [id, approver_name, 'APPROVAL_SIGNATURE', `Signed approval stage '${updateRes.rows[0].stage_name}' with digital hash ${sigHash}`]
+      "INSERT INTO audit_logs (lease_id, user_name, table_name, record_id, action, action_type, description) VALUES ($1, $2, 'leases', $3, $4, $5, $6)",
+      [id, approver_name, id, 'APPROVAL_SIGNATURE', 'APPROVAL_SIGNATURE', `Signed approval stage '${updateRes.rows[0].stage_name}' with digital hash ${sigHash}`]
     );
 
     res.json({ success: true, stage: updateRes.rows[0] });
@@ -2162,8 +2162,8 @@ app.post('/api/portfolio/notifications/trigger-alert', async (req, res) => {
     const message = `[ALERT] Critical date notice window alert triggered for lease ${lease_id || 'Portfolio'} via ${channel.toUpperCase()} dispatch relay.`;
 
     await pool.query(
-      "INSERT INTO audit_logs (lease_id, user_name, action_type, description) VALUES ($1, $2, $3, $4)",
-      [lease_id || null, 'System Dispatcher', 'NOTIFICATION_DISPATCH', message]
+      "INSERT INTO audit_logs (lease_id, user_name, table_name, record_id, action, action_type, description) VALUES ($1, $2, 'leases', $3, $4, $5, $6)",
+      [lease_id || null, 'System Dispatcher', lease_id || '0', 'NOTIFICATION_DISPATCH', 'NOTIFICATION_DISPATCH', message]
     );
 
     res.json({
