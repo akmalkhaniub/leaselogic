@@ -215,8 +215,17 @@ export default function LeaseLogicApp() {
   const [carbonData, setCarbonData] = useState<any>(null);
   const [loadingCarbon, setLoadingCarbon] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon'>('abstract');
+  // Buyout Optimizer state
+  const [buyoutParams, setBuyoutParams] = useState({
+    notice_months_given: 6,
+    landlord_penalty_months: 3,
+    restoration_cost: 25000
+  });
+  const [buyoutData, setBuyoutData] = useState<any>(null);
+  const [loadingBuyout, setLoadingBuyout] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -576,6 +585,27 @@ export default function LeaseLogicApp() {
       console.error('Error fetching carbon emissions:', err);
     } finally {
       setLoadingCarbon(false);
+    }
+  };
+
+  // Run Lease Buyout & Early Termination Penalty Optimizer
+  const handleRunBuyoutOptimizer = async () => {
+    if (!selectedLease) return;
+    setLoadingBuyout(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/buyout-optimizer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buyoutParams)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBuyoutData(data);
+      }
+    } catch (err) {
+      console.error('Error running buyout optimizer:', err);
+    } finally {
+      setLoadingBuyout(false);
     }
   };
 
@@ -4118,6 +4148,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'carbon' ? 'active' : ''}`} onClick={() => { setActiveTab('carbon'); handleFetchCarbonEmissions(); }}>
                   📊 Carbon
                 </div>
+                <div className={`tab ${activeTab === 'buyout' ? 'active' : ''}`} onClick={() => { setActiveTab('buyout'); handleRunBuyoutOptimizer(); }}>
+                  💰 Buyout
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -5854,6 +5887,94 @@ export default function LeaseLogicApp() {
                         <span className="badge badge-success" style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
                           Passes GRESB Benchmark
                         </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'buyout' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>💰 Lease Buyout & Early Termination Penalty Optimizer</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                      NPV financial modeling evaluating early lease surrender savings against exit penalties and dilapidation costs.
+                    </p>
+                  </div>
+
+                  {/* Inputs */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Notice Window Given (Months)</label>
+                      <input 
+                        type="number" 
+                        value={buyoutParams.notice_months_given}
+                        onChange={(e) => setBuyoutParams({ ...buyoutParams, notice_months_given: parseInt(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Landlord Exit Penalty (Months Rent)</label>
+                      <input 
+                        type="number" 
+                        value={buyoutParams.landlord_penalty_months}
+                        onChange={(e) => setBuyoutParams({ ...buyoutParams, landlord_penalty_months: parseInt(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Restoration Cost ($)</label>
+                      <input 
+                        type="number" 
+                        value={buyoutParams.restoration_cost}
+                        onChange={(e) => setBuyoutParams({ ...buyoutParams, restoration_cost: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem' }}
+                      />
+                    </div>
+                    <button onClick={handleRunBuyoutOptimizer} disabled={loadingBuyout} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingBuyout ? 'Calculating...' : '💰 Calculate Buyout'}
+                    </button>
+                  </div>
+
+                  {/* Summary & Feasibility */}
+                  {buyoutData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Feasibility Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: buyoutData.feasibility_rating === 'HIGHLY_FAVORABLE_BUYOUT' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                        border: `1px solid ${buyoutData.feasibility_rating === 'HIGHLY_FAVORABLE_BUYOUT' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px'
+                      }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Early Termination Feasibility Rating</span>
+                        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: buyoutData.feasibility_rating === 'HIGHLY_FAVORABLE_BUYOUT' ? 'var(--success)' : 'var(--warning)' }}>
+                          {buyoutData.feasibility_rating === 'HIGHLY_FAVORABLE_BUYOUT' ? '✅ HIGHLY FAVORABLE EARLY SURRENDER' : '⚠️ NEUTRAL / CONDITIONAL SURRENDER'}
+                        </h2>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--foreground)', margin: 0, lineHeight: 1.5 }}>
+                          {buyoutData.reasoning}
+                        </p>
+                      </div>
+
+                      {/* Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Remaining Liability Avoided</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--foreground)' }}>${buyoutData.remaining_lease_liability.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{buyoutData.remaining_months} Months Remaining</span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Surrender Cost</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--error)' }}>${buyoutData.total_surrender_cost.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Penalty + Dilapidations</span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net NPV Buyout Savings</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--success)' }}>${buyoutData.net_npv_savings.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700 }}>Net Financial Gain</span>
+                        </div>
                       </div>
                     </div>
                   )}
