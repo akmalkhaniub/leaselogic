@@ -47,7 +47,11 @@ export default function LeaseLogicApp() {
   const [selectedTerm, setSelectedTerm] = useState<LeaseTerm | null>(null);
   
   // Views: 'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare'
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration' | 'dispatcher'>('workspace');
+  // Credit Risk Monitor state
+  const [creditMonitorData, setCreditMonitorData] = useState<any>(null);
+  const [loadingCreditMonitor, setLoadingCreditMonitor] = useState(false);
+
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration' | 'dispatcher' | 'credit_monitor'>('workspace');
   
   // Notification Dispatcher state
   const [dispatchData, setDispatchData] = useState<any>(null);
@@ -684,6 +688,22 @@ export default function LeaseLogicApp() {
       console.error('Error fetching regulatory audit:', err);
     } finally {
       setLoadingRegulatory(false);
+    }
+  };
+
+  // Fetch Autonomous Tenant Credit Risk & Bankruptcy Early Warning Monitor
+  const handleFetchCreditMonitor = async () => {
+    setLoadingCreditMonitor(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/agent/credit-risk-monitor`);
+      if (res.ok) {
+        const data = await res.json();
+        setCreditMonitorData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching credit risk monitor:', err);
+    } finally {
+      setLoadingCreditMonitor(false);
     }
   };
 
@@ -2148,6 +2168,13 @@ export default function LeaseLogicApp() {
             onClick={() => { setCurrentView('dispatcher'); fetchDispatchList(); }}
           >
             ⚡ Dispatch
+          </button>
+          <button 
+            className={`btn ${currentView === 'credit_monitor' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => { setCurrentView('credit_monitor'); handleFetchCreditMonitor(); }}
+          >
+            📊 Credit
           </button>
         </div>
 
@@ -4067,6 +4094,106 @@ export default function LeaseLogicApp() {
                               >
                                 ✉️ Email Alert
                               </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : currentView === 'credit_monitor' ? (
+          <div className="pane" style={{ overflowY: 'auto', gap: '20px' }}>
+            <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)' }}>📊 Autonomous Tenant Credit Risk & Bankruptcy Early Warning Agent</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                    Continuous financial health monitoring, Altman Z-Score scoring, payment delinquency alerts, and collateral coverage analysis.
+                  </p>
+                </div>
+                <button onClick={handleFetchCreditMonitor} disabled={loadingCreditMonitor} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                  {loadingCreditMonitor ? 'Monitoring...' : '🔄 Refresh Risk Data'}
+                </button>
+              </div>
+
+              {loadingCreditMonitor ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Calculating tenant Altman Z-Scores & bankruptcy risk probabilities...
+                </div>
+              ) : !creditMonitorData ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Click Refresh Risk Data to load credit monitoring suite.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Summary Banner */}
+                  <div style={{
+                    padding: '16px 20px',
+                    borderRadius: '8px',
+                    background: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Portfolio Financial Health Score</span>
+                      <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '2px 0 0 0', color: creditMonitorData.portfolio_health_score >= 80 ? 'var(--success)' : 'var(--warning)' }}>
+                        🛡️ Health Score: {creditMonitorData.portfolio_health_score} / 100
+                      </h2>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Audited Tenants</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0' }}>{creditMonitorData.total_audited_tenants}</h4>
+                      </div>
+
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--error)', textTransform: 'uppercase', fontWeight: 700 }}>Bankruptcy Alerts</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--error)', margin: '2px 0 0 0' }}>{creditMonitorData.high_risk_bankrupt_alert_count} High Risk</h4>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tenant Credit Table */}
+                  <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                    <table className="terms-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Corporate Tenant</th>
+                          <th>Altman Z-Score</th>
+                          <th>Credit Risk Rating</th>
+                          <th>Monthly Rent</th>
+                          <th>Collateral Coverage</th>
+                          <th>Delinquency</th>
+                          <th>Early Warning Alert</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {creditMonitorData.tenants.map((t: any, idx: number) => (
+                          <tr key={idx}>
+                            <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{t.tenant_name}</td>
+                            <td style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 800, color: t.altman_z_score < 1.8 ? 'var(--error)' : 'var(--success)' }}>
+                              {t.altman_z_score}
+                            </td>
+                            <td>
+                              <span className={`badge badge-${t.credit_risk_rating === 'HIGH_BANKRUPTCY_ALERT' ? 'failed' : t.credit_risk_rating === 'MODERATE_WATCHLIST' ? 'pending' : 'completed'}`} style={{ fontSize: '0.7rem' }}>
+                                {t.credit_risk_rating}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: '0.82rem', fontWeight: 600 }}>${t.monthly_rent_usd.toLocaleString()}/mo</td>
+                            <td style={{ fontSize: '0.82rem', fontWeight: 700, color: t.collateral_coverage_ratio < 1.0 ? 'var(--error)' : 'var(--primary)' }}>
+                              {t.collateral_coverage_ratio}x
+                            </td>
+                            <td style={{ fontSize: '0.82rem', fontWeight: 700, color: t.payment_delinquency_days > 0 ? 'var(--error)' : 'var(--text-muted)' }}>
+                              {t.payment_delinquency_days > 0 ? `${t.payment_delinquency_days} Days Overdue` : 'Current (0 d)'}
+                            </td>
+                            <td style={{ fontSize: '0.78rem', color: t.credit_risk_rating === 'HIGH_BANKRUPTCY_ALERT' ? 'var(--error)' : 'var(--text-muted)', fontWeight: t.credit_risk_rating === 'HIGH_BANKRUPTCY_ALERT' ? 700 : 400 }}>
+                              {t.early_warning_alert}
                             </td>
                           </tr>
                         ))}
