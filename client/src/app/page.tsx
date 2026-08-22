@@ -234,8 +234,14 @@ export default function LeaseLogicApp() {
   const [drafterData, setDrafterData] = useState<any>(null);
   const [loadingDrafter, setLoadingDrafter] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter'>('abstract');
+  // Inflation Simulator Agent state
+  const [cpiShockPct, setCpiShockPct] = useState(5.0);
+  const [inflationHorizonYears, setInflationHorizonYears] = useState(5);
+  const [inflationData, setInflationData] = useState<any>(null);
+  const [loadingInflation, setLoadingInflation] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -637,6 +643,26 @@ export default function LeaseLogicApp() {
       console.error('Error running clause drafter agent:', err);
     } finally {
       setLoadingDrafter(false);
+    }
+  };
+
+  // Run Predictive Portfolio Rent Escalation & Inflation Hedging Simulator Agent
+  const handleRunInflationSimulator = async () => {
+    setLoadingInflation(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/agent/inflation-simulator`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpi_shock_pct: cpiShockPct, simulation_horizon_years: inflationHorizonYears })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setInflationData(data);
+      }
+    } catch (err) {
+      console.error('Error running inflation simulator:', err);
+    } finally {
+      setLoadingInflation(false);
     }
   };
 
@@ -4319,6 +4345,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'drafter' ? 'active' : ''}`} onClick={() => { setActiveTab('drafter'); handleRunClauseDrafter(); }}>
                   🤖 Drafter
                 </div>
+                <div className={`tab ${activeTab === 'inflation' ? 'active' : ''}`} onClick={() => { setActiveTab('inflation'); handleRunInflationSimulator(); }}>
+                  🔮 Inflation
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -6246,6 +6275,101 @@ export default function LeaseLogicApp() {
                           <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0', fontStyle: 'italic' }}>
                             {drafterData.negotiation_strategy}
                           </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'inflation' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🔮 Predictive Portfolio Rent Escalation & Inflation Hedging Simulator</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Simulate portfolio rent liability escalations and OpEx cost surges under macroeconomic CPI inflation shock scenarios.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Stressed CPI Annual Inflation Rate ({cpiShockPct}%)</label>
+                      <input 
+                        type="range"
+                        min="1.0"
+                        max="10.0"
+                        step="0.5"
+                        value={cpiShockPct}
+                        onChange={(e) => setCpiShockPct(parseFloat(e.target.value))}
+                        style={{ accentColor: 'var(--primary)' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Simulation Horizon (Years)</label>
+                      <select 
+                        value={inflationHorizonYears}
+                        onChange={(e) => setInflationHorizonYears(parseInt(e.target.value) || 5)}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem', background: '#ffffff' }}
+                      >
+                        <option value="3">3 Years</option>
+                        <option value="5">5 Years</option>
+                        <option value="10">10 Years</option>
+                      </select>
+                    </div>
+
+                    <button onClick={handleRunInflationSimulator} disabled={loadingInflation} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingInflation ? 'Simulating...' : '🔮 Run CPI Simulation'}
+                    </button>
+                  </div>
+
+                  {/* Summary & Hedging Verdict */}
+                  {inflationData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Verdict Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(59, 130, 246, 0.08)',
+                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px'
+                      }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Agentic Inflation Hedging Verdict</span>
+                        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--primary)' }}>
+                          🛡️ Strategy: {inflationData.hedging_strategy_verdict.replace(/_/g, ' ')}
+                        </h2>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--foreground)', margin: 0, lineHeight: 1.5 }}>
+                          {inflationData.agent_reasoning}
+                        </p>
+                      </div>
+
+                      {/* Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Baseline 3% Fixed Rent</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--foreground)' }}>${inflationData.baseline_fixed_3pct_total_rent.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{inflationData.simulation_horizon_years}-Year Aggregate</span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Stressed {inflationData.cpi_shock_pct}% CPI Rent</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--warning)' }}>${inflationData.stressed_cpi_total_rent.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--warning)' }}>Stressed CPI Inflation</span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Rent Liability Surge</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--error)' }}>+${inflationData.rent_variance_total.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--error)', fontWeight: 700 }}>Inflation Premium</span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Estimated OpEx Spike</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--primary)' }}>+${inflationData.estimated_opex_spike_total.toLocaleString()}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>Un-capped OpEx Impact</span>
                         </div>
                       </div>
                     </div>
