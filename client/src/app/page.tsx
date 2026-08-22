@@ -228,8 +228,14 @@ export default function LeaseLogicApp() {
   const [buyoutData, setBuyoutData] = useState<any>(null);
   const [loadingBuyout, setLoadingBuyout] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout'>('abstract');
+  // Clause Drafter Agent state
+  const [drafterClauseType, setDrafterClauseType] = useState('cam_cap');
+  const [drafterBias, setDrafterBias] = useState('aggressive_tenant');
+  const [drafterData, setDrafterData] = useState<any>(null);
+  const [loadingDrafter, setLoadingDrafter] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -610,6 +616,27 @@ export default function LeaseLogicApp() {
       console.error('Error running buyout optimizer:', err);
     } finally {
       setLoadingBuyout(false);
+    }
+  };
+
+  // Run Autonomous AI Lease Clause Drafting Agent
+  const handleRunClauseDrafter = async () => {
+    if (!selectedLease) return;
+    setLoadingDrafter(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/agent/draft-clause`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clause_type: drafterClauseType, tenant_target_bias: drafterBias })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDrafterData(data);
+      }
+    } catch (err) {
+      console.error('Error running clause drafter agent:', err);
+    } finally {
+      setLoadingDrafter(false);
     }
   };
 
@@ -4289,6 +4316,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'buyout' ? 'active' : ''}`} onClick={() => { setActiveTab('buyout'); handleRunBuyoutOptimizer(); }}>
                   💰 Buyout
                 </div>
+                <div className={`tab ${activeTab === 'drafter' ? 'active' : ''}`} onClick={() => { setActiveTab('drafter'); handleRunClauseDrafter(); }}>
+                  🤖 Drafter
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -6112,6 +6142,110 @@ export default function LeaseLogicApp() {
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net NPV Buyout Savings</span>
                           <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--success)' }}>${buyoutData.net_npv_savings.toLocaleString()}</h3>
                           <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700 }}>Net Financial Gain</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'drafter' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🤖 Autonomous AI Lease Clause Drafting & Redline Negotiation Agent</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Autonomous multi-agent prompt loops drafting tenant-favorable redlines, legal justifications, and counter-offer strategy notes.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Options */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Target Clause Category</label>
+                      <select 
+                        value={drafterClauseType}
+                        onChange={(e) => setDrafterClauseType(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem', background: '#ffffff' }}
+                      >
+                        <option value="cam_cap">CAM Cap & Escalation Limits</option>
+                        <option value="assignment">Assignment & Subletting Rights</option>
+                        <option value="break_option">Break & Early Exit Options</option>
+                        <option value="maintenance">HVAC & Structural Maintenance</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tenant Stance Strategy</label>
+                      <select 
+                        value={drafterBias}
+                        onChange={(e) => setDrafterBias(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem', background: '#ffffff' }}
+                      >
+                        <option value="aggressive_tenant">Aggressive Tenant Protection (Low Risk)</option>
+                        <option value="balanced">Balanced Market Neutral Position</option>
+                      </select>
+                    </div>
+
+                    <button onClick={handleRunClauseDrafter} disabled={loadingDrafter} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingDrafter ? 'Drafting Redline...' : '🤖 Draft Clause Redline'}
+                    </button>
+                  </div>
+
+                  {/* Redline Output & Strategy */}
+                  {drafterData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Risk Reduction Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Clause Risk Reduction</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            🛡️ Clause Risk Lowered: {drafterData.original_risk_score}% ➔ {drafterData.improved_risk_score}%
+                          </h2>
+                        </div>
+                        <span className="badge badge-success" style={{ padding: '6px 14px', fontSize: '0.8rem' }}>
+                          Tenant Optimal Protection
+                        </span>
+                      </div>
+
+                      {/* Side by side Redline comparison */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div style={{ background: 'rgba(239, 68, 68, 0.04)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--error)', textTransform: 'uppercase', fontWeight: 700 }}>Landlord Original Clause (High Risk)</span>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--foreground)', marginTop: '8px', lineHeight: 1.5, fontFamily: 'monospace' }}>
+                            {drafterData.original_clause_text}
+                          </p>
+                        </div>
+
+                        <div style={{ background: 'rgba(16, 185, 129, 0.04)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--success)', textTransform: 'uppercase', fontWeight: 700 }}>Agentic Tenant Redline (Recommended)</span>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--foreground)', marginTop: '8px', lineHeight: 1.5, fontFamily: 'monospace', fontWeight: 600 }}>
+                            {drafterData.drafted_redline_text}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Legal Rationale & Strategy */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div>
+                          <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', color: 'var(--primary)' }}>⚖️ Legal Rationale & Justification</h4>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--foreground)', margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                            {drafterData.legal_rationale}
+                          </p>
+                        </div>
+
+                        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+                          <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', color: 'var(--text-muted)' }}>🎯 Negotiation Strategy Note</h4>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0', fontStyle: 'italic' }}>
+                            {drafterData.negotiation_strategy}
+                          </p>
                         </div>
                       </div>
                     </div>
