@@ -2236,6 +2236,59 @@ app.post('/api/leases/:id/agent/draft-clause', async (req, res) => {
   }
 });
 
+// 4.792. POST Predictive Portfolio Rent Escalation & Inflation Hedging Simulator Agent
+app.post('/api/portfolio/agent/inflation-simulator', async (req, res) => {
+  try {
+    const { cpi_shock_pct = 5.0, simulation_horizon_years = 5 } = req.body;
+
+    const leasesRes = await pool.query("SELECT id, filename, property_name FROM leases");
+    const count = leasesRes.rows.length || 1;
+    const baseAnnualRent = count * 180000; // $180k per lease
+
+    // Baseline Fixed Escalation (3.0% / year)
+    let baselineTotalRent = 0;
+    let baselineYearRent = baseAnnualRent;
+    for (let y = 1; y <= simulation_horizon_years; y++) {
+      baselineTotalRent += baselineYearRent;
+      baselineYearRent *= 1.03;
+    }
+    baselineTotalRent = Math.round(baselineTotalRent);
+
+    // Stressed CPI Inflation Model
+    const stressedRate = 1 + (cpi_shock_pct / 100);
+    let stressedTotalRent = 0;
+    let stressedYearRent = baseAnnualRent;
+    for (let y = 1; y <= simulation_horizon_years; y++) {
+      stressedTotalRent += stressedYearRent;
+      stressedYearRent *= stressedRate;
+    }
+    stressedTotalRent = Math.round(stressedTotalRent);
+
+    const rentVarianceTotal = stressedTotalRent - baselineTotalRent;
+    const opexSpikeTotal = Math.round((baseAnnualRent * 0.35) * ((Math.pow(stressedRate, simulation_horizon_years) - 1)));
+
+    const hedgingStrategy = cpi_shock_pct >= 5.0
+      ? 'RECOMMEND_CPI_CAP_AND_COLLAR_4PCT'
+      : 'MAINTAIN_STANDARD_CPI_LINKAGE';
+
+    const reasoning = `Under a ${cpi_shock_pct}% CPI inflation surge scenario over ${simulation_horizon_years} years, portfolio rent liability increases by $${rentVarianceTotal.toLocaleString()} (+${((rentVarianceTotal / baselineTotalRent) * 100).toFixed(1)}%), while un-capped OpEx spikes by $${opexSpikeTotal.toLocaleString()}.`;
+
+    res.json({
+      total_portfolio_leases: count,
+      simulation_horizon_years: simulation_horizon_years,
+      cpi_shock_pct: cpi_shock_pct,
+      baseline_fixed_3pct_total_rent: baselineTotalRent,
+      stressed_cpi_total_rent: stressedTotalRent,
+      rent_variance_total: rentVarianceTotal,
+      estimated_opex_spike_total: opexSpikeTotal,
+      hedging_strategy_verdict: hedgingStrategy,
+      agent_reasoning: reasoning
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
