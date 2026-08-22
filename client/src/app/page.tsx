@@ -240,8 +240,12 @@ export default function LeaseLogicApp() {
   const [inflationData, setInflationData] = useState<any>(null);
   const [loadingInflation, setLoadingInflation] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation'>('abstract');
+  // Regulatory Auditor Agent state
+  const [regulatoryData, setRegulatoryData] = useState<any>(null);
+  const [loadingRegulatory, setLoadingRegulatory] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -663,6 +667,23 @@ export default function LeaseLogicApp() {
       console.error('Error running inflation simulator:', err);
     } finally {
       setLoadingInflation(false);
+    }
+  };
+
+  // Fetch Autonomous Regulatory & Zoning Compliance Audit
+  const handleFetchRegulatoryAudit = async () => {
+    if (!selectedLease) return;
+    setLoadingRegulatory(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/agent/regulatory-audit`);
+      if (res.ok) {
+        const data = await res.json();
+        setRegulatoryData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching regulatory audit:', err);
+    } finally {
+      setLoadingRegulatory(false);
     }
   };
 
@@ -4348,6 +4369,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'inflation' ? 'active' : ''}`} onClick={() => { setActiveTab('inflation'); handleRunInflationSimulator(); }}>
                   🔮 Inflation
                 </div>
+                <div className={`tab ${activeTab === 'regulatory' ? 'active' : ''}`} onClick={() => { setActiveTab('regulatory'); handleFetchRegulatoryAudit(); }}>
+                  🏛️ Regulatory
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -6371,6 +6395,86 @@ export default function LeaseLogicApp() {
                           <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '6px 0 0 0', color: 'var(--primary)' }}>+${inflationData.estimated_opex_spike_total.toLocaleString()}</h3>
                           <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>Un-capped OpEx Impact</span>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'regulatory' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🏛️ Autonomous Regulatory & Zoning Compliance Auditor</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Cross-audits lease covenants against Building Energy Performance Standards (BEPS / Local Law 97), ADA Title III, and municipal zoning codes.
+                      </p>
+                    </div>
+                    <button onClick={handleFetchRegulatoryAudit} disabled={loadingRegulatory} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                      {loadingRegulatory ? 'Auditing...' : '🔄 Refresh Audit'}
+                    </button>
+                  </div>
+
+                  {loadingRegulatory ? (
+                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Evaluating municipal zoning codes & energy performance standards...
+                    </div>
+                  ) : !regulatoryData ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Click Refresh Audit to load regulatory compliance checks.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Overall Verdict Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: regulatoryData.overall_compliance_verdict === 'FULLY_REGULATORY_COMPLIANT' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                        border: `1px solid ${regulatoryData.overall_compliance_verdict === 'FULLY_REGULATORY_COMPLIANT' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Municipal Regulatory Audit Verdict</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: regulatoryData.overall_compliance_verdict === 'FULLY_REGULATORY_COMPLIANT' ? 'var(--success)' : 'var(--warning)' }}>
+                            {regulatoryData.overall_compliance_verdict === 'FULLY_REGULATORY_COMPLIANT' ? '✅ FULLY REGULATORY COMPLIANT' : '⚠️ ACTION REQUIRED: ENERGY RETROFIT & BEPS'}
+                          </h2>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Penalty Exposure</span>
+                          <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--error)' }}>
+                            ${regulatoryData.total_annual_penalty_exposure.toLocaleString()}/yr
+                          </h4>
+                        </div>
+                      </div>
+
+                      {/* Audited Checks List */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {regulatoryData.audited_checks.map((chk: any, idx: number) => (
+                          <div key={idx} style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ flex: 1, paddingRight: '20px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>{chk.framework}</h4>
+                                <span className={`badge badge-${chk.current_status === 'COMPLIANT_PASSED' ? 'completed' : 'failed'}`} style={{ fontSize: '0.72rem' }}>
+                                  {chk.current_status}
+                                </span>
+                              </div>
+                              <p style={{ fontSize: '0.82rem', color: 'var(--foreground)', margin: '6px 0 0 0', fontWeight: 600 }}>
+                                Covenant Requirement: {chk.requirement}
+                              </p>
+                              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                                Remedial Plan: {chk.remedial_action}
+                              </p>
+                            </div>
+
+                            <div style={{ textAlign: 'right', minWidth: '130px' }}>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Penalty Impact</span>
+                              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '2px 0 0 0', color: chk.penalty_exposure_annual > 0 ? 'var(--error)' : 'var(--success)' }}>
+                                ${chk.penalty_exposure_annual.toLocaleString()}
+                              </h4>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
