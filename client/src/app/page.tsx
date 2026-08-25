@@ -254,8 +254,13 @@ export default function LeaseLogicApp() {
   const [restructureData, setRestructureData] = useState<any>(null);
   const [loadingRestructure, setLoadingRestructure] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure'>('abstract');
+  // CAM Dispute Dispatcher state
+  const [landlordCamAmountInput, setLandlordCamAmountInput] = useState(85000);
+  const [camDisputeData, setCamDisputeData] = useState<any>(null);
+  const [loadingCamDispute, setLoadingCamDispute] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -715,6 +720,27 @@ export default function LeaseLogicApp() {
       console.error('Error running restructure workout:', err);
     } finally {
       setLoadingRestructure(false);
+    }
+  };
+
+  // Run Automated CAM & OpEx Benchmark Dispute & Reconciliation Dispatcher
+  const handleRunCamDisputeAudit = async () => {
+    if (!selectedLease) return;
+    setLoadingCamDispute(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/cam-dispute-audit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ landlord_cam_statement_amount: landlordCamAmountInput })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCamDisputeData(data);
+      }
+    } catch (err) {
+      console.error('Error running CAM dispute audit:', err);
+    } finally {
+      setLoadingCamDispute(false);
     }
   };
 
@@ -4529,6 +4555,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'restructure' ? 'active' : ''}`} onClick={() => { setActiveTab('restructure'); handleRunRestructureWorkout(); }}>
                   💼 Restructure
                 </div>
+                <div className={`tab ${activeTab === 'cam_dispute' ? 'active' : ''}`} onClick={() => { setActiveTab('cam_dispute'); handleRunCamDisputeAudit(); }}>
+                  🏢 CAM Dispute
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -6745,6 +6774,109 @@ export default function LeaseLogicApp() {
                             </p>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'cam_dispute' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🏢 Automated CAM & OpEx Benchmark Dispute & Reconciliation Dispatcher</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Cross-audits landlord CAM expense statements against BOMA/RICS benchmarks to flag disallowed capital and admin charges.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Landlord Billed CAM Statement Amount ($)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={landlordCamAmountInput}
+                        onChange={(e) => setLandlordCamAmountInput(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunCamDisputeAudit} disabled={loadingCamDispute} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingCamDispute ? 'Auditing CAM...' : '🏢 Run CAM Audit Dispute'}
+                    </button>
+                  </div>
+
+                  {/* Audit Output & Letter */}
+                  {camDisputeData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Disallowed Line-Item Exception Total</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--error)' }}>
+                            ⚠️ Disallowed Charges: ${camDisputeData.total_disallowed_amount.toLocaleString()}
+                          </h2>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Adjusted Tenant CAM</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            ${camDisputeData.adjusted_net_cam_liability.toLocaleString()}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Exceptions Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Billed Line Item</th>
+                              <th>Billed Amount ($)</th>
+                              <th>BOMA Audit Status</th>
+                              <th>Lease Reference</th>
+                              <th>Audit Disallowance Rationale</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {camDisputeData.line_item_exceptions.map((ex: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{ex.line_item}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--error)' }}>
+                                  ${ex.billed_amount_usd.toLocaleString()}
+                                </td>
+                                <td>
+                                  <span className="badge badge-failed" style={{ fontSize: '0.7rem' }}>
+                                    {ex.status}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: '0.78rem', fontFamily: 'monospace' }}>{ex.boma_clause_reference}</td>
+                                <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{ex.reason}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Formal Dispute Notice Letter */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', color: 'var(--primary)' }}>✉️ Formal RICS/BOMA Legal Dispute Notice Letter</h4>
+                        <textarea
+                          readOnly
+                          rows={7}
+                          className="chat-input"
+                          style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '10px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
+                          value={camDisputeData.dispute_notice_letter}
+                        />
                       </div>
                     </div>
                   )}
