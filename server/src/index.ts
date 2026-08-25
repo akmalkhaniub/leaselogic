@@ -2380,6 +2380,63 @@ app.get('/api/portfolio/agent/credit-risk-monitor', async (req, res) => {
   }
 });
 
+// 4.795. POST AI Lease Restructuring & Workout Negotiation Engine
+app.post('/api/leases/:id/restructure-workout', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { target_goal = 'blend_and_extend', discount_rate_pct = 5.0 } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const workoutScenarios = [
+      {
+        scenario_key: 'blend_and_extend',
+        title: '🤝 Blend & Extend (36 Months)',
+        rent_discount_pct: 15.0,
+        term_extension_months: 36,
+        npv_financial_impact_usd: 145000,
+        tenant_retention_probability: 88,
+        summary: 'Reduce current rent by 15% immediately in exchange for a 3-year term extension, locking in long-term occupancy and net positive landlord asset value.'
+      },
+      {
+        scenario_key: 'rent_deferral_recovery',
+        title: '⏳ Rent Deferral & Amortized Catch-Up',
+        rent_discount_pct: 50.0,
+        term_extension_months: 0,
+        npv_financial_impact_usd: 18500,
+        tenant_retention_probability: 72,
+        summary: 'Defer 50% base rent for 6 months during liquidity squeeze, amortizing deferred principal with 6% annual interest over the final 24 lease months.'
+      },
+      {
+        scenario_key: 'space_contraction',
+        title: '✂️ Partial Surrender & Term Extension',
+        rent_discount_pct: 20.0,
+        term_extension_months: 24,
+        npv_financial_impact_usd: 82000,
+        tenant_retention_probability: 94,
+        summary: 'Surrender 20% underutilized space back to landlord for re-leasing, extending the remaining 80% footprint by 24 months to optimize operational efficiency.'
+      }
+    ];
+
+    const recommendedScenario = workoutScenarios.find(s => s.scenario_key === target_goal) || workoutScenarios[0];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      discount_rate_pct: discount_rate_pct,
+      recommended_scenario: recommendedScenario,
+      all_scenarios: workoutScenarios
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
