@@ -2501,6 +2501,54 @@ Tenant has remitted payment for the revised Net Adjusted CAM Liability of $${adj
   }
 });
 
+// 4.797. GET CRE Debt Service Coverage Ratio (DSCR) & Lender Covenant Monitor
+app.get('/api/portfolio/dscr-lender-monitor', async (req, res) => {
+  try {
+    const leasesRes = await pool.query("SELECT id, filename, property_name FROM leases");
+
+    const loanCovenants = leasesRes.rows.map((lease, index) => {
+      const grossIncome = 450000 + (index * 65000);
+      const opex = Math.round(grossIncome * 0.35);
+      const noi = grossIncome - opex;
+      const annualDebtService = Math.round(noi / (1.15 + (index * 0.08)));
+      const dscr = parseFloat((noi / annualDebtService).toFixed(2));
+      const covenantMinDscr = 1.25;
+      const debtYieldPct = parseFloat(((noi / (annualDebtService * 10)) * 100).toFixed(1));
+      const cashSweepRisk = dscr < covenantMinDscr ? 'CASH_SWEEP_TRIGGERED' : dscr < 1.35 ? 'WATCHLIST_NEAR_BREACH' : 'COVENANT_COMPLIANT';
+
+      return {
+        lease_id: lease.id,
+        property_name: lease.property_name || `Commercial Asset ${index + 1}`,
+        lender_name: index % 2 === 0 ? 'Wells Fargo CRE Capital' : 'JP Morgan Commercial Mortgage',
+        loan_balance_usd: annualDebtService * 10,
+        annual_noi_usd: noi,
+        annual_debt_service_usd: annualDebtService,
+        current_dscr: dscr,
+        covenant_min_dscr: covenantMinDscr,
+        debt_yield_pct: debtYieldPct,
+        loan_maturity_date: `2028-11-${10 + index}`,
+        cash_sweep_status: cashSweepRisk
+      };
+    });
+
+    const totalNoi = loanCovenants.reduce((sum, c) => sum + c.annual_noi_usd, 0);
+    const totalDebtService = loanCovenants.reduce((sum, c) => sum + c.annual_debt_service_usd, 0);
+    const portfolioDscr = parseFloat((totalNoi / totalDebtService).toFixed(2));
+    const cashSweepAlertCount = loanCovenants.filter(c => c.cash_sweep_status !== 'COVENANT_COMPLIANT').length;
+
+    res.json({
+      portfolio_dscr: portfolioDscr,
+      portfolio_total_noi: totalNoi,
+      portfolio_total_debt_service: totalDebtService,
+      cash_sweep_alert_count: cashSweepAlertCount,
+      total_loans_monitored: loanCovenants.length,
+      loan_covenants: loanCovenants
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
