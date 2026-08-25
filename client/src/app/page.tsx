@@ -51,7 +51,11 @@ export default function LeaseLogicApp() {
   const [creditMonitorData, setCreditMonitorData] = useState<any>(null);
   const [loadingCreditMonitor, setLoadingCreditMonitor] = useState(false);
 
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration' | 'dispatcher' | 'credit_monitor'>('workspace');
+  // DSCR Lender Monitor state
+  const [dscrData, setDscrData] = useState<any>(null);
+  const [loadingDscr, setLoadingDscr] = useState(false);
+
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration' | 'dispatcher' | 'credit_monitor' | 'dscr_monitor'>('workspace');
   
   // Notification Dispatcher state
   const [dispatchData, setDispatchData] = useState<any>(null);
@@ -757,6 +761,22 @@ export default function LeaseLogicApp() {
       console.error('Error fetching credit risk monitor:', err);
     } finally {
       setLoadingCreditMonitor(false);
+    }
+  };
+
+  // Fetch CRE Debt Service Coverage Ratio (DSCR) & Lender Covenant Monitor
+  const handleFetchDscrMonitor = async () => {
+    setLoadingDscr(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/dscr-lender-monitor`);
+      if (res.ok) {
+        const data = await res.json();
+        setDscrData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching DSCR monitor:', err);
+    } finally {
+      setLoadingDscr(false);
     }
   };
 
@@ -2228,6 +2248,13 @@ export default function LeaseLogicApp() {
             onClick={() => { setCurrentView('credit_monitor'); handleFetchCreditMonitor(); }}
           >
             📊 Credit
+          </button>
+          <button 
+            className={`btn ${currentView === 'dscr_monitor' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => { setCurrentView('dscr_monitor'); handleFetchDscrMonitor(); }}
+          >
+            📊 DSCR
           </button>
         </div>
 
@@ -4247,6 +4274,109 @@ export default function LeaseLogicApp() {
                             </td>
                             <td style={{ fontSize: '0.78rem', color: t.credit_risk_rating === 'HIGH_BANKRUPTCY_ALERT' ? 'var(--error)' : 'var(--text-muted)', fontWeight: t.credit_risk_rating === 'HIGH_BANKRUPTCY_ALERT' ? 700 : 400 }}>
                               {t.early_warning_alert}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : currentView === 'dscr_monitor' ? (
+          <div className="pane" style={{ overflowY: 'auto', gap: '20px' }}>
+            <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)' }}>📊 Commercial Real Estate Debt Service Coverage Ratio (DSCR) & Lender Covenant Monitor</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                    Real-time loan covenant tracking (DSCR, Debt Yield %, Cash Sweep triggers) for institutional CMBS and commercial bank lenders.
+                  </p>
+                </div>
+                <button onClick={handleFetchDscrMonitor} disabled={loadingDscr} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                  {loadingDscr ? 'Loading Loan Data...' : '🔄 Refresh DSCR Covenants'}
+                </button>
+              </div>
+
+              {loadingDscr ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Calculating property Net Operating Income (NOI) & DSCR loan ratios...
+                </div>
+              ) : !dscrData ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Click Refresh DSCR Covenants to load lender compliance suite.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Portfolio Gauge Banner */}
+                  <div style={{
+                    padding: '16px 20px',
+                    borderRadius: '8px',
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Weighted Portfolio DSCR Ratio</span>
+                      <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                        📊 Portfolio DSCR: {dscrData.portfolio_dscr}x (Min Req: 1.25x)
+                      </h2>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Portfolio Annual NOI</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>${dscrData.portfolio_total_noi.toLocaleString()}</h4>
+                      </div>
+
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Debt Service</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0' }}>${dscrData.portfolio_total_debt_service.toLocaleString()}</h4>
+                      </div>
+
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--warning)', textTransform: 'uppercase', fontWeight: 700 }}>Cash Sweep Alerts</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--warning)', margin: '2px 0 0 0' }}>{dscrData.cash_sweep_alert_count} Warnings</h4>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Loan Covenant Table */}
+                  <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                    <table className="terms-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Property Asset</th>
+                          <th>Lender Institution</th>
+                          <th>Loan Principal ($)</th>
+                          <th>Annual NOI ($)</th>
+                          <th>Annual Debt Service</th>
+                          <th>Current DSCR (Req)</th>
+                          <th>Debt Yield (%)</th>
+                          <th>Loan Maturity</th>
+                          <th>Cash Sweep Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dscrData.loan_covenants.map((c: any, idx: number) => (
+                          <tr key={idx}>
+                            <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{c.property_name}</td>
+                            <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{c.lender_name}</td>
+                            <td style={{ fontSize: '0.82rem', fontWeight: 600 }}>${c.loan_balance_usd.toLocaleString()}</td>
+                            <td style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--success)' }}>${c.annual_noi_usd.toLocaleString()}</td>
+                            <td style={{ fontSize: '0.82rem' }}>${c.annual_debt_service_usd.toLocaleString()}</td>
+                            <td style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 800, color: c.current_dscr < c.covenant_min_dscr ? 'var(--error)' : c.current_dscr < 1.35 ? 'var(--warning)' : 'var(--success)' }}>
+                              {c.current_dscr}x ({c.covenant_min_dscr}x)
+                            </td>
+                            <td style={{ fontSize: '0.82rem', fontWeight: 700 }}>{c.debt_yield_pct}%</td>
+                            <td style={{ fontSize: '0.78rem', fontFamily: 'monospace' }}>{c.loan_maturity_date}</td>
+                            <td>
+                              <span className={`badge badge-${c.cash_sweep_status === 'COVENANT_COMPLIANT' ? 'completed' : c.cash_sweep_status === 'WATCHLIST_NEAR_BREACH' ? 'pending' : 'failed'}`} style={{ fontSize: '0.68rem' }}>
+                                {c.cash_sweep_status}
+                              </span>
                             </td>
                           </tr>
                         ))}
