@@ -248,8 +248,14 @@ export default function LeaseLogicApp() {
   const [regulatoryData, setRegulatoryData] = useState<any>(null);
   const [loadingRegulatory, setLoadingRegulatory] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory'>('abstract');
+  // Restructure Workout Engine state
+  const [restructureGoal, setRestructureGoal] = useState('blend_and_extend');
+  const [restructureDiscountRate, setRestructureDiscountRate] = useState(5.0);
+  const [restructureData, setRestructureData] = useState<any>(null);
+  const [loadingRestructure, setLoadingRestructure] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -688,6 +694,27 @@ export default function LeaseLogicApp() {
       console.error('Error fetching regulatory audit:', err);
     } finally {
       setLoadingRegulatory(false);
+    }
+  };
+
+  // Run AI Lease Restructuring & Workout Negotiation Engine
+  const handleRunRestructureWorkout = async () => {
+    if (!selectedLease) return;
+    setLoadingRestructure(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/restructure-workout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_goal: restructureGoal, discount_rate_pct: restructureDiscountRate })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRestructureData(data);
+      }
+    } catch (err) {
+      console.error('Error running restructure workout:', err);
+    } finally {
+      setLoadingRestructure(false);
     }
   };
 
@@ -4499,6 +4526,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'regulatory' ? 'active' : ''}`} onClick={() => { setActiveTab('regulatory'); handleFetchRegulatoryAudit(); }}>
                   🏛️ Regulatory
                 </div>
+                <div className={`tab ${activeTab === 'restructure' ? 'active' : ''}`} onClick={() => { setActiveTab('restructure'); handleRunRestructureWorkout(); }}>
+                  💼 Restructure
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -6600,6 +6630,119 @@ export default function LeaseLogicApp() {
                                 ${chk.penalty_exposure_annual.toLocaleString()}
                               </h4>
                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'restructure' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>💼 AI Lease Restructuring & Workout Negotiation Engine</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Simulate lease workout options (Blend & Extend, Rent Deferral, Partial Surrender) to optimize tenant retention and asset NPV.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Target Restructuring Strategy</label>
+                      <select 
+                        value={restructureGoal}
+                        onChange={(e) => setRestructureGoal(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem', background: '#ffffff' }}
+                      >
+                        <option value="blend_and_extend">🤝 Blend & Extend (3-Year Extension)</option>
+                        <option value="rent_deferral_recovery">⏳ Rent Deferral & Amortized Catch-Up</option>
+                        <option value="space_contraction">✂️ Partial Space Surrender (20% Cut)</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Discount Rate ({restructureDiscountRate}%)</label>
+                      <input 
+                        type="range"
+                        min="3.0"
+                        max="10.0"
+                        step="0.5"
+                        value={restructureDiscountRate}
+                        onChange={(e) => setRestructureDiscountRate(parseFloat(e.target.value))}
+                        style={{ accentColor: 'var(--primary)' }}
+                      />
+                    </div>
+
+                    <button onClick={handleRunRestructureWorkout} disabled={loadingRestructure} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingRestructure ? 'Calculating Workout...' : '💼 Run Restructure Model'}
+                    </button>
+                  </div>
+
+                  {/* Scenarios & Recommendation */}
+                  {restructureData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Recommended Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Recommended Restructuring Plan</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            {restructureData.recommended_scenario.title}
+                          </h2>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--foreground)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+                            {restructureData.recommended_scenario.summary}
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '160px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net NPV Asset Value</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            +${restructureData.recommended_scenario.npv_financial_impact_usd.toLocaleString()}
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>
+                            {restructureData.recommended_scenario.tenant_retention_probability}% Tenant Retention
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Scenarios Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                        {restructureData.all_scenarios.map((sc: any, idx: number) => (
+                          <div key={idx} style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: sc.scenario_key === restructureData.recommended_scenario.scenario_key ? '2px solid var(--primary)' : '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>{sc.title}</h4>
+                              {sc.scenario_key === restructureData.recommended_scenario.scenario_key && (
+                                <span className="badge badge-success" style={{ fontSize: '0.68rem' }}>Recommended</span>
+                              )}
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '8px', fontSize: '0.8rem' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Rent Discount:</span>
+                              <strong style={{ color: 'var(--warning)' }}>-{sc.rent_discount_pct}%</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Term Extension:</span>
+                              <strong>+{sc.term_extension_months} Months</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>NPV Savings:</span>
+                              <strong style={{ color: 'var(--success)' }}>+${sc.npv_financial_impact_usd.toLocaleString()}</strong>
+                            </div>
+
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+                              {sc.summary}
+                            </p>
                           </div>
                         ))}
                       </div>
