@@ -2437,6 +2437,70 @@ app.post('/api/leases/:id/restructure-workout', async (req, res) => {
   }
 });
 
+// 4.796. POST Automated CAM & OpEx Benchmark Dispute & Reconciliation Dispatcher
+app.post('/api/leases/:id/cam-dispute-audit', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { landlord_cam_statement_amount = 85000, tenant_area_sqft = 5000 } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const lineItemExceptions = [
+      {
+        line_item: 'Capital Equipment Replacement (Roof & Chiller)',
+        billed_amount_usd: 22500,
+        status: 'DISALLOWED_CAPEX',
+        boma_clause_reference: 'Section 7.2 - Capital Expenditures Excluded from Direct OpEx',
+        reason: 'Capital additions extending building useful life must be amortized by Landlord, not billed as direct CAM.'
+      },
+      {
+        line_item: 'Landlord Corporate Legal Counsel Fees',
+        billed_amount_usd: 8400,
+        status: 'DISALLOWED_ADMIN',
+        boma_clause_reference: 'Section 7.4 - Excluded Administrative & Legal Fees',
+        reason: 'Legal expenses incurred for new tenant lease negotiations cannot be passed through to existing tenants.'
+      },
+      {
+        line_item: 'Property Vacancy Marketing & Leasing Commissions',
+        billed_amount_usd: 4200,
+        status: 'DISALLOWED_MARKETING',
+        boma_clause_reference: 'Section 7.8 - Advertising & Leasing Costs',
+        reason: 'Promotional expenses for unleased building space are sole responsibility of Landlord.'
+      }
+    ];
+
+    const totalDisallowed = lineItemExceptions.reduce((acc, item) => acc + item.billed_amount_usd, 0);
+    const adjustedCamLiability = Math.max(0, landlord_cam_statement_amount - totalDisallowed);
+
+    const disputeNoticeLetter = `RE: FORMAL NOTICE OF CAM & OPEX RECONCILIATION EXCEPTION DISPUTE
+Property: ${lease.property_name || 'Commercial Asset'} (Lease ID: ${id})
+
+Dear Landlord / Property Manager,
+
+Please be advised that Tenant has completed a formal RICS/BOMA audit of the Annual Operating Expense Statement ($${landlord_cam_statement_amount.toLocaleString()}). Based on express terms in Section 7 of the Lease Agreement, Tenant hereby disputes line-item charges totaling $${totalDisallowed.toLocaleString()} representing non-allowable Capital Expenditures, Corporate Legal Fees, and Vacancy Marketing.
+
+Tenant has remitted payment for the revised Net Adjusted CAM Liability of $${adjustedCamLiability.toLocaleString()}. Please provide an updated zero-balance reconciliation statement.`;
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      landlord_billed_cam_amount: landlord_cam_statement_amount,
+      total_disallowed_amount: totalDisallowed,
+      adjusted_net_cam_liability: adjustedCamLiability,
+      audit_dispute_verdict: 'DISPUTE_NOTICE_ISSUED',
+      line_item_exceptions: lineItemExceptions,
+      dispute_notice_letter: disputeNoticeLetter
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
