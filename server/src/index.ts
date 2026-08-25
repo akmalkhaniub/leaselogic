@@ -2549,6 +2549,77 @@ app.get('/api/portfolio/dscr-lender-monitor', async (req, res) => {
   }
 });
 
+// 4.798. POST Multi-Jurisdiction International Lease Tax & Stamp Duty Calculator
+app.post('/api/leases/:id/international-tax-calc', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { jurisdiction = 'UK', annual_rent_usd = 120000, lease_term_years = 5 } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const grossRentTotal = annual_rent_usd * lease_term_years;
+
+    // UK SDLT Calculation (3.5% NPV discount)
+    const npvUkRent = Math.round(annual_rent_usd * ((1 - Math.pow(1 + 0.035, -lease_term_years)) / 0.035));
+    const ukSdltTax = npvUkRent > 150000 ? Math.round((npvUkRent - 150000) * 0.01) + 1500 : 0;
+
+    // US Commercial Rent Tax (CRT)
+    const usCrtTaxAnnual = annual_rent_usd > 250000 ? Math.round(annual_rent_usd * 0.039) : Math.round(annual_rent_usd * 0.018);
+    const usCrtTaxTotal = usCrtTaxAnnual * lease_term_years;
+
+    // EU Commercial VAT
+    const euVatTaxAnnual = Math.round(annual_rent_usd * 0.19);
+    const euVatTaxTotal = euVatTaxAnnual * lease_term_years;
+
+    const selectedTaxResult = jurisdiction === 'UK' ? {
+      jurisdiction_name: '🇬🇧 United Kingdom (HMRC SDLT)',
+      tax_type: 'Stamp Duty Land Tax (SDLT)',
+      taxable_base_npv_usd: npvUkRent,
+      statutory_tax_rate_pct: 1.0,
+      total_tax_liability_usd: ukSdltTax,
+      filing_deadline: '14 Days post-lease completion',
+      tax_notes: 'Calculated on Net Present Value (NPV) of consideration rent discounted at 3.5% standard HMRC statutory rate.'
+    } : jurisdiction === 'US' ? {
+      jurisdiction_name: '🇺🇸 United States (NYC CRT / State Transfer)',
+      tax_type: 'Commercial Rent Tax (CRT)',
+      taxable_base_npv_usd: grossRentTotal,
+      statutory_tax_rate_pct: 3.9,
+      total_tax_liability_usd: usCrtTaxTotal,
+      filing_deadline: 'Quarterly Return (Form CR-A)',
+      tax_notes: 'Applied to base rent for commercial premises located south of 96th Street in Manhattan above $250k threshold.'
+    } : {
+      jurisdiction_name: '🇪🇺 European Union (Commercial VAT)',
+      tax_type: 'Value Added Tax (VAT / MwSt)',
+      taxable_base_npv_usd: grossRentTotal,
+      statutory_tax_rate_pct: 19.0,
+      total_tax_liability_usd: euVatTaxTotal,
+      filing_deadline: 'Monthly VAT Return',
+      tax_notes: 'Commercial lease option-to-tax regime allowing input VAT recovery on capital improvements.'
+    };
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      annual_rent_usd: annual_rent_usd,
+      lease_term_years: lease_term_years,
+      gross_contract_rent_usd: grossRentTotal,
+      selected_tax_summary: selectedTaxResult,
+      multi_jurisdiction_comparison: {
+        uk_sdlt_tax_usd: ukSdltTax,
+        us_crt_tax_usd: usCrtTaxTotal,
+        eu_vat_tax_usd: euVatTaxTotal
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
