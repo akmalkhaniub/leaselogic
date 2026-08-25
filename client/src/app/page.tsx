@@ -263,8 +263,15 @@ export default function LeaseLogicApp() {
   const [camDisputeData, setCamDisputeData] = useState<any>(null);
   const [loadingCamDispute, setLoadingCamDispute] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute'>('abstract');
+  // Multi-Jurisdiction International Tax Calculator state
+  const [taxJurisdiction, setTaxJurisdiction] = useState('UK');
+  const [taxAnnualRent, setTaxAnnualRent] = useState(120000);
+  const [taxLeaseTermYears, setTaxLeaseTermYears] = useState(5);
+  const [taxData, setTaxData] = useState<any>(null);
+  const [loadingTax, setLoadingTax] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -745,6 +752,27 @@ export default function LeaseLogicApp() {
       console.error('Error running CAM dispute audit:', err);
     } finally {
       setLoadingCamDispute(false);
+    }
+  };
+
+  // Run Multi-Jurisdiction International Lease Tax & Stamp Duty Calculator
+  const handleRunInternationalTaxCalc = async () => {
+    if (!selectedLease) return;
+    setLoadingTax(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/international-tax-calc`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jurisdiction: taxJurisdiction, annual_rent_usd: taxAnnualRent, lease_term_years: taxLeaseTermYears })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTaxData(data);
+      }
+    } catch (err) {
+      console.error('Error running tax calculator:', err);
+    } finally {
+      setLoadingTax(false);
     }
   };
 
@@ -4688,6 +4716,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'cam_dispute' ? 'active' : ''}`} onClick={() => { setActiveTab('cam_dispute'); handleRunCamDisputeAudit(); }}>
                   🏢 CAM Dispute
                 </div>
+                <div className={`tab ${activeTab === 'tax_calc' ? 'active' : ''}`} onClick={() => { setActiveTab('tax_calc'); handleRunInternationalTaxCalc(); }}>
+                  🌐 Tax Calc
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -7007,6 +7038,122 @@ export default function LeaseLogicApp() {
                           style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '10px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
                           value={camDisputeData.dispute_notice_letter}
                         />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'tax_calc' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🌐 Multi-Jurisdiction International Lease Tax & Stamp Duty Calculator</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Calculates statutory tax liabilities (UK SDLT, US CRT, EU VAT) across global commercial lease footprints.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Target Tax Jurisdiction</label>
+                      <select 
+                        value={taxJurisdiction}
+                        onChange={(e) => setTaxJurisdiction(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem', background: '#ffffff' }}
+                      >
+                        <option value="UK">🇬🇧 United Kingdom (HMRC SDLT)</option>
+                        <option value="US">🇺🇸 United States (NYC CRT / State Transfer)</option>
+                        <option value="EU">🇪🇺 European Union (Commercial VAT)</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Annual Contract Rent ($)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={taxAnnualRent}
+                        onChange={(e) => setTaxAnnualRent(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lease Term (Years)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={taxLeaseTermYears}
+                        onChange={(e) => setTaxLeaseTermYears(parseInt(e.target.value) || 1)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunInternationalTaxCalc} disabled={loadingTax} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingTax ? 'Calculating Tax...' : '🌐 Run Tax Calculator'}
+                    </button>
+                  </div>
+
+                  {/* Tax Output */}
+                  {taxData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(139, 92, 246, 0.08)',
+                        border: '1px solid rgba(139, 92, 246, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>{taxData.selected_tax_summary.jurisdiction_name}</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            {taxData.selected_tax_summary.tax_type}: ${taxData.selected_tax_summary.total_tax_liability_usd.toLocaleString()}
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            {taxData.selected_tax_summary.tax_notes}
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '160px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Filing Deadline</span>
+                          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '2px 0 0 0', color: 'var(--warning)' }}>
+                            {taxData.selected_tax_summary.filing_deadline}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>
+                            {taxData.selected_tax_summary.statutory_tax_rate_pct}% Statutory Rate
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Multi-Jurisdiction Comparison Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: taxJurisdiction === 'UK' ? '2px solid var(--primary)' : '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>🇬🇧 UK SDLT (HMRC)</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--foreground)' }}>
+                            ${taxData.multi_jurisdiction_comparison.uk_sdlt_tax_usd.toLocaleString()}
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Net Present Value (NPV) basis</span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: taxJurisdiction === 'US' ? '2px solid var(--primary)' : '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>🇺🇸 US Commercial Rent Tax</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--foreground)' }}>
+                            ${taxData.multi_jurisdiction_comparison.us_crt_tax_usd.toLocaleString()}
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>3.9% Gross rent pass-through</span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: taxJurisdiction === 'EU' ? '2px solid var(--primary)' : '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>🇪🇺 EU Commercial VAT (19%)</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--foreground)' }}>
+                            ${taxData.multi_jurisdiction_comparison.eu_vat_tax_usd.toLocaleString()}
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Recoverable input tax option</span>
+                        </div>
                       </div>
                     </div>
                   )}
