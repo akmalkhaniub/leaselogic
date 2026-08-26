@@ -2749,6 +2749,50 @@ Please instruct your insurance broker to issue a revised COI reflecting complian
   }
 });
 
+// 4.801. POST 3D BIM & Spatial Tenant Fit-Out Cost Estimator
+app.post('/api/leases/:id/spatial-fitout-estimator', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fitout_tier = 'executive_tech', floor_area_sqft = 5000, ti_allowance_per_sqft = 50.0 } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const multiplier = fitout_tier === 'medical_lab' ? 1.6 : fitout_tier === 'executive_tech' ? 1.25 : 1.0;
+
+    const lineItems = [
+      { category: 'Architectural Demolition & Partitions', cost_per_sqft: Math.round(25 * multiplier), total_cost_usd: Math.round(25 * multiplier * floor_area_sqft) },
+      { category: 'MEP (HVAC & Electrical Distribution)', cost_per_sqft: Math.round(35 * multiplier), total_cost_usd: Math.round(35 * multiplier * floor_area_sqft) },
+      { category: 'Finishes, Millwork & Ceiling Systems', cost_per_sqft: Math.round(20 * multiplier), total_cost_usd: Math.round(20 * multiplier * floor_area_sqft) },
+      { category: 'IT Cabling & Smart Building Sensor Integration', cost_per_sqft: Math.round(15 * multiplier), total_cost_usd: Math.round(15 * multiplier * floor_area_sqft) }
+    ];
+
+    const grossCostPerSqft = lineItems.reduce((sum, item) => sum + item.cost_per_sqft, 0);
+    const grossTotalCostUsd = lineItems.reduce((sum, item) => sum + item.total_cost_usd, 0);
+    const landlordTiAllowanceTotal = Math.round(ti_allowance_per_sqft * floor_area_sqft);
+    const netTenantCapexUsd = Math.max(0, grossTotalCostUsd - landlordTiAllowanceTotal);
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      fitout_tier: fitout_tier,
+      floor_area_sqft: floor_area_sqft,
+      gross_cost_per_sqft: grossCostPerSqft,
+      gross_total_cost_usd: grossTotalCostUsd,
+      ti_allowance_per_sqft: ti_allowance_per_sqft,
+      landlord_ti_allowance_total_usd: landlordTiAllowanceTotal,
+      net_tenant_out_of_pocket_capex_usd: netTenantCapexUsd,
+      cost_breakdown: lineItems
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
