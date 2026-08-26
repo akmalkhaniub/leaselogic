@@ -287,8 +287,12 @@ export default function LeaseLogicApp() {
   const [fitoutData, setFitoutData] = useState<any>(null);
   const [loadingFitout, setLoadingFitout] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator'>('abstract');
+  // Sublease Rights & Royalty Sharing Engine state
+  const [subleaseRoyaltyData, setSubleaseRoyaltyData] = useState<any>(null);
+  const [loadingSubleaseRoyalty, setLoadingSubleaseRoyalty] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -849,6 +853,23 @@ export default function LeaseLogicApp() {
       console.error('Error running fitout estimator:', err);
     } finally {
       setLoadingFitout(false);
+    }
+  };
+
+  // Fetch Autonomous Sublease Rights & Assignment Royalty Sharing Engine
+  const handleFetchSubleaseRoyalty = async () => {
+    if (!selectedLease) return;
+    setLoadingSubleaseRoyalty(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/sublease-royalty-engine`);
+      if (res.ok) {
+        const data = await res.json();
+        setSubleaseRoyaltyData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching sublease royalty engine:', err);
+    } finally {
+      setLoadingSubleaseRoyalty(false);
     }
   };
 
@@ -4804,6 +4825,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'fitout_estimator' ? 'active' : ''}`} onClick={() => { setActiveTab('fitout_estimator'); handleRunFitoutEstimator(); }}>
                   📐 Fit-Out Estimator
                 </div>
+                <div className={`tab ${activeTab === 'sublease_royalty' ? 'active' : ''}`} onClick={() => { setActiveTab('sublease_royalty'); handleFetchSubleaseRoyalty(); }}>
+                  📜 Sublease Royalty
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -7538,6 +7562,110 @@ export default function LeaseLogicApp() {
                                 <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.category}</td>
                                 <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)' }}>${item.cost_per_sqft} / sqft</td>
                                 <td style={{ fontSize: '0.85rem', fontWeight: 800 }}>${item.total_cost_usd.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'sublease_royalty' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>📜 Autonomous Sublease Rights & Assignment Royalty Sharing Engine</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Calculates subtenant profit premiums and 50/50 Landlord royalty profit split waterfalls.
+                      </p>
+                    </div>
+                    <button onClick={handleFetchSubleaseRoyalty} disabled={loadingSubleaseRoyalty} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                      {loadingSubleaseRoyalty ? 'Calculating Royalty...' : '🔄 Refresh Royalty Model'}
+                    </button>
+                  </div>
+
+                  {/* Sublease Output */}
+                  {subleaseRoyaltyData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Profit Sharing Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Landlord Royalty Sharing Revenue</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            📜 +${subleaseRoyaltyData.landlord_annual_royalty_usd.toLocaleString()} / Year ({subleaseRoyaltyData.landlord_royalty_share_pct}% Net Share)
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Gross Sublease Profit Premium: ${subleaseRoyaltyData.gross_sublease_profit_usd.toLocaleString()}/yr | Tenant Retained Share: ${subleaseRoyaltyData.tenant_retained_annual_profit_usd.toLocaleString()}/yr
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '160px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Consent Status</span>
+                          <span className="badge badge-success" style={{ fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                            {subleaseRoyaltyData.sublease_consent_status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Sublease Waterfall Metrics Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Base Lease Rent</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '4px 0 0 0' }}>
+                            ${subleaseRoyaltyData.annual_base_rent_usd.toLocaleString()}
+                          </h3>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Subtenant Gross Rent</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--primary)' }}>
+                            ${subleaseRoyaltyData.annual_sublease_gross_income_usd.toLocaleString()}
+                          </h3>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Landlord Royalty Split</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--success)' }}>
+                            ${subleaseRoyaltyData.landlord_annual_royalty_usd.toLocaleString()}
+                          </h3>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant Profit Share</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--warning)' }}>
+                            ${subleaseRoyaltyData.tenant_retained_annual_profit_usd.toLocaleString()}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Sublease Covenants Checklist */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Sublease Consent Covenant</th>
+                              <th>Approval Status</th>
+                              <th>Covenant Audit Details</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {subleaseRoyaltyData.consent_covenants.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.covenant_name}</td>
+                                <td>
+                                  <span className="badge badge-completed" style={{ fontSize: '0.68rem' }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{item.details}</td>
                               </tr>
                             ))}
                           </tbody>
