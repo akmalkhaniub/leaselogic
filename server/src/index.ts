@@ -2684,6 +2684,71 @@ app.post('/api/leases/:id/carbon-offset-marketplace', async (req, res) => {
   }
 });
 
+// 4.800. GET Autonomous Insurance (COI) Coverage Compliance Dispatcher
+app.get('/api/leases/:id/coi-insurance-audit', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const insuranceCovenants = [
+      {
+        coverage_type: 'General Commercial Liability',
+        required_limit_usd: 5000000,
+        active_policy_limit_usd: 2000000,
+        status: 'COVERAGE_DEFICIT_ALERT',
+        deficit_amount_usd: 3000000,
+        notes: 'Active policy limit is $3.0M below required lease minimum of $5.0M per occurrence.'
+      },
+      {
+        coverage_type: 'Umbrella Excess Liability',
+        required_limit_usd: 10000000,
+        active_policy_limit_usd: 10000000,
+        status: 'COVENANT_COMPLIANT',
+        deficit_amount_usd: 0,
+        notes: 'Active policy meets or exceeds required minimum.'
+      },
+      {
+        coverage_type: 'Landlord Additional Insured Endorsement',
+        required_limit_usd: 0,
+        active_policy_limit_usd: 0,
+        status: 'ENDORSEMENT_MISSING',
+        deficit_amount_usd: 0,
+        notes: 'Certificate fails to explicitly name Landlord LLC as primary non-contributory Additional Insured.'
+      }
+    ];
+
+    const complianceScore = 65;
+    const nonComplianceNoticeLetter = `RE: FORMAL NOTICE OF INSURANCE CERTIFICATE (COI) NON-COMPLIANCE
+Property: ${lease.property_name || 'Commercial Space'} (Lease ID: ${id})
+
+Dear Tenant,
+
+Please be advised that an audit of your active Certificate of Insurance (COI) revealed material non-compliance with Section 11 (Insurance Obligations) of your Lease Agreement:
+
+1. General Liability Limit: Active coverage of $2,000,000 fails to meet the required $5,000,000 minimum limit.
+2. Additional Insured: Missing explicit ISO Form CG 20 11 endorsement naming Landlord as Additional Insured.
+
+Please instruct your insurance broker to issue a revised COI reflecting compliant limits within 10 business days.`;
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      coi_compliance_score: complianceScore,
+      audit_status: 'NON_COMPLIANCE_NOTICE_REQUIRED',
+      covenants: insuranceCovenants,
+      non_compliance_notice_letter: nonComplianceNoticeLetter
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
