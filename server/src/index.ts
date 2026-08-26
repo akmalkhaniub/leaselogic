@@ -2620,6 +2620,70 @@ app.post('/api/leases/:id/international-tax-calc', async (req, res) => {
   }
 });
 
+// 4.799. POST Autonomous AI Utility & Carbon Offsetting Marketplace Agent
+app.post('/api/leases/:id/carbon-offset-marketplace', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { target_offset_pct = 100, project_type = 'solar_ppa' } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const scope1Tons = 145;
+    const scope2Tons = 280;
+    const grossTonsCo2e = scope1Tons + scope2Tons;
+    const targetOffsetTons = Math.round(grossTonsCo2e * (target_offset_pct / 100));
+
+    const offsetProjects = [
+      {
+        project_key: 'solar_ppa',
+        title: '☀️ On-Site Solar Power Purchase Agreement (PPA)',
+        price_per_ton_usd: 22,
+        registry_standard: 'Gold Standard GHG Protocol',
+        annual_cost_usd: targetOffsetTons * 22,
+        summary: 'Direct Virtual Power Purchase Agreement (VPPA) generated from regional utility-scale solar arrays.'
+      },
+      {
+        project_key: 'forestry_vcs',
+        title: '🌲 Verified Amazonian Reforestation (VCS)',
+        price_per_ton_usd: 18,
+        registry_standard: 'Verra VCS + CCB Standard',
+        annual_cost_usd: targetOffsetTons * 18,
+        summary: 'High-permanence forestry conservation credits certified by Verra carbon standard registry.'
+      },
+      {
+        project_key: 'direct_air_capture',
+        title: '💎 Climeworks Direct Air Capture (DAC)',
+        price_per_ton_usd: 140,
+        registry_standard: 'ISO 14064 Permanent Storage',
+        annual_cost_usd: targetOffsetTons * 140,
+        summary: 'Permanent carbon dioxide removal via geothermal direct air capture and deep basalt mineralization.'
+      }
+    ];
+
+    const selectedProject = offsetProjects.find(p => p.project_key === project_type) || offsetProjects[0];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      scope1_direct_emissions_tons: scope1Tons,
+      scope2_indirect_emissions_tons: scope2Tons,
+      gross_emissions_co2e_tons: grossTonsCo2e,
+      target_offset_pct: target_offset_pct,
+      target_offset_tons: targetOffsetTons,
+      net_zero_compliance_status: target_offset_pct === 100 ? 'NET_ZERO_COMPLIANT' : 'PARTIAL_OFFSET',
+      selected_project: selectedProject,
+      available_marketplace_projects: offsetProjects
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
