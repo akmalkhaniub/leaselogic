@@ -270,8 +270,14 @@ export default function LeaseLogicApp() {
   const [taxData, setTaxData] = useState<any>(null);
   const [loadingTax, setLoadingTax] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc'>('abstract');
+  // Carbon Offsetting Marketplace state
+  const [carbonOffsetPct, setCarbonOffsetPct] = useState(100);
+  const [carbonProjectType, setCarbonProjectType] = useState('solar_ppa');
+  const [carbonMarketplaceData, setCarbonMarketplaceData] = useState<any>(null);
+  const [loadingCarbonMarketplace, setLoadingCarbonMarketplace] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -773,6 +779,27 @@ export default function LeaseLogicApp() {
       console.error('Error running tax calculator:', err);
     } finally {
       setLoadingTax(false);
+    }
+  };
+
+  // Run Autonomous AI Utility & Carbon Offsetting Marketplace Agent
+  const handleRunCarbonMarketplace = async () => {
+    if (!selectedLease) return;
+    setLoadingCarbonMarketplace(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/carbon-offset-marketplace`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_offset_pct: carbonOffsetPct, project_type: carbonProjectType })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCarbonMarketplaceData(data);
+      }
+    } catch (err) {
+      console.error('Error running carbon marketplace:', err);
+    } finally {
+      setLoadingCarbonMarketplace(false);
     }
   };
 
@@ -4719,6 +4746,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'tax_calc' ? 'active' : ''}`} onClick={() => { setActiveTab('tax_calc'); handleRunInternationalTaxCalc(); }}>
                   🌐 Tax Calc
                 </div>
+                <div className={`tab ${activeTab === 'carbon_marketplace' ? 'active' : ''}`} onClick={() => { setActiveTab('carbon_marketplace'); handleRunCarbonMarketplace(); }}>
+                  ⚡ Carbon Marketplace
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -7154,6 +7184,114 @@ export default function LeaseLogicApp() {
                           </h3>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Recoverable input tax option</span>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'carbon_marketplace' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>⚡ Autonomous AI Utility & Carbon Offsetting Marketplace Agent</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Calculates Scope 1 & 2 carbon liabilities and dispatches verified PPA solar & reforestation offset contracts.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Target Offset Percentage ({carbonOffsetPct}%)</label>
+                      <input 
+                        type="range"
+                        min="10"
+                        max="100"
+                        step="10"
+                        value={carbonOffsetPct}
+                        onChange={(e) => setCarbonOffsetPct(parseInt(e.target.value))}
+                        style={{ accentColor: 'var(--primary)' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Preferred Offsetting Project</label>
+                      <select 
+                        value={carbonProjectType}
+                        onChange={(e) => setCarbonProjectType(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem', background: '#ffffff' }}
+                      >
+                        <option value="solar_ppa">☀️ Utility Solar PPA ($22/ton)</option>
+                        <option value="forestry_vcs">🌲 Verra Forestry Conservation ($18/ton)</option>
+                        <option value="direct_air_capture">💎 Climeworks Direct Air Capture ($140/ton)</option>
+                      </select>
+                    </div>
+
+                    <button onClick={handleRunCarbonMarketplace} disabled={loadingCarbonMarketplace} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingCarbonMarketplace ? 'Processing Offset...' : '⚡ Execute Offset Purchase'}
+                    </button>
+                  </div>
+
+                  {/* Carbon Output */}
+                  {carbonMarketplaceData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Building Carbon Liability</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            🌱 {carbonMarketplaceData.gross_emissions_co2e_tons} Metric Tons CO2e / Year
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Scope 1 Direct: {carbonMarketplaceData.scope1_direct_emissions_tons} tons | Scope 2 Electricity: {carbonMarketplaceData.scope2_indirect_emissions_tons} tons
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '160px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Offset Cost</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            ${carbonMarketplaceData.selected_project.annual_cost_usd.toLocaleString()}
+                          </h3>
+                          <span className="badge badge-success" style={{ fontSize: '0.7rem', marginTop: '4px' }}>
+                            {carbonMarketplaceData.net_zero_compliance_status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Marketplace Projects Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                        {carbonMarketplaceData.available_marketplace_projects.map((p: any, idx: number) => (
+                          <div key={idx} style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: p.project_key === carbonMarketplaceData.selected_project.project_key ? '2px solid var(--primary)' : '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0 }}>{p.title}</h4>
+                              {p.project_key === carbonMarketplaceData.selected_project.project_key && (
+                                <span className="badge badge-success" style={{ fontSize: '0.65rem' }}>Active Selection</span>
+                              )}
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '8px', fontSize: '0.8rem' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Price per Ton:</span>
+                              <strong style={{ color: 'var(--primary)' }}>${p.price_per_ton_usd} / ton</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Registry Standard:</span>
+                              <strong style={{ fontSize: '0.75rem' }}>{p.registry_standard}</strong>
+                            </div>
+
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+                              {p.summary}
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
