@@ -276,8 +276,12 @@ export default function LeaseLogicApp() {
   const [carbonMarketplaceData, setCarbonMarketplaceData] = useState<any>(null);
   const [loadingCarbonMarketplace, setLoadingCarbonMarketplace] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace'>('abstract');
+  // COI Insurance Coverage Compliance state
+  const [coiAuditData, setCoiAuditData] = useState<any>(null);
+  const [loadingCoiAudit, setLoadingCoiAudit] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -800,6 +804,23 @@ export default function LeaseLogicApp() {
       console.error('Error running carbon marketplace:', err);
     } finally {
       setLoadingCarbonMarketplace(false);
+    }
+  };
+
+  // Fetch Autonomous Insurance (COI) Coverage Compliance Audit
+  const handleFetchCoiAudit = async () => {
+    if (!selectedLease) return;
+    setLoadingCoiAudit(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/coi-insurance-audit`);
+      if (res.ok) {
+        const data = await res.json();
+        setCoiAuditData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching COI insurance audit:', err);
+    } finally {
+      setLoadingCoiAudit(false);
     }
   };
 
@@ -4749,6 +4770,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'carbon_marketplace' ? 'active' : ''}`} onClick={() => { setActiveTab('carbon_marketplace'); handleRunCarbonMarketplace(); }}>
                   ⚡ Carbon Marketplace
                 </div>
+                <div className={`tab ${activeTab === 'coi_audit' ? 'active' : ''}`} onClick={() => { setActiveTab('coi_audit'); handleFetchCoiAudit(); }}>
+                  🛡️ Insurance COI
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -7292,6 +7316,93 @@ export default function LeaseLogicApp() {
                             </p>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'coi_audit' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🛡️ Autonomous Insurance (COI) Coverage Compliance Dispatcher</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Cross-audits tenant Certificate of Insurance policy limits and endorsement clauses against lease covenants.
+                      </p>
+                    </div>
+                    <button onClick={handleFetchCoiAudit} disabled={loadingCoiAudit} className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                      {loadingCoiAudit ? 'Auditing COI...' : '🔄 Refresh COI Audit'}
+                    </button>
+                  </div>
+
+                  {/* COI Output */}
+                  {coiAuditData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Scorecard Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: coiAuditData.coi_compliance_score >= 80 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                        border: coiAuditData.coi_compliance_score >= 80 ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant Insurance Compliance Rating</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: coiAuditData.coi_compliance_score >= 80 ? 'var(--success)' : 'var(--error)' }}>
+                            🛡️ Score: {coiAuditData.coi_compliance_score} / 100 ({coiAuditData.audit_status})
+                          </h2>
+                        </div>
+                      </div>
+
+                      {/* Policy Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Insurance Coverage Type</th>
+                              <th>Active Policy Limit ($)</th>
+                              <th>Lease Required Limit ($)</th>
+                              <th>Compliance Status</th>
+                              <th>Deficit ($)</th>
+                              <th>Audit Findings</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {coiAuditData.covenants.map((c: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{c.coverage_type}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800 }}>
+                                  {c.active_policy_limit_usd > 0 ? `$${c.active_policy_limit_usd.toLocaleString()}` : 'N/A'}
+                                </td>
+                                <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                  {c.required_limit_usd > 0 ? `$${c.required_limit_usd.toLocaleString()}` : 'Covenant Required'}
+                                </td>
+                                <td>
+                                  <span className={`badge badge-${c.status === 'COVENANT_COMPLIANT' ? 'completed' : 'failed'}`} style={{ fontSize: '0.68rem' }}>
+                                    {c.status}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: c.deficit_amount_usd > 0 ? 'var(--error)' : 'var(--success)' }}>
+                                  {c.deficit_amount_usd > 0 ? `-$${c.deficit_amount_usd.toLocaleString()}` : '$0'}
+                                </td>
+                                <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{c.notes}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Automated Non-Compliance Notice Letter */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', color: 'var(--error)' }}>✉️ Formal Notice of Insurance Non-Compliance Letter</h4>
+                        <textarea
+                          readOnly
+                          rows={6}
+                          className="chat-input"
+                          style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '10px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
+                          value={coiAuditData.non_compliance_notice_letter}
+                        />
                       </div>
                     </div>
                   )}
