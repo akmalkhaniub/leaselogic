@@ -280,8 +280,15 @@ export default function LeaseLogicApp() {
   const [coiAuditData, setCoiAuditData] = useState<any>(null);
   const [loadingCoiAudit, setLoadingCoiAudit] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit'>('abstract');
+  // 3D BIM Spatial Fit-Out Estimator state
+  const [fitoutTier, setFitoutTier] = useState('executive_tech');
+  const [fitoutAreaSqft, setFitoutAreaSqft] = useState(5000);
+  const [fitoutTiAllowance, setFitoutTiAllowance] = useState(50.0);
+  const [fitoutData, setFitoutData] = useState<any>(null);
+  const [loadingFitout, setLoadingFitout] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -821,6 +828,27 @@ export default function LeaseLogicApp() {
       console.error('Error fetching COI insurance audit:', err);
     } finally {
       setLoadingCoiAudit(false);
+    }
+  };
+
+  // Run 3D BIM & Spatial Tenant Fit-Out Cost Estimator
+  const handleRunFitoutEstimator = async () => {
+    if (!selectedLease) return;
+    setLoadingFitout(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/spatial-fitout-estimator`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fitout_tier: fitoutTier, floor_area_sqft: fitoutAreaSqft, ti_allowance_per_sqft: fitoutTiAllowance })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFitoutData(data);
+      }
+    } catch (err) {
+      console.error('Error running fitout estimator:', err);
+    } finally {
+      setLoadingFitout(false);
     }
   };
 
@@ -4773,6 +4801,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'coi_audit' ? 'active' : ''}`} onClick={() => { setActiveTab('coi_audit'); handleFetchCoiAudit(); }}>
                   🛡️ Insurance COI
                 </div>
+                <div className={`tab ${activeTab === 'fitout_estimator' ? 'active' : ''}`} onClick={() => { setActiveTab('fitout_estimator'); handleRunFitoutEstimator(); }}>
+                  📐 Fit-Out Estimator
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -7403,6 +7434,114 @@ export default function LeaseLogicApp() {
                           style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '10px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
                           value={coiAuditData.non_compliance_notice_letter}
                         />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'fitout_estimator' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>📐 3D BIM & Spatial Tenant Fit-Out Cost Estimator</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Models tenant improvement (TI) CAPEX specifications ($/sqft) offset against Landlord TI allowances.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Fit-Out Specification Tier</label>
+                      <select 
+                        value={fitoutTier}
+                        onChange={(e) => setFitoutTier(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem', background: '#ffffff' }}
+                      >
+                        <option value="standard_office">🏢 Standard Office ($85/sqft baseline)</option>
+                        <option value="executive_tech">💻 Executive Tech Suite ($105/sqft baseline)</option>
+                        <option value="medical_lab">🔬 Medical Cleanroom Lab ($135/sqft baseline)</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Floor Area (sqft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={fitoutAreaSqft}
+                        onChange={(e) => setFitoutAreaSqft(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Landlord TI Allowance ($/sqft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={fitoutTiAllowance}
+                        onChange={(e) => setFitoutTiAllowance(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunFitoutEstimator} disabled={loadingFitout} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingFitout ? 'Estimating...' : '📐 Calculate Fit-Out CAPEX'}
+                    </button>
+                  </div>
+
+                  {/* Fit-Out Output */}
+                  {fitoutData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(59, 130, 246, 0.08)',
+                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Gross Tenant Improvement Cost</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            📐 Total: ${fitoutData.gross_total_cost_usd.toLocaleString()} (${fitoutData.gross_cost_per_sqft}/sqft)
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Landlord TI Allowance Offset: -${fitoutData.landlord_ti_allowance_total_usd.toLocaleString()} (${fitoutData.ti_allowance_per_sqft}/sqft)
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '160px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Tenant Out-of-Pocket CAPEX</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--warning)' }}>
+                            ${fitoutData.net_tenant_out_of_pocket_capex_usd.toLocaleString()}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Line Item Breakdown Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Fit-Out Trade Category</th>
+                              <th>Unit Cost ($/sqft)</th>
+                              <th>Total Budget Impact ($)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {fitoutData.cost_breakdown.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.category}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)' }}>${item.cost_per_sqft} / sqft</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800 }}>${item.total_cost_usd.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
