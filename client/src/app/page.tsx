@@ -55,7 +55,11 @@ export default function LeaseLogicApp() {
   const [dscrData, setDscrData] = useState<any>(null);
   const [loadingDscr, setLoadingDscr] = useState(false);
 
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration' | 'dispatcher' | 'credit_monitor' | 'dscr_monitor'>('workspace');
+  // CMBS Securitization & Rating Tape state
+  const [cmbsTapeData, setCmbsTapeData] = useState<any>(null);
+  const [loadingCmbsTape, setLoadingCmbsTape] = useState(false);
+
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration' | 'dispatcher' | 'credit_monitor' | 'dscr_monitor' | 'cmbs_tape'>('workspace');
   
   // Notification Dispatcher state
   const [dispatchData, setDispatchData] = useState<any>(null);
@@ -987,6 +991,22 @@ export default function LeaseLogicApp() {
       console.error('Error fetching DSCR monitor:', err);
     } finally {
       setLoadingDscr(false);
+    }
+  };
+
+  // Fetch Autonomous CRE CMBS Securitization & Rating Agency Tape
+  const handleFetchCmbsTape = async () => {
+    setLoadingCmbsTape(true);
+    try {
+      const res = await fetch(`${API_BASE}/portfolio/cmbs-rating-tape`);
+      if (res.ok) {
+        const data = await res.json();
+        setCmbsTapeData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching CMBS rating tape:', err);
+    } finally {
+      setLoadingCmbsTape(false);
     }
   };
 
@@ -2465,6 +2485,13 @@ export default function LeaseLogicApp() {
             onClick={() => { setCurrentView('dscr_monitor'); handleFetchDscrMonitor(); }}
           >
             📊 DSCR
+          </button>
+          <button 
+            className={`btn ${currentView === 'cmbs_tape' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => { setCurrentView('cmbs_tape'); handleFetchCmbsTape(); }}
+          >
+            💼 CMBS
           </button>
         </div>
 
@@ -4592,6 +4619,124 @@ export default function LeaseLogicApp() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : currentView === 'cmbs_tape' ? (
+          <div className="pane" style={{ overflowY: 'auto' }}>
+            <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h2 className="gradient-text" style={{ fontSize: '1.4rem', margin: 0 }}>💼 Autonomous CRE CMBS Securitization & Rating Agency Tape Generator</h2>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                    Standardized loan tape underwriter aggregating portfolio WALT, DSCR, and Rating Agency Annex A subordination tranching.
+                  </p>
+                </div>
+                <button onClick={handleFetchCmbsTape} disabled={loadingCmbsTape} className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '8px 16px' }}>
+                  {loadingCmbsTape ? 'Generating...' : '🔄 Refresh Securitization Tape'}
+                </button>
+              </div>
+
+              {cmbsTapeData && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {/* Summary Metric Header */}
+                  <div style={{
+                    padding: '20px',
+                    borderRadius: '8px',
+                    background: 'rgba(139, 92, 246, 0.08)',
+                    border: '1px solid rgba(139, 92, 246, 0.25)',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(5, 1fr)',
+                    gap: '16px'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Securitization Deal</span>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--primary)' }}>{cmbsTapeData.securitization_deal_name}</h4>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Cut-Off Loan Balance</span>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--foreground)' }}>${cmbsTapeData.cut_off_balance_usd.toLocaleString()}</h4>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Portfolio WALT</span>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--success)' }}>{cmbsTapeData.portfolio_walt_years} Years</h4>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Portfolio DSCR</span>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--primary)' }}>{cmbsTapeData.portfolio_dscr}x</h4>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Debt Yield / Rating Status</span>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--success)' }}>{cmbsTapeData.portfolio_debt_yield_pct}%</h4>
+                    </div>
+                  </div>
+
+                  {/* Tranches Table */}
+                  <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>🏛️ CMBS Certificate Capital Structure & Rating Subordination</h4>
+                    </div>
+                    <table className="terms-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>CMBS Certificate Tranche</th>
+                          <th>Rating Agency Grade</th>
+                          <th>Certificate Balance ($)</th>
+                          <th>Subordination Level</th>
+                          <th>Coupon Spread</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cmbsTapeData.tranches.map((t: any, idx: number) => (
+                          <tr key={idx}>
+                            <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{t.tranche_name}</td>
+                            <td>
+                              <span className={`badge badge-${t.rating_agency.includes('AAA') ? 'completed' : t.rating_agency.includes('BBB') ? 'pending' : 'warning'}`} style={{ fontSize: '0.72rem' }}>
+                                {t.rating_agency}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: '0.85rem', fontWeight: 700 }}>${t.balance_usd.toLocaleString()}</td>
+                            <td style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>{t.subordination_pct}%</td>
+                            <td style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary)' }}>+{t.coupon_spread_bps} bps</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Stratification Cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    {/* Property Stratification */}
+                    <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                      <h4 style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px' }}>🏢 Property Type Stratification</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {cmbsTapeData.property_stratification.map((p: any, idx: number) => (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{p.property_type}</span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary)' }}>{p.allocated_loan_pct}% ({p.total_sqft.toLocaleString()} sqft)</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tenant Stratification */}
+                    <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                      <h4 style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px' }}>👥 Top Tenant Credit Concentrations</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {cmbsTapeData.tenant_stratification.map((ten: any, idx: number) => (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{ten.tenant_name} ({ten.credit_rating})</span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--success)' }}>{ten.concentration_pct}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
