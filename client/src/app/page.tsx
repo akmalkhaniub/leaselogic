@@ -305,8 +305,16 @@ export default function LeaseLogicApp() {
   const [demandResponseData, setDemandResponseData] = useState<any>(null);
   const [loadingDemandResponse, setLoadingDemandResponse] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response'>('abstract');
+  // Industrial Logistics & Warehouse Modeler state
+  const [warehouseAreaSqft, setWarehouseAreaSqft] = useState(100000);
+  const [clearHeightFt, setClearHeightFt] = useState(36);
+  const [dockDoorsCount, setDockDoorsCount] = useState(24);
+  const [truckCourtDepth, setTruckCourtDepth] = useState(135);
+  const [industrialData, setIndustrialData] = useState<any>(null);
+  const [loadingIndustrial, setLoadingIndustrial] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -926,6 +934,27 @@ export default function LeaseLogicApp() {
       console.error('Error running demand response dispatcher:', err);
     } finally {
       setLoadingDemandResponse(false);
+    }
+  };
+
+  // Run Smart Warehouse & Industrial Logistics Throughput Modeler
+  const handleRunIndustrialLogistics = async () => {
+    if (!selectedLease) return;
+    setLoadingIndustrial(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/industrial-logistics-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ warehouse_area_sqft: warehouseAreaSqft, clear_height_ft: clearHeightFt, dock_doors: dockDoorsCount, truck_court_depth_ft: truckCourtDepth })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setIndustrialData(data);
+      }
+    } catch (err) {
+      console.error('Error running industrial logistics modeler:', err);
+    } finally {
+      setLoadingIndustrial(false);
     }
   };
 
@@ -4890,6 +4919,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'demand_response' ? 'active' : ''}`} onClick={() => { setActiveTab('demand_response'); handleRunDemandResponse(); }}>
                   ⚡ Demand Response
                 </div>
+                <div className={`tab ${activeTab === 'industrial_logistics' ? 'active' : ''}`} onClick={() => { setActiveTab('industrial_logistics'); handleRunIndustrialLogistics(); }}>
+                  📦 Industrial Logistics
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -7970,6 +8002,123 @@ export default function LeaseLogicApp() {
                                     {item.tariff_tier}
                                   </span>
                                 </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'industrial_logistics' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>📦 Smart Warehouse & Industrial Logistics Throughput & Clear Height Modeler</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Models cubic volume storage density, vertical pallet racking tiers, cross-dock throughput, and WB-67 truck court compliance.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Warehouse Area (sqft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={warehouseAreaSqft}
+                        onChange={(e) => setWarehouseAreaSqft(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clear Height (ft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={clearHeightFt}
+                        onChange={(e) => setClearHeightFt(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Dock Loading Doors</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={dockDoorsCount}
+                        onChange={(e) => setDockDoorsCount(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Truck Court Depth (ft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={truckCourtDepth}
+                        onChange={(e) => setTruckCourtDepth(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunIndustrialLogistics} disabled={loadingIndustrial} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingIndustrial ? 'Modeling...' : '📦 Model Logistics'}
+                    </button>
+                  </div>
+
+                  {/* Industrial Output */}
+                  {industrialData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(59, 130, 246, 0.08)',
+                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Warehouse Storage Density</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            📦 {industrialData.pallet_positions.toLocaleString()} Pallet Positions ({industrialData.racking_tier_levels}-High Racking)
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Daily Cross-Dock Throughput: {industrialData.daily_pallet_throughput.toLocaleString()} Pallets/Day | Cubic Volume: {industrialData.cubic_volume_cu_ft.toLocaleString()} cu.ft
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '160px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Truck Apron Rating</span>
+                          <span className={`badge badge-${industrialData.truck_court_compliance === 'WB67_COMPLIANT' ? 'completed' : 'warning'}`} style={{ fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                            {industrialData.truck_court_compliance}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Specifications Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Industrial Logistics Parameter</th>
+                              <th>Engineering Metric</th>
+                              <th>Performance Standard / Specification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {industrialData.specifications.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.specification}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)' }}>{item.metric_value}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{item.performance_grade}</td>
                               </tr>
                             ))}
                           </tbody>
