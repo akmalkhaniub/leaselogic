@@ -291,8 +291,15 @@ export default function LeaseLogicApp() {
   const [subleaseRoyaltyData, setSubleaseRoyaltyData] = useState<any>(null);
   const [loadingSubleaseRoyalty, setLoadingSubleaseRoyalty] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty'>('abstract');
+  // Zoning & Entitlement Screener state
+  const [proposedZoningUse, setProposedZoningUse] = useState('Life Sciences & Wet Lab');
+  const [proposedFar, setProposedFar] = useState(2.4);
+  const [proposedParkingRatio, setProposedParkingRatio] = useState(3.2);
+  const [zoningData, setZoningData] = useState<any>(null);
+  const [loadingZoning, setLoadingZoning] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -870,6 +877,27 @@ export default function LeaseLogicApp() {
       console.error('Error fetching sublease royalty engine:', err);
     } finally {
       setLoadingSubleaseRoyalty(false);
+    }
+  };
+
+  // Run Autonomous AI Zoning, Land-Use Entitlement & Permitted Variance Screener
+  const handleRunZoningScreener = async () => {
+    if (!selectedLease) return;
+    setLoadingZoning(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/zoning-entitlement-screener`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposed_use: proposedZoningUse, proposed_far: proposedFar, proposed_parking_ratio: proposedParkingRatio })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setZoningData(data);
+      }
+    } catch (err) {
+      console.error('Error running zoning screener:', err);
+    } finally {
+      setLoadingZoning(false);
     }
   };
 
@@ -4828,6 +4856,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'sublease_royalty' ? 'active' : ''}`} onClick={() => { setActiveTab('sublease_royalty'); handleFetchSubleaseRoyalty(); }}>
                   📜 Sublease Royalty
                 </div>
+                <div className={`tab ${activeTab === 'zoning_screener' ? 'active' : ''}`} onClick={() => { setActiveTab('zoning_screener'); handleRunZoningScreener(); }}>
+                  🏛️ Zoning Screener
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -7670,6 +7701,128 @@ export default function LeaseLogicApp() {
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'zoning_screener' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🏛️ Autonomous AI Zoning, Land-Use Entitlement & Permitted Variance Screener</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Evaluates municipal zoning bylaws (FAR, parking minimums, building height, CUPs) and generates variance application briefs.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Proposed Tenant Use</label>
+                      <select 
+                        value={proposedZoningUse}
+                        onChange={(e) => setProposedZoningUse(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.82rem', background: '#ffffff' }}
+                      >
+                        <option value="Life Sciences & Wet Lab">🔬 Life Sciences & Wet Lab (BSL-2)</option>
+                        <option value="Light Industrial Logistics">📦 Light Industrial Logistics & Fulfillment</option>
+                        <option value="Retail Showroom">🛍️ Retail Commercial Showroom</option>
+                        <option value="Data Center Enterprise">⚡ High-Density Data Center Facility</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Proposed FAR (Floor Area Ratio)</label>
+                      <input 
+                        type="number"
+                        step="0.1"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={proposedFar}
+                        onChange={(e) => setProposedFar(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Proposed Parking Ratio (/1k sqft)</label>
+                      <input 
+                        type="number"
+                        step="0.1"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={proposedParkingRatio}
+                        onChange={(e) => setProposedParkingRatio(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunZoningScreener} disabled={loadingZoning} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingZoning ? 'Screening...' : '🏛️ Screen Entitlements'}
+                    </button>
+                  </div>
+
+                  {/* Zoning Output */}
+                  {zoningData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: zoningData.overall_entitlement_status === 'ENTITLEMENT_APPROVED_BY_RIGHT' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                        border: zoningData.overall_entitlement_status === 'ENTITLEMENT_APPROVED_BY_RIGHT' ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Municipal Entitlement Finding</span>
+                          <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: zoningData.overall_entitlement_status === 'ENTITLEMENT_APPROVED_BY_RIGHT' ? 'var(--success)' : 'var(--warning)' }}>
+                            🏛️ {zoningData.overall_entitlement_status}
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Proposed FAR: {zoningData.proposed_far} (Max Allowed: {zoningData.max_allowed_far}) | Parking Ratio: {zoningData.proposed_parking_ratio}/1k sqft (Min Required: {zoningData.min_required_parking_ratio})
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Bylaw Parameters Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Zoning Bylaw Parameter</th>
+                              <th>Municipal Code Standard</th>
+                              <th>Tenant Proposed Standard</th>
+                              <th>Compliance Finding</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {zoningData.zoning_parameters.map((param: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{param.parameter}</td>
+                                <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{param.allowed_standard}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)' }}>{param.proposed_standard}</td>
+                                <td>
+                                  <span className={`badge badge-${param.status === 'COMPLIANT' || param.status === 'PERMITTED_BY_RIGHT' ? 'completed' : 'warning'}`} style={{ fontSize: '0.68rem' }}>
+                                    {param.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Automated Variance Application Brief */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', color: 'var(--primary)' }}>📜 Municipal Zoning Variance Petition & Legal Findings Brief</h4>
+                        <textarea
+                          readOnly
+                          rows={6}
+                          className="chat-input"
+                          style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '10px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
+                          value={zoningData.variance_petition_brief}
+                        />
                       </div>
                     </div>
                   )}
