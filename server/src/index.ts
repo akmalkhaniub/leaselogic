@@ -2942,6 +2942,54 @@ app.post('/api/leases/:id/peak-shaving-grid-dispatcher', async (req, res) => {
   }
 });
 
+// 4.805. POST Smart Warehouse & Industrial Logistics Throughput & Clear Height Modeler
+app.post('/api/leases/:id/industrial-logistics-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { warehouse_area_sqft = 100000, clear_height_ft = 36, dock_doors = 24, truck_court_depth_ft = 135 } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const rackingTierLevels = clear_height_ft >= 40 ? 6 : clear_height_ft >= 36 ? 5 : clear_height_ft >= 32 ? 4 : 3;
+    const palletPositions = Math.round((warehouse_area_sqft * 0.55 / 15.5) * rackingTierLevels);
+    const cubicVolumeCuFt = warehouse_area_sqft * clear_height_ft;
+    const dailyPalletThroughput = dock_doors * 4.5 * 26; // 4.5 truck turns/day * 26 pallets/truck
+
+    const isTruckCourtCompliant = truck_court_depth_ft >= 130;
+    const floorSlabLoadPbsSqft = 3000;
+
+    const industrialSpecs = [
+      { specification: 'Clear Ceiling Height', metric_value: `${clear_height_ft} ft Clear`, performance_grade: clear_height_ft >= 36 ? 'Class A+ Modern High-Cube' : 'Standard Bulk Distribution' },
+      { specification: 'Total Pallet Storage Density', metric_value: `${palletPositions.toLocaleString()} Pallet Positions`, performance_grade: `${rackingTierLevels}-Tier Vertical Racking` },
+      { specification: 'Loading Dock Throughput', metric_value: `${Math.round(dailyPalletThroughput).toLocaleString()} Pallets / Day`, performance_grade: `${dock_doors} Cross-Dock High-Speed Positions` },
+      { specification: 'Truck Court Depth & Apron', metric_value: `${truck_court_depth_ft} ft Depth`, performance_grade: isTruckCourtCompliant ? 'WB-67 Interstate Semi Compliant' : 'Substandard Turning Apron' },
+      { specification: 'Heavy Floor Slab Rating', metric_value: `${floorSlabLoadPbsSqft.toLocaleString()} lbs/sqft`, performance_grade: 'Super-Flat Laser Screed (FF 50 / FL 50)' }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Industrial Logistics Asset',
+      warehouse_area_sqft: warehouse_area_sqft,
+      clear_height_ft: clear_height_ft,
+      dock_doors: dock_doors,
+      truck_court_depth_ft: truck_court_depth_ft,
+      cubic_volume_cu_ft: cubicVolumeCuFt,
+      racking_tier_levels: rackingTierLevels,
+      pallet_positions: palletPositions,
+      daily_pallet_throughput: Math.round(dailyPalletThroughput),
+      truck_court_compliance: isTruckCourtCompliant ? 'WB67_COMPLIANT' : 'VARIANCE_WARNING',
+      specifications: industrialSpecs
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
