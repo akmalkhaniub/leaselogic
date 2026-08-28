@@ -2893,6 +2893,55 @@ Jurisdiction: Municipal Planning & Zoning Commission
   }
 });
 
+// 4.804. POST Real-Time Dynamic Peak-Shaving & Smart Grid Demand Response Dispatcher
+app.post('/api/leases/:id/peak-shaving-grid-dispatcher', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { battery_capacity_kwh = 250, curtailment_target_pct = 30, electricity_rate_per_kwh = 0.28 } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const baselinePeakKw = 480;
+    const batteryDischargeKw = Math.min(200, Math.round(battery_capacity_kwh * 0.8));
+    const hvacCurtailmentKw = Math.round(baselinePeakKw * (curtailment_target_pct / 100));
+    const totalCurtailmentKw = batteryDischargeKw + hvacCurtailmentKw;
+    const netPeakDemandKw = Math.max(0, baselinePeakKw - totalCurtailmentKw);
+
+    const utilityDemandResponseRebateUsd = Math.round(totalCurtailmentKw * 125);
+    const energyTariffSavingsUsd = Math.round(totalCurtailmentKw * 4 * 250 * electricity_rate_per_kwh * 0.4);
+    const totalAnnualFinancialBenefitUsd = utilityDemandResponseRebateUsd + energyTariffSavingsUsd;
+
+    const loadIntervals = [
+      { time_slot: '08:00 - 12:00', baseline_load_kw: 320, dispatched_load_kw: 320, tariff_tier: 'Off-Peak ($0.14/kWh)' },
+      { time_slot: '12:00 - 16:00', baseline_load_kw: 410, dispatched_load_kw: 410, tariff_tier: 'Mid-Peak ($0.21/kWh)' },
+      { time_slot: '16:00 - 20:00 (Surge)', baseline_load_kw: baselinePeakKw, dispatched_load_kw: netPeakDemandKw, tariff_tier: 'On-Peak Surge ($0.42/kWh)' },
+      { time_slot: '20:00 - 00:00', baseline_load_kw: 210, dispatched_load_kw: 210, tariff_tier: 'Off-Peak ($0.14/kWh)' }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      baseline_peak_kw: baselinePeakKw,
+      battery_capacity_kwh: battery_capacity_kwh,
+      curtailment_target_pct: curtailment_target_pct,
+      total_curtailed_kw: totalCurtailmentKw,
+      net_peak_demand_kw: netPeakDemandKw,
+      peak_reduction_pct: Math.round((totalCurtailmentKw / baselinePeakKw) * 100),
+      utility_demand_response_rebate_usd: utilityDemandResponseRebateUsd,
+      energy_tariff_savings_usd: energyTariffSavingsUsd,
+      total_annual_financial_benefit_usd: totalAnnualFinancialBenefitUsd,
+      load_curve_intervals: loadIntervals
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
