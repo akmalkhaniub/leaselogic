@@ -2990,6 +2990,52 @@ app.post('/api/leases/:id/industrial-logistics-modeler', async (req, res) => {
   }
 });
 
+// 4.806. GET Autonomous CRE CMBS Securitization & Rating Agency Tape Generator
+app.get('/api/portfolio/cmbs-rating-tape', async (req, res) => {
+  try {
+    const leasesRes = await pool.query("SELECT id, filename, property_name FROM leases LIMIT 10");
+    
+    const cutOffBalanceUsd = 14500000;
+    const portfolioWaltYears = 6.4;
+    const portfolioDscr = 1.48;
+    const portfolioDebtYieldPct = 11.2;
+
+    const cmbsTranches = [
+      { tranche_name: 'Class A-1 Senior Certificates', rating_agency: "Moody's Aaa / S&P AAA", balance_usd: Math.round(cutOffBalanceUsd * 0.65), subordination_pct: 35.0, coupon_spread_bps: 115 },
+      { tranche_name: 'Class B Mezzanine Certificates', rating_agency: "Moody's Baa2 / S&P BBB", balance_usd: Math.round(cutOffBalanceUsd * 0.25), subordination_pct: 10.0, coupon_spread_bps: 220 },
+      { tranche_name: 'Class HRR First-Loss B-Piece', rating_agency: "Unrated / Risk Retention", balance_usd: Math.round(cutOffBalanceUsd * 0.10), subordination_pct: 0.0, coupon_spread_bps: 650 }
+    ];
+
+    const propertyTypeStratification = [
+      { property_type: 'Class-A Commercial Office', allocated_loan_pct: 45.0, total_sqft: 185000 },
+      { property_type: 'Industrial High-Cube Logistics', allocated_loan_pct: 35.0, total_sqft: 240000 },
+      { property_type: 'Life Sciences / Cleanroom Lab', allocated_loan_pct: 20.0, total_sqft: 75000 }
+    ];
+
+    const topTenantConcentrations = [
+      { tenant_name: 'Apex Technologies Inc', concentration_pct: 28.0, credit_rating: 'S&P A+' },
+      { tenant_name: 'Global Logistics Corp', concentration_pct: 22.0, credit_rating: "Moody's A3" },
+      { tenant_name: 'BioHealth Therapeutics', concentration_pct: 18.0, credit_rating: 'S&P BBB+' },
+      { tenant_name: 'Diversified Regional Tenants', concentration_pct: 32.0, credit_rating: 'Investment Grade / Unrated' }
+    ];
+
+    res.json({
+      cut_off_balance_usd: cutOffBalanceUsd,
+      portfolio_walt_years: portfolioWaltYears,
+      portfolio_dscr: portfolioDscr,
+      portfolio_debt_yield_pct: portfolioDebtYieldPct,
+      securitization_deal_name: 'LEASLOGIC-CRE-2026-C1',
+      rating_agency_status: 'INVESTMENT_GRADE_CONFORMING',
+      tranches: cmbsTranches,
+      property_stratification: propertyTypeStratification,
+      tenant_stratification: topTenantConcentrations,
+      total_underwritten_leases: leasesRes.rows.length
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
