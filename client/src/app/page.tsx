@@ -298,8 +298,15 @@ export default function LeaseLogicApp() {
   const [zoningData, setZoningData] = useState<any>(null);
   const [loadingZoning, setLoadingZoning] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener'>('abstract');
+  // Peak-Shaving & Demand Response Dispatcher state
+  const [batteryCapacityKwh, setBatteryCapacityKwh] = useState(250);
+  const [curtailmentPct, setCurtailmentPct] = useState(30);
+  const [electricityRate, setElectricityRate] = useState(0.28);
+  const [demandResponseData, setDemandResponseData] = useState<any>(null);
+  const [loadingDemandResponse, setLoadingDemandResponse] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -898,6 +905,27 @@ export default function LeaseLogicApp() {
       console.error('Error running zoning screener:', err);
     } finally {
       setLoadingZoning(false);
+    }
+  };
+
+  // Run Real-Time Dynamic Peak-Shaving & Smart Grid Demand Response Dispatcher
+  const handleRunDemandResponse = async () => {
+    if (!selectedLease) return;
+    setLoadingDemandResponse(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/peak-shaving-grid-dispatcher`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ battery_capacity_kwh: batteryCapacityKwh, curtailment_target_pct: curtailmentPct, electricity_rate_per_kwh: electricityRate })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDemandResponseData(data);
+      }
+    } catch (err) {
+      console.error('Error running demand response dispatcher:', err);
+    } finally {
+      setLoadingDemandResponse(false);
     }
   };
 
@@ -4859,6 +4887,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'zoning_screener' ? 'active' : ''}`} onClick={() => { setActiveTab('zoning_screener'); handleRunZoningScreener(); }}>
                   🏛️ Zoning Screener
                 </div>
+                <div className={`tab ${activeTab === 'demand_response' ? 'active' : ''}`} onClick={() => { setActiveTab('demand_response'); handleRunDemandResponse(); }}>
+                  ⚡ Demand Response
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -7823,6 +7854,126 @@ export default function LeaseLogicApp() {
                           style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '10px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
                           value={zoningData.variance_petition_brief}
                         />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'demand_response' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>⚡ Real-Time Dynamic Peak-Shaving & Smart Grid Demand Response Dispatcher</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Dispatches battery energy storage (BESS) and HVAC curtailment to capture utility grid demand-response revenue rebates.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Battery Capacity (kWh)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={batteryCapacityKwh}
+                        onChange={(e) => setBatteryCapacityKwh(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>HVAC Curtailment Target ({curtailmentPct}%)</label>
+                      <input 
+                        type="range"
+                        min="10"
+                        max="50"
+                        step="5"
+                        value={curtailmentPct}
+                        onChange={(e) => setCurtailmentPct(parseInt(e.target.value))}
+                        style={{ accentColor: 'var(--primary)' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Electricity Tariff ($/kWh)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={electricityRate}
+                        onChange={(e) => setElectricityRate(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunDemandResponse} disabled={loadingDemandResponse} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingDemandResponse ? 'Dispatching...' : '⚡ Dispatch Peak-Shave'}
+                    </button>
+                  </div>
+
+                  {/* Demand Response Output */}
+                  {demandResponseData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Annual Financial Value Created</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            ⚡ +${demandResponseData.total_annual_financial_benefit_usd.toLocaleString()} / Year
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Demand Response Capacity Rebate: ${demandResponseData.utility_demand_response_rebate_usd.toLocaleString()}/yr | Energy Cost Savings: ${demandResponseData.energy_tariff_savings_usd.toLocaleString()}/yr
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '160px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Peak Load Reduction</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            -{demandResponseData.peak_reduction_pct}% ({demandResponseData.total_curtailed_kw} kW)
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Peak: {demandResponseData.baseline_peak_kw} kW ➔ {demandResponseData.net_peak_demand_kw} kW
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Load Intervals Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Daily Time Interval</th>
+                              <th>Baseline Grid Load (kW)</th>
+                              <th>Dispatched Active Load (kW)</th>
+                              <th>Utility Tariff Tier</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {demandResponseData.load_curve_intervals.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.time_slot}</td>
+                                <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{item.baseline_load_kw} kW</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: item.dispatched_load_kw < item.baseline_load_kw ? 'var(--success)' : 'var(--foreground)' }}>
+                                  {item.dispatched_load_kw} kW {item.dispatched_load_kw < item.baseline_load_kw ? `(-${item.baseline_load_kw - item.dispatched_load_kw} kW Curtailment)` : ''}
+                                </td>
+                                <td>
+                                  <span className={`badge badge-${item.tariff_tier.includes('Surge') ? 'failed' : 'completed'}`} style={{ fontSize: '0.68rem' }}>
+                                    {item.tariff_tier}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
