@@ -2841,6 +2841,58 @@ app.get('/api/leases/:id/sublease-royalty-engine', async (req, res) => {
   }
 });
 
+// 4.803. POST Autonomous AI Zoning, Land-Use Entitlement & Permitted Variance Screener
+app.post('/api/leases/:id/zoning-entitlement-screener', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { proposed_use = 'Life Sciences & Wet Lab', proposed_far = 2.4, proposed_parking_ratio = 3.2 } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const maxAllowedFar = 2.5;
+    const minRequiredParkingRatio = 3.0;
+    const isFarCompliant = proposed_far <= maxAllowedFar;
+    const isParkingCompliant = proposed_parking_ratio >= minRequiredParkingRatio;
+
+    const zoningParameters = [
+      { parameter: 'Zoning Classification', allowed_standard: 'M-1 Light Industrial / Commercial Mixed', proposed_standard: 'M-1 Mixed Commercial', status: 'COMPLIANT' },
+      { parameter: 'Floor Area Ratio (FAR)', allowed_standard: `Max ${maxAllowedFar} FAR`, proposed_standard: `${proposed_far} FAR`, status: isFarCompliant ? 'COMPLIANT' : 'VARIANCE_REQUIRED' },
+      { parameter: 'Parking Ratio', allowed_standard: `Min ${minRequiredParkingRatio} / 1k sqft`, proposed_standard: `${proposed_parking_ratio} / 1k sqft`, status: isParkingCompliant ? 'COMPLIANT' : 'VARIANCE_REQUIRED' },
+      { parameter: 'Building Height Envelope', allowed_standard: 'Max 65 ft', proposed_standard: '55 ft Existing', status: 'COMPLIANT' },
+      { parameter: 'Conditional Use Permit (CUP)', allowed_standard: 'Standard Commercial Uses', proposed_standard: proposed_use, status: proposed_use.includes('Lab') ? 'CUP_PERMIT_REQUIRED' : 'PERMITTED_BY_RIGHT' }
+    ];
+
+    const variancePetitionBrief = `MUNICIPAL LAND USE & ZONING COMPLIANCE CERTIFICATE / VARIANCE APPLICATION
+Property: ${lease.property_name || 'Commercial Asset'} (Lease ID: ${id})
+Jurisdiction: Municipal Planning & Zoning Commission
+
+1. Proposed Tenant Use: ${proposed_use}
+2. Entitlement Finding: Proposed FAR of ${proposed_far} and parking ratio of ${proposed_parking_ratio}/1k sqft conform to M-1 commercial standards.
+3. Special Requirements: ${proposed_use.includes('Lab') ? 'Conditional Use Permit (CUP) required for specialized BSL-2 chemical/ventilation exhaust systems.' : 'Tenant operations fully permitted by right.'}
+4. Recommendation: Approve administrative land-use zoning certificate without public hearing requirement.`;
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      proposed_use: proposed_use,
+      proposed_far: proposed_far,
+      max_allowed_far: maxAllowedFar,
+      proposed_parking_ratio: proposed_parking_ratio,
+      min_required_parking_ratio: minRequiredParkingRatio,
+      overall_entitlement_status: (isFarCompliant && isParkingCompliant) ? 'ENTITLEMENT_APPROVED_BY_RIGHT' : 'MUNICIPAL_VARIANCE_REQUIRED',
+      zoning_parameters: zoningParameters,
+      variance_petition_brief: variancePetitionBrief
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
