@@ -330,8 +330,16 @@ export default function LeaseLogicApp() {
   const [climateData, setClimateData] = useState<any>(null);
   const [loadingClimate, setLoadingClimate] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk'>('abstract');
+  // Smart IoT Occupancy & Space Utilization state
+  const [iotLeasedSqft, setIotLeasedSqft] = useState(25000);
+  const [iotDesks, setIotDesks] = useState(150);
+  const [iotAttendancePct, setIotAttendancePct] = useState(62);
+  const [iotSharingRatio, setIotSharingRatio] = useState(1.4);
+  const [iotData, setIotData] = useState<any>(null);
+  const [loadingIot, setLoadingIot] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1016,6 +1024,32 @@ export default function LeaseLogicApp() {
       console.error('Error fetching climate risk index:', err);
     } finally {
       setLoadingClimate(false);
+    }
+  };
+
+  // Run Smart IoT PropTech Occupancy & Space Density Modeler
+  const handleRunIotOccupancy = async () => {
+    if (!selectedLease) return;
+    setLoadingIot(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/iot-occupancy-engine`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          total_leased_sqft: iotLeasedSqft,
+          designated_desks: iotDesks,
+          peak_attendance_pct: iotAttendancePct,
+          target_sharing_ratio: iotSharingRatio
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setIotData(data);
+      }
+    } catch (err) {
+      console.error('Error running IoT occupancy engine:', err);
+    } finally {
+      setLoadingIot(false);
     }
   };
 
@@ -5130,6 +5164,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'climate_risk' ? 'active' : ''}`} onClick={() => { setActiveTab('climate_risk'); handleFetchClimateRisk(); }}>
                   🌊 Climate Risk
                 </div>
+                <div className={`tab ${activeTab === 'iot_occupancy' ? 'active' : ''}`} onClick={() => { setActiveTab('iot_occupancy'); handleRunIotOccupancy(); }}>
+                  📡 IoT Utilization
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -8574,6 +8611,140 @@ export default function LeaseLogicApp() {
                                 <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)' }}>${r.estimated_capex_usd.toLocaleString()}</td>
                                 <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--success)' }}>-{r.risk_reduction_pct}% Risk</td>
                                 <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--success)' }}>+${r.premium_rebate_usd.toLocaleString()} / Year</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'iot_occupancy' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>📡 Smart IoT PropTech Occupancy & Space Utilization Density Heatmap Engine</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Analyzes IoT badge swipe sensor telemetry to right-size office footprint, calculate hot-desking surplus area, and optimize operating lease costs.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Leased Space (sqft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={iotLeasedSqft}
+                        onChange={(e) => setIotLeasedSqft(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Desks</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={iotDesks}
+                        onChange={(e) => setIotDesks(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Peak Attendance ({iotAttendancePct}%)</label>
+                      <input 
+                        type="range"
+                        min="20"
+                        max="100"
+                        step="2"
+                        value={iotAttendancePct}
+                        onChange={(e) => setIotAttendancePct(parseInt(e.target.value))}
+                        style={{ accentColor: 'var(--primary)' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Desk Sharing Ratio</label>
+                      <input 
+                        type="number"
+                        step="0.1"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={iotSharingRatio}
+                        onChange={(e) => setIotSharingRatio(parseFloat(e.target.value) || 1.0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunIotOccupancy} disabled={loadingIot} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingIot ? 'Modeling...' : '📡 Run IoT Analytics'}
+                    </button>
+                  </div>
+
+                  {/* IoT Output */}
+                  {iotData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(59, 130, 246, 0.08)',
+                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Rent & OPEX Right-Sizing Savings</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            📡 +${iotData.annual_rent_savings_usd.toLocaleString()} / Year
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Surplus Footprint for Sublease/Downsize: {iotData.surplus_area_sqft.toLocaleString()} sqft ({iotData.surplus_area_pct}% surplus) | Required Space: {iotData.required_area_sqft.toLocaleString()} sqft
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Optimized Desks</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            {iotData.right_sized_desks} Desks (Avg: {iotData.average_daily_attendance} Users)
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Excess Desks Eliminated: -{iotData.excess_desks} Desks
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Day of Week Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>📊 Weekly IoT Sensor Badge Swipe Density Telemetry</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Day of Week</th>
+                              <th>Occupancy Rate</th>
+                              <th>Daily Badge Swipes</th>
+                              <th>Workplace Density Classification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {iotData.daily_patterns.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.day}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: item.occupancy_pct >= 80 ? 'var(--primary)' : item.occupancy_pct <= 35 ? 'var(--text-muted)' : 'var(--foreground)' }}>
+                                  {item.occupancy_pct}%
+                                </td>
+                                <td style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>{item.badge_swipes} Active Swipes</td>
+                                <td>
+                                  <span className={`badge badge-${item.density_status.includes('PEAK') ? 'completed' : item.density_status.includes('LOW') || item.density_status.includes('DIP') ? 'warning' : 'pending'}`} style={{ fontSize: '0.68rem' }}>
+                                    {item.density_status}
+                                  </span>
+                                </td>
                               </tr>
                             ))}
                           </tbody>
