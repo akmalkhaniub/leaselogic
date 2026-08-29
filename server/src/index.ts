@@ -3036,6 +3036,69 @@ app.get('/api/portfolio/cmbs-rating-tape', async (req, res) => {
   }
 });
 
+// 4.807. POST Autonomous AI EV Fleet Charging Infrastructure & Ancillary Revenue Modeler
+app.post('/api/leases/:id/ev-charging-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      level2_ports = 12, 
+      dcfc_ports = 4, 
+      charging_fee_per_kwh = 0.45, 
+      utility_cost_per_kwh = 0.18, 
+      daily_utilization_hours = 4.5 
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const level2Kw = 9.6;
+    const dcfcKw = 150.0;
+    const dailyKwhLevel2 = level2_ports * level2Kw * daily_utilization_hours;
+    const dailyKwhDcfc = dcfc_ports * dcfcKw * daily_utilization_hours;
+    const totalDailyKwh = Math.round(dailyKwhLevel2 + dailyKwhDcfc);
+    const annualKwhDispensed = Math.round(totalDailyKwh * 365);
+
+    const grossAnnualRevenueUsd = Math.round(annualKwhDispensed * charging_fee_per_kwh);
+    const annualUtilityCostUsd = Math.round(annualKwhDispensed * utility_cost_per_kwh);
+    const netAnnualOperatingProfitUsd = grossAnnualRevenueUsd - annualUtilityCostUsd;
+
+    const turnkeyCapexUsd = (level2_ports * 6500) + (dcfc_ports * 48000);
+    const cleanEnergyIraSubsidyUsd = Math.round(turnkeyCapexUsd * 0.30);
+    const netCapexInvestmentUsd = turnkeyCapexUsd - cleanEnergyIraSubsidyUsd;
+    const simplePaybackYears = Number((netCapexInvestmentUsd / (netAnnualOperatingProfitUsd || 1)).toFixed(1));
+    const annualCo2AvoidedTons = Math.round((annualKwhDispensed * 0.85) / 2204.62);
+
+    const chargerSpecs = [
+      { charger_type: 'Level 2 Dual-Port (Commercial)', port_count: level2_ports, power_rating: '9.6 kW / 240V', target_demographic: 'Daily Commuter & Office Tenant Parking', daily_energy_kwh: Math.round(dailyKwhLevel2) },
+      { charger_type: 'DC Fast Charger (DCFC Supercharger)', port_count: dcfc_ports, power_rating: '150 kW / 480V 3-Phase', target_demographic: 'Delivery Van Fleets & Visitor Fast-Charge', daily_energy_kwh: Math.round(dailyKwhDcfc) }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      level2_ports: level2_ports,
+      dcfc_ports: dcfc_ports,
+      daily_utilization_hours: daily_utilization_hours,
+      annual_kwh_dispensed: annualKwhDispensed,
+      gross_annual_revenue_usd: grossAnnualRevenueUsd,
+      annual_utility_cost_usd: annualUtilityCostUsd,
+      net_annual_operating_profit_usd: netAnnualOperatingProfitUsd,
+      turnkey_capex_usd: turnkeyCapexUsd,
+      clean_energy_ira_subsidy_usd: cleanEnergyIraSubsidyUsd,
+      net_capex_investment_usd: netCapexInvestmentUsd,
+      simple_payback_years: simplePaybackYears,
+      annual_co2_avoided_tons: annualCo2AvoidedTons,
+      charger_specs: chargerSpecs
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
