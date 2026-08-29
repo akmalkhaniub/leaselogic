@@ -317,8 +317,17 @@ export default function LeaseLogicApp() {
   const [industrialData, setIndustrialData] = useState<any>(null);
   const [loadingIndustrial, setLoadingIndustrial] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics'>('abstract');
+  // EV Fleet Charging Infrastructure Modeler state
+  const [evLevel2Ports, setEvLevel2Ports] = useState(12);
+  const [evDcfcPorts, setEvDcfcPorts] = useState(4);
+  const [evChargingFee, setEvChargingFee] = useState(0.45);
+  const [evUtilityCost, setEvUtilityCost] = useState(0.18);
+  const [evUtilizationHours, setEvUtilizationHours] = useState(4.5);
+  const [evChargingData, setEvChargingData] = useState<any>(null);
+  const [loadingEvCharging, setLoadingEvCharging] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -959,6 +968,33 @@ export default function LeaseLogicApp() {
       console.error('Error running industrial logistics modeler:', err);
     } finally {
       setLoadingIndustrial(false);
+    }
+  };
+
+  // Run Autonomous AI EV Fleet Charging Infrastructure Modeler
+  const handleRunEvCharging = async () => {
+    if (!selectedLease) return;
+    setLoadingEvCharging(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/ev-charging-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level2_ports: evLevel2Ports,
+          dcfc_ports: evDcfcPorts,
+          charging_fee_per_kwh: evChargingFee,
+          utility_cost_per_kwh: evUtilityCost,
+          daily_utilization_hours: evUtilizationHours
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEvChargingData(data);
+      }
+    } catch (err) {
+      console.error('Error running EV charging modeler:', err);
+    } finally {
+      setLoadingEvCharging(false);
     }
   };
 
@@ -5067,6 +5103,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'industrial_logistics' ? 'active' : ''}`} onClick={() => { setActiveTab('industrial_logistics'); handleRunIndustrialLogistics(); }}>
                   📦 Industrial Logistics
                 </div>
+                <div className={`tab ${activeTab === 'ev_charging' ? 'active' : ''}`} onClick={() => { setActiveTab('ev_charging'); handleRunEvCharging(); }}>
+                  ⚡ EV Charging
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -8264,6 +8303,144 @@ export default function LeaseLogicApp() {
                                 <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.specification}</td>
                                 <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)' }}>{item.metric_value}</td>
                                 <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{item.performance_grade}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'ev_charging' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>⚡ Autonomous AI EV Fleet Charging Infrastructure & Ancillary Revenue Modeler</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Simulates commercial Level 2 and DC Fast Charging (DCFC) infrastructure deployments, ancillary revenue, IRA subsidies, and CapEx payback.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Level 2 Ports (9.6 kW)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={evLevel2Ports}
+                        onChange={(e) => setEvLevel2Ports(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>DCFC Ports (150 kW)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={evDcfcPorts}
+                        onChange={(e) => setEvDcfcPorts(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Retail Tariff ($/kWh)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={evChargingFee}
+                        onChange={(e) => setEvChargingFee(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Utility Cost ($/kWh)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={evUtilityCost}
+                        onChange={(e) => setEvUtilityCost(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Daily Use (hrs/day)</label>
+                      <input 
+                        type="number"
+                        step="0.5"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={evUtilizationHours}
+                        onChange={(e) => setEvUtilizationHours(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunEvCharging} disabled={loadingEvCharging} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingEvCharging ? 'Modeling...' : '⚡ Model EV'}
+                    </button>
+                  </div>
+
+                  {/* EV Output */}
+                  {evChargingData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Annual Ancillary Operating Profit</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            ⚡ +${evChargingData.net_annual_operating_profit_usd.toLocaleString()} / Year
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Gross Revenue: ${evChargingData.gross_annual_revenue_usd.toLocaleString()}/yr | Power Utility Cost: ${evChargingData.annual_utility_cost_usd.toLocaleString()}/yr | Total Energy: {evChargingData.annual_kwh_dispensed.toLocaleString()} kWh/yr
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Simple Payback Period</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            {evChargingData.simple_payback_years} Years
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Net CapEx: ${evChargingData.net_capex_investment_usd.toLocaleString()} (IRA 30% Tax Credit: -${evChargingData.clean_energy_ira_subsidy_usd.toLocaleString()})
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Charger Specs Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Charger Infrastructure Tier</th>
+                              <th>Port Quantity</th>
+                              <th>Power Output Rating</th>
+                              <th>Daily Dispensed Energy</th>
+                              <th>Target Tenant Fleet Demographic</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {evChargingData.charger_specs.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.charger_type}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)' }}>{item.port_count} Ports</td>
+                                <td style={{ fontSize: '0.82rem', fontFamily: 'monospace' }}>{item.power_rating}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--success)' }}>{item.daily_energy_kwh.toLocaleString()} kWh/day</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{item.target_demographic}</td>
                               </tr>
                             ))}
                           </tbody>
