@@ -3143,6 +3143,62 @@ app.get('/api/leases/:id/climate-risk-index', async (req, res) => {
   }
 });
 
+// 4.809. POST Smart IoT PropTech Occupancy & Space Utilization Density Heatmap Engine
+app.post('/api/leases/:id/iot-occupancy-engine', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      total_leased_sqft = 25000, 
+      designated_desks = 150, 
+      peak_attendance_pct = 62, 
+      target_sharing_ratio = 1.4 
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const averageDailyAttendance = Math.round(designated_desks * (peak_attendance_pct / 100));
+    const rightSizedDesks = Math.round(averageDailyAttendance / (target_sharing_ratio || 1.0));
+    const excessDesks = Math.max(0, designated_desks - rightSizedDesks);
+
+    const requiredAreaSqft = rightSizedDesks * 150;
+    const surplusAreaSqft = Math.max(0, total_leased_sqft - requiredAreaSqft);
+    const surplusAreaPct = Math.round((surplusAreaSqft / total_leased_sqft) * 100);
+    const annualRentSavingsUsd = Math.round(surplusAreaSqft * 55); // $55/sqft market rate
+
+    const dayOfWeekPatterns = [
+      { day: 'Monday', occupancy_pct: 42, badge_swipes: Math.round(designated_desks * 0.42), density_status: 'LOW_OCCUPANCY' },
+      { day: 'Tuesday', occupancy_pct: 84, badge_swipes: Math.round(designated_desks * 0.84), density_status: 'PEAK_COLLABORATION' },
+      { day: 'Wednesday', occupancy_pct: 88, badge_swipes: Math.round(designated_desks * 0.88), density_status: 'PEAK_COLLABORATION' },
+      { day: 'Thursday', occupancy_pct: 79, badge_swipes: Math.round(designated_desks * 0.79), density_status: 'HIGH_ATTENDANCE' },
+      { day: 'Friday', occupancy_pct: 28, badge_swipes: Math.round(designated_desks * 0.28), density_status: 'REMOTE_DIP' }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'General Portfolio Asset',
+      total_leased_sqft: total_leased_sqft,
+      designated_desks: designated_desks,
+      peak_attendance_pct: peak_attendance_pct,
+      target_sharing_ratio: target_sharing_ratio,
+      average_daily_attendance: averageDailyAttendance,
+      right_sized_desks: rightSizedDesks,
+      excess_desks: excessDesks,
+      required_area_sqft: requiredAreaSqft,
+      surplus_area_sqft: surplusAreaSqft,
+      surplus_area_pct: surplusAreaPct,
+      annual_rent_savings_usd: annualRentSavingsUsd,
+      daily_patterns: dayOfWeekPatterns
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
