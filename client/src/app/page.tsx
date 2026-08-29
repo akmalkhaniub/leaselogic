@@ -326,8 +326,12 @@ export default function LeaseLogicApp() {
   const [evChargingData, setEvChargingData] = useState<any>(null);
   const [loadingEvCharging, setLoadingEvCharging] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging'>('abstract');
+  // Climate Physical Risk & Resilience Vulnerability Index state
+  const [climateData, setClimateData] = useState<any>(null);
+  const [loadingClimate, setLoadingClimate] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -995,6 +999,23 @@ export default function LeaseLogicApp() {
       console.error('Error running EV charging modeler:', err);
     } finally {
       setLoadingEvCharging(false);
+    }
+  };
+
+  // Fetch Autonomous Climate Physical Risk & Resilience Vulnerability Index
+  const handleFetchClimateRisk = async () => {
+    if (!selectedLease) return;
+    setLoadingClimate(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/climate-risk-index`);
+      if (res.ok) {
+        const data = await res.json();
+        setClimateData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching climate risk index:', err);
+    } finally {
+      setLoadingClimate(false);
     }
   };
 
@@ -5106,6 +5127,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'ev_charging' ? 'active' : ''}`} onClick={() => { setActiveTab('ev_charging'); handleRunEvCharging(); }}>
                   ⚡ EV Charging
                 </div>
+                <div className={`tab ${activeTab === 'climate_risk' ? 'active' : ''}`} onClick={() => { setActiveTab('climate_risk'); handleFetchClimateRisk(); }}>
+                  🌊 Climate Risk
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -8441,6 +8465,115 @@ export default function LeaseLogicApp() {
                                 <td style={{ fontSize: '0.82rem', fontFamily: 'monospace' }}>{item.power_rating}</td>
                                 <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--success)' }}>{item.daily_energy_kwh.toLocaleString()} kWh/day</td>
                                 <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{item.target_demographic}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'climate_risk' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🌊 Autonomous Climate Physical Risk & Resilience Vulnerability Index (FEMA/NOAA)</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Evaluates FEMA 100-year flood zones, NOAA tidal inundation projections, wildfire hazards, and resilience CapEx hardening ROI.
+                      </p>
+                    </div>
+                    <button onClick={handleFetchClimateRisk} disabled={loadingClimate} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
+                      {loadingClimate ? 'Auditing Perils...' : '🌊 Refresh Climate Audit'}
+                    </button>
+                  </div>
+
+                  {/* Climate Risk Output */}
+                  {climateData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Composite Physical Climate Risk Score</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--error)' }}>
+                            🌊 {climateData.composite_risk_score} / 100 ({climateData.risk_category.replace(/_/g, ' ')})
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Expected Annual Average Loss (AAL): ${climateData.annual_average_loss_usd.toLocaleString()}/yr | Projected Insurance Escalation: +{climateData.insurance_premium_hike_pct}%
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '160px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Peril Hazard Exposure</span>
+                          <span className="badge badge-warning" style={{ fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                            {climateData.risk_category}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Climate Perils Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>⛈️ Environmental Peril Hazard & Vulnerability Stratification</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Climate Peril Category</th>
+                              <th>Hazard Severity Metric</th>
+                              <th>Peril Severity (1-100)</th>
+                              <th>Vulnerability Exposure Status</th>
+                              <th>Engineering Mitigation Directive</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {climateData.perils.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.peril_type}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--foreground)', fontWeight: 600 }}>{item.hazard_rating}</td>
+                                <td style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 800, color: item.severity_score >= 70 ? 'var(--error)' : 'var(--warning)' }}>
+                                  {item.severity_score} / 100
+                                </td>
+                                <td>
+                                  <span className={`badge badge-${item.status.includes('HIGH') ? 'failed' : 'pending'}`} style={{ fontSize: '0.68rem' }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.mitigation}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Resilience Investments Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--success)' }}>🛡️ Recommended Resilience CapEx Hardening & Premium Rebates</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Resilience Retrofit Measure</th>
+                              <th>Estimated CapEx Investment</th>
+                              <th>Peril Risk Reduction</th>
+                              <th>Annual Insurance Premium Rebate</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {climateData.resilience_investments.map((r: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{r.measure_title}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)' }}>${r.estimated_capex_usd.toLocaleString()}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--success)' }}>-{r.risk_reduction_pct}% Risk</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--success)' }}>+${r.premium_rebate_usd.toLocaleString()} / Year</td>
                               </tr>
                             ))}
                           </tbody>
