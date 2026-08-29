@@ -338,8 +338,12 @@ export default function LeaseLogicApp() {
   const [iotData, setIotData] = useState<any>(null);
   const [loadingIot, setLoadingIot] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy'>('abstract');
+  // Tenant Estoppel Certificate & Landlord Waiver state
+  const [estoppelData, setEstoppelData] = useState<any>(null);
+  const [loadingEstoppel, setLoadingEstoppel] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1050,6 +1054,23 @@ export default function LeaseLogicApp() {
       console.error('Error running IoT occupancy engine:', err);
     } finally {
       setLoadingIot(false);
+    }
+  };
+
+  // Fetch Autonomous Tenant Estoppel Certificate & Landlord Waiver
+  const handleFetchEstoppel = async () => {
+    if (!selectedLease) return;
+    setLoadingEstoppel(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/estoppel-generator`);
+      if (res.ok) {
+        const data = await res.json();
+        setEstoppelData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching estoppel certificate:', err);
+    } finally {
+      setLoadingEstoppel(false);
     }
   };
 
@@ -5167,6 +5188,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'iot_occupancy' ? 'active' : ''}`} onClick={() => { setActiveTab('iot_occupancy'); handleRunIotOccupancy(); }}>
                   📡 IoT Utilization
                 </div>
+                <div className={`tab ${activeTab === 'estoppel_waiver' ? 'active' : ''}`} onClick={() => { setActiveTab('estoppel_waiver'); handleFetchEstoppel(); }}>
+                  📑 Estoppel & Waivers
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -8749,6 +8773,101 @@ export default function LeaseLogicApp() {
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'estoppel_waiver' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>📑 Autonomous Tenant Estoppel Certificate & Landlord Waiver Dispatcher</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Auto-generates institutional estoppel certificates, verifies tenant rent/deposit accounts, and executes lender personal property lien waivers.
+                      </p>
+                    </div>
+                    <button onClick={handleFetchEstoppel} disabled={loadingEstoppel} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
+                      {loadingEstoppel ? 'Compiling Certificate...' : '📑 Refresh Estoppel'}
+                    </button>
+                  </div>
+
+                  {/* Estoppel Output */}
+                  {estoppelData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Header */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(139, 92, 246, 0.08)',
+                        border: '1px solid rgba(139, 92, 246, 0.25)',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(4, 1fr)',
+                        gap: '16px'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant Entity</span>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>{estoppelData.tenant_name}</h4>
+                        </div>
+
+                        <div>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Base Rent</span>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--foreground)' }}>{estoppelData.monthly_rent}</h4>
+                        </div>
+
+                        <div>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Security Deposit</span>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>{estoppelData.security_deposit}</h4>
+                        </div>
+
+                        <div>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Audit Status</span>
+                          <span className="badge badge-completed" style={{ fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                            {estoppelData.audit_conformance_status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Representations Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>📜 Certified Legal Representations & Lien Subordinations</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Clause Section</th>
+                              <th>Legal Topic</th>
+                              <th>Certified Representation Statement</th>
+                              <th>Audit Verification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {estoppelData.representations.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.82rem', fontFamily: 'monospace' }}>{item.section_num}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)' }}>{item.title}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{item.representation}</td>
+                                <td>
+                                  <span className="badge badge-completed" style={{ fontSize: '0.68rem' }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Formal Estoppel Text Area */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', color: 'var(--primary)' }}>📄 Institutional Lender Estoppel Certificate & Waiver Document</h4>
+                        <textarea
+                          readOnly
+                          rows={8}
+                          className="chat-input"
+                          style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '12px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
+                          value={estoppelData.estoppel_document_text}
+                        />
                       </div>
                     </div>
                   )}
