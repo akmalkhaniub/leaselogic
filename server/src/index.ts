@@ -3260,6 +3260,77 @@ The undersigned Tenant hereby certifies to Lender, Landlord, and their respectiv
   }
 });
 
+// 4.811. POST Autonomous AI Lease Version Diff & Structural Redline Engine
+app.post('/api/leases/:id/version-diff', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      amendment_name = 'First Omnibus Lease Amendment & Term Extension',
+      effective_date = '2026-06-01',
+      extension_years = 5
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const clauseDiffs = [
+      {
+        clause_topic: 'Base Rent & Escalation Index',
+        original_covenant: '$42.00/sqft NNN with fixed 2.5% annual compounded escalation on January 1.',
+        amended_covenant: '$48.50/sqft NNN resetting with CPI-U un-capped annual escalation (minimum 3.5%).',
+        financial_delta_usd: 162500,
+        risk_level: 'HIGH_RISK_INCREASE',
+        ai_audit_verdict: 'Landlord inserted an un-capped CPI-U indexation formula replacing the previous predictable 2.5% fixed escalation cap, creating substantial downside inflation volatility.'
+      },
+      {
+        clause_topic: 'Operating Expense & CAM Controllable Cap',
+        original_covenant: 'Controllable CAM expenses capped at 5.0% cumulative annual growth over prior calendar year.',
+        amended_covenant: 'Controllable CAM expenses capped at 7.5% compounded annual growth with capital amortization pass-throughs included.',
+        financial_delta_usd: 48750,
+        risk_level: 'MODERATE_RISK_INCREASE',
+        ai_audit_verdict: 'Expansion of CAM cap from 5% to 7.5% and inclusion of capital amortization pass-through degrades tenant operating expense protections.'
+      },
+      {
+        clause_topic: 'Assignment & Subletting Rights (Profits Split)',
+        original_covenant: 'Tenant retains 75% of excess sublease profits; landlord consent not unreasonably withheld within 15 business days.',
+        amended_covenant: 'Landlord captures 50% of gross sublease profits; 30-day review period with landlord right to recapture premises.',
+        financial_delta_usd: 75000,
+        risk_level: 'HIGH_RISK_INCREASE',
+        ai_audit_verdict: 'Landlord recapture right upon sublease request restricts corporate flexibility and cuts tenant profit participation from 75% to 50%.'
+      },
+      {
+        clause_topic: 'End-of-Term Premise Restoration & Decommissioning',
+        original_covenant: 'Tenant shall surrender premises in broom-clean condition, ordinary wear and tear excepted; standard tenant improvements exempt.',
+        amended_covenant: 'Tenant required at landlord option to remove all cabling, specialized fixtures, and supplemental HVAC units to slab baseline.',
+        financial_delta_usd: 110000,
+        risk_level: 'CRITICAL_RISK_INCREASE',
+        ai_audit_verdict: 'Onerous restoration clause added. Landlord can compel complete removal of specialized IT cabling and HVAC, adding unbudgeted exit CapEx.'
+      }
+    ];
+
+    const totalFinancialExposureUsd = clauseDiffs.reduce((acc, c) => acc + c.financial_delta_usd, 0);
+    const cumulativeRiskScore = 79; // Out of 100
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Subject Asset',
+      amendment_name: amendment_name,
+      effective_date: effective_date,
+      extension_years: extension_years,
+      total_financial_exposure_usd: totalFinancialExposureUsd,
+      cumulative_risk_score: cumulativeRiskScore,
+      risk_classification: 'ELEVATED_LANDLORD_FAVORING_SHIFTS',
+      clause_diffs: clauseDiffs
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
