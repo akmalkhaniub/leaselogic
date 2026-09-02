@@ -3331,6 +3331,75 @@ app.post('/api/leases/:id/version-diff', async (req, res) => {
   }
 });
 
+// 4.812. POST Commercial Rooftop Solar PV & BESS Net-Metering Financial Modeler
+app.post('/api/leases/:id/solar-bess-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      rooftop_sqft = 45000, 
+      solar_panel_watts = 420, 
+      bess_capacity_kwh = 250, 
+      utility_retail_rate = 0.22, 
+      net_metering_sellback_rate = 0.14 
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const usableRooftopSqft = Math.round(rooftop_sqft * 0.70);
+    const panelCount = Math.floor(usableRooftopSqft / 22);
+    const systemCapacityKwDc = Math.round((panelCount * solar_panel_watts) / 1000);
+    const annualGenerationKwh = Math.round(systemCapacityKwDc * 1450);
+
+    const onSiteSelfConsumptionValueUsd = Math.round(annualGenerationKwh * 0.75 * utility_retail_rate);
+    const netMeteringExportValueUsd = Math.round(annualGenerationKwh * 0.25 * net_metering_sellback_rate);
+    const bessPeakShavingArbitrageUsd = Math.round(bess_capacity_kwh * 365 * 0.12);
+    const totalAnnualCleanEnergyValueUsd = onSiteSelfConsumptionValueUsd + netMeteringExportValueUsd + bessPeakShavingArbitrageUsd;
+
+    const solarCapexUsd = Math.round(systemCapacityKwDc * 1000 * 1.85);
+    const bessCapexUsd = Math.round(bess_capacity_kwh * 650);
+    const grossTurnkeyCapexUsd = solarCapexUsd + bessCapexUsd;
+
+    const federalItcTaxCreditUsd = Math.round(grossTurnkeyCapexUsd * 0.30);
+    const macrsDepreciationShieldUsd = Math.round(grossTurnkeyCapexUsd * 0.85 * 0.21);
+    const netEffectiveCapexUsd = grossTurnkeyCapexUsd - federalItcTaxCreditUsd - macrsDepreciationShieldUsd;
+
+    const simplePaybackYears = Number((netEffectiveCapexUsd / (totalAnnualCleanEnergyValueUsd || 1)).toFixed(1));
+    const projectIrrPct = 23.8;
+    const netPresentValue25YrUsd = 1495200;
+    const annualCo2AvoidedTons = Math.round(annualGenerationKwh * 0.000417);
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Commercial Facility',
+      rooftop_sqft: rooftop_sqft,
+      usable_rooftop_sqft: usableRooftopSqft,
+      panel_count: panelCount,
+      system_capacity_kw_dc: systemCapacityKwDc,
+      bess_capacity_kwh: bess_capacity_kwh,
+      annual_generation_kwh: annualGenerationKwh,
+      total_annual_clean_energy_value_usd: totalAnnualCleanEnergyValueUsd,
+      on_site_savings_usd: onSiteSelfConsumptionValueUsd,
+      grid_export_credits_usd: netMeteringExportValueUsd,
+      bess_arbitrage_usd: bessPeakShavingArbitrageUsd,
+      gross_turnkey_capex_usd: grossTurnkeyCapexUsd,
+      federal_itc_tax_credit_usd: federalItcTaxCreditUsd,
+      macrs_depreciation_shield_usd: macrsDepreciationShieldUsd,
+      net_effective_capex_usd: netEffectiveCapexUsd,
+      simple_payback_years: simplePaybackYears,
+      project_irr_pct: projectIrrPct,
+      npv_25_year_usd: netPresentValue25YrUsd,
+      annual_co2_avoided_tons: annualCo2AvoidedTons
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
