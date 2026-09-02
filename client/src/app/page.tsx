@@ -357,8 +357,16 @@ export default function LeaseLogicApp() {
   const [solarData, setSolarData] = useState<any>(null);
   const [loadingSolar, setLoadingSolar] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess'>('abstract');
+  // Smart BMS HVAC Fault Detection state
+  const [bmsChillerKw, setBmsChillerKw] = useState(450);
+  const [bmsLeasedSqft, setBmsLeasedSqft] = useState(35000);
+  const [bmsCdd, setBmsCdd] = useState(1200);
+  const [bmsUtilityRate, setBmsUtilityRate] = useState(0.21);
+  const [bmsData, setBmsData] = useState<any>(null);
+  const [loadingBms, setLoadingBms] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1137,6 +1145,32 @@ export default function LeaseLogicApp() {
       console.error('Error running solar BESS modeler:', err);
     } finally {
       setLoadingSolar(false);
+    }
+  };
+
+  // Run Smart BMS HVAC Fault Detection & CAM Energy Drift Scheduler
+  const handleRunBmsDiagnostics = async () => {
+    if (!selectedLease) return;
+    setLoadingBms(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/bms-fault-detection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chiller_plant_kw: bmsChillerKw,
+          total_leased_sqft: bmsLeasedSqft,
+          cooling_degree_days: bmsCdd,
+          utility_rate_per_kwh: bmsUtilityRate
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBmsData(data);
+      }
+    } catch (err) {
+      console.error('Error running BMS diagnostics:', err);
+    } finally {
+      setLoadingBms(false);
     }
   };
 
@@ -5263,6 +5297,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'solar_bess' ? 'active' : ''}`} onClick={() => { setActiveTab('solar_bess'); handleRunSolarBess(); }}>
                   🌞 Solar & BESS
                 </div>
+                <div className={`tab ${activeTab === 'bms_diagnostics' ? 'active' : ''}`} onClick={() => { setActiveTab('bms_diagnostics'); handleRunBmsDiagnostics(); }}>
+                  🏢 BMS Diagnostics
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -9200,6 +9237,172 @@ export default function LeaseLogicApp() {
                               <td style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1rem' }}>${solarData.net_effective_capex_usd.toLocaleString()}</td>
                               <td style={{ fontWeight: 700, color: 'var(--success)', fontSize: '0.82rem' }}>Net 47.9% capital subsidy reduction via IRA clean energy policy</td>
                             </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'bms_diagnostics' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🏢 Smart BMS HVAC Fault Detection & CAM Energy Drift Scheduler</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Analyzes BMS BACnet/Modbus telemetry for chiller COP drop, economizer damper slippage, and VAV leaks to stop CAM utility budget drift.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Chiller Capacity (kW)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={bmsChillerKw}
+                        onChange={(e) => setBmsChillerKw(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Leased Space (sqft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={bmsLeasedSqft}
+                        onChange={(e) => setBmsLeasedSqft(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Cooling Degree Days</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={bmsCdd}
+                        onChange={(e) => setBmsCdd(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Utility Rate ($/kWh)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={bmsUtilityRate}
+                        onChange={(e) => setBmsUtilityRate(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunBmsDiagnostics} disabled={loadingBms} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingBms ? 'Scanning BMS...' : '🏢 Run BMS Scan'}
+                    </button>
+                  </div>
+
+                  {/* BMS Output */}
+                  {bmsData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(245, 158, 11, 0.08)',
+                        border: '1px solid rgba(245, 158, 11, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Energy Drift & CAM Waste Penalty</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--warning)' }}>
+                            🏢 -${bmsData.annual_energy_drift_penalty_usd.toLocaleString()} / Year ({bmsData.annual_wasted_kwh.toLocaleString()} kWh Wasted)
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Tenant CAM Dispute Reimbursement Exposure: ${bmsData.cam_dispute_reimbursement_usd.toLocaleString()} | Facility Area: {bmsData.total_leased_sqft.toLocaleString()} sqft
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Overall BMS Health Score</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--warning)' }}>
+                            {bmsData.bms_health_score} / 100
+                          </h3>
+                          <span className="badge badge-warning" style={{ fontSize: '0.72rem', marginTop: '4px', display: 'inline-block' }}>
+                            SUB-OPTIMAL DEGRADATION
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Diagnosed Faults Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>⚠️ Diagnosed Subsystem Telemetry Faults & Energy Drift</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Equipment Tag</th>
+                              <th>Subsystem</th>
+                              <th>Telemetry Fault Condition</th>
+                              <th>Operational Inefficiency</th>
+                              <th>Annual Cost Drift</th>
+                              <th>Actionable Maintenance Work-Order</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {bmsData.diagnosed_faults.map((f: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{f.equipment_tag}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--primary)', fontWeight: 600 }}>{f.subsystem}</td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--foreground)' }}>{f.fault_condition}</td>
+                                <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{f.operational_impact}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--error)', fontFamily: 'monospace' }}>
+                                  +${f.annual_drift_usd.toLocaleString()}/yr
+                                  <span className={`badge badge-${f.severity.includes('CRITICAL') ? 'failed' : 'warning'}`} style={{ fontSize: '0.62rem', display: 'block', marginTop: '4px' }}>{f.severity}</span>
+                                </td>
+                                <td style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--foreground)' }}>{f.recommended_dispatch}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Work-Orders Dispatch Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--success)' }}>🛠️ Automated Predictive Maintenance Work-Order Dispatch Schedule</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Work Order ID</th>
+                              <th>Assigned Specialized Contractor</th>
+                              <th>Estimated Turnkey Cost</th>
+                              <th>Energy Payback Period</th>
+                              <th>Dispatch Priority</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {bmsData.dispatch_work_orders.map((wo: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 800, fontFamily: 'monospace', color: 'var(--primary)' }}>{wo.work_order_id}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 600 }}>{wo.vendor}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--foreground)' }}>${wo.estimated_cost_usd.toLocaleString()}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--success)' }}>{wo.simple_payback_months} Months</td>
+                                <td>
+                                  <span className={`badge badge-${wo.priority.includes('P1') ? 'failed' : 'completed'}`} style={{ fontSize: '0.68rem' }}>
+                                    {wo.priority}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
