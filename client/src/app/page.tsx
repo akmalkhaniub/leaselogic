@@ -348,8 +348,17 @@ export default function LeaseLogicApp() {
   const [diffData, setDiffData] = useState<any>(null);
   const [loadingDiff, setLoadingDiff] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff'>('abstract');
+  // Commercial Rooftop Solar PV & BESS state
+  const [solarRooftopSqft, setSolarRooftopSqft] = useState(45000);
+  const [solarPanelWatts, setSolarPanelWatts] = useState(420);
+  const [solarBessKwh, setSolarBessKwh] = useState(250);
+  const [solarUtilityRate, setSolarUtilityRate] = useState(0.22);
+  const [solarSellbackRate, setSolarSellbackRate] = useState(0.14);
+  const [solarData, setSolarData] = useState<any>(null);
+  const [loadingSolar, setLoadingSolar] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1101,6 +1110,33 @@ export default function LeaseLogicApp() {
       console.error('Error running version diff:', err);
     } finally {
       setLoadingDiff(false);
+    }
+  };
+
+  // Run Commercial Rooftop Solar PV & BESS Net-Metering Modeler
+  const handleRunSolarBess = async () => {
+    if (!selectedLease) return;
+    setLoadingSolar(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/solar-bess-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rooftop_sqft: solarRooftopSqft,
+          solar_panel_watts: solarPanelWatts,
+          bess_capacity_kwh: solarBessKwh,
+          utility_retail_rate: solarUtilityRate,
+          net_metering_sellback_rate: solarSellbackRate
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSolarData(data);
+      }
+    } catch (err) {
+      console.error('Error running solar BESS modeler:', err);
+    } finally {
+      setLoadingSolar(false);
     }
   };
 
@@ -5224,6 +5260,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'version_diff' ? 'active' : ''}`} onClick={() => { setActiveTab('version_diff'); handleRunVersionDiff(); }}>
                   🤖 Version Diff
                 </div>
+                <div className={`tab ${activeTab === 'solar_bess' ? 'active' : ''}`} onClick={() => { setActiveTab('solar_bess'); handleRunSolarBess(); }}>
+                  🌞 Solar & BESS
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -9007,6 +9046,160 @@ export default function LeaseLogicApp() {
                                 <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>{item.ai_audit_verdict}</td>
                               </tr>
                             ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'solar_bess' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🌞 Commercial Rooftop Solar PV & BESS Net-Metering Financial Modeler</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Evaluates on-site solar generation, BESS peak-shaving arbitrage, Federal Section 48 ITC (30%), MACRS depreciation, and 25-year project IRR.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Rooftop Area (sqft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={solarRooftopSqft}
+                        onChange={(e) => setSolarRooftopSqft(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Panel Rating (W)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={solarPanelWatts}
+                        onChange={(e) => setSolarPanelWatts(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>BESS Battery (kWh)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={solarBessKwh}
+                        onChange={(e) => setSolarBessKwh(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Utility Rate ($/kWh)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={solarUtilityRate}
+                        onChange={(e) => setSolarUtilityRate(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Sell-Back Rate ($/kWh)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={solarSellbackRate}
+                        onChange={(e) => setSolarSellbackRate(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunSolarBess} disabled={loadingSolar} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingSolar ? 'Modeling...' : '🌞 Run Solar Modeler'}
+                    </button>
+                  </div>
+
+                  {/* Solar Output */}
+                  {solarData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Annual Clean Energy Economic Value</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            🌞 +${solarData.total_annual_clean_energy_value_usd.toLocaleString()} / Year
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            On-Site Savings: ${solarData.on_site_savings_usd.toLocaleString()}/yr | Grid Export Credits: ${solarData.grid_export_credits_usd.toLocaleString()}/yr | BESS Arbitrage: ${solarData.bess_arbitrage_usd.toLocaleString()}/yr
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Project IRR & Payback</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            {solarData.project_irr_pct}% IRR ({solarData.simple_payback_years} Yrs)
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            25-Yr Net Present Value: +${solarData.npv_25_year_usd.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Financial CapEx Breakdown Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>⚡ Capital Investment, Subsidies & Energy Generation Metrics</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Metric Parameter</th>
+                              <th>Engineering / Economic Output</th>
+                              <th>Subsidy & Tax Optimization Benefit</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td style={{ fontWeight: 700 }}>System Sizing & Annual Yield</td>
+                              <td style={{ fontWeight: 800, color: 'var(--primary)' }}>{solarData.system_capacity_kw_dc} kW DC ({solarData.panel_count} Panels)</td>
+                              <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{solarData.annual_generation_kwh.toLocaleString()} kWh/yr Generation ({solarData.annual_co2_avoided_tons} tons CO2e avoided)</td>
+                            </tr>
+                            <tr>
+                              <td style={{ fontWeight: 700 }}>Gross Turnkey CapEx (Solar + BESS)</td>
+                              <td style={{ fontWeight: 800, color: 'var(--foreground)' }}>${solarData.gross_turnkey_capex_usd.toLocaleString()}</td>
+                              <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Includes {solarData.bess_capacity_kwh} kWh BESS energy storage integration</td>
+                            </tr>
+                            <tr>
+                              <td style={{ fontWeight: 700 }}>Federal Section 48 ITC Tax Credit</td>
+                              <td style={{ fontWeight: 800, color: 'var(--success)' }}>-${solarData.federal_itc_tax_credit_usd.toLocaleString()}</td>
+                              <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>30% Direct Cash/Tax Credit under Inflation Reduction Act (IRA)</td>
+                            </tr>
+                            <tr>
+                              <td style={{ fontWeight: 700 }}>MACRS 5-Year Accelerated Depreciation</td>
+                              <td style={{ fontWeight: 800, color: 'var(--success)' }}>-${solarData.macrs_depreciation_shield_usd.toLocaleString()}</td>
+                              <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Corporate tax shield calculated at 21% on 85% adjusted basis</td>
+                            </tr>
+                            <tr style={{ background: '#f8fafc' }}>
+                              <td style={{ fontWeight: 800, color: 'var(--primary)' }}>Net Effective Capital Outlay</td>
+                              <td style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1rem' }}>${solarData.net_effective_capex_usd.toLocaleString()}</td>
+                              <td style={{ fontWeight: 700, color: 'var(--success)', fontSize: '0.82rem' }}>Net 47.9% capital subsidy reduction via IRA clean energy policy</td>
+                            </tr>
                           </tbody>
                         </table>
                       </div>
