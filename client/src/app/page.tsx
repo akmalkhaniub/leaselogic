@@ -342,8 +342,14 @@ export default function LeaseLogicApp() {
   const [estoppelData, setEstoppelData] = useState<any>(null);
   const [loadingEstoppel, setLoadingEstoppel] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver'>('abstract');
+  // Autonomous AI Lease Version Diff state
+  const [diffAmendmentName, setDiffAmendmentName] = useState('First Omnibus Lease Amendment & Term Extension');
+  const [diffExtensionYears, setDiffExtensionYears] = useState(5);
+  const [diffData, setDiffData] = useState<any>(null);
+  const [loadingDiff, setLoadingDiff] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1071,6 +1077,30 @@ export default function LeaseLogicApp() {
       console.error('Error fetching estoppel certificate:', err);
     } finally {
       setLoadingEstoppel(false);
+    }
+  };
+
+  // Run Autonomous AI Lease Version Diff & Structural Redline
+  const handleRunVersionDiff = async () => {
+    if (!selectedLease) return;
+    setLoadingDiff(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/version-diff`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amendment_name: diffAmendmentName,
+          extension_years: diffExtensionYears
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDiffData(data);
+      }
+    } catch (err) {
+      console.error('Error running version diff:', err);
+    } finally {
+      setLoadingDiff(false);
     }
   };
 
@@ -5191,6 +5221,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'estoppel_waiver' ? 'active' : ''}`} onClick={() => { setActiveTab('estoppel_waiver'); handleFetchEstoppel(); }}>
                   📑 Estoppel & Waivers
                 </div>
+                <div className={`tab ${activeTab === 'version_diff' ? 'active' : ''}`} onClick={() => { setActiveTab('version_diff'); handleRunVersionDiff(); }}>
+                  🤖 Version Diff
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -8868,6 +8901,114 @@ export default function LeaseLogicApp() {
                           style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '12px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
                           value={estoppelData.estoppel_document_text}
                         />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'version_diff' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🤖 Autonomous AI Lease Version Diff & Structural Redline Engine</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Performs deep structural clause comparison between baseline executed leases and amendments to audit sneaky landlord covenant creep.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Amendment / Extension Document Title</label>
+                      <input 
+                        type="text"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={diffAmendmentName}
+                        onChange={(e) => setDiffAmendmentName(e.target.value)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Extension Horizon (Years)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={diffExtensionYears}
+                        onChange={(e) => setDiffExtensionYears(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunVersionDiff} disabled={loadingDiff} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingDiff ? 'Auditing Redlines...' : '🤖 Run AI Redline Audit'}
+                    </button>
+                  </div>
+
+                  {/* Diff Output */}
+                  {diffData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Cumulative Financial Exposure</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--error)' }}>
+                            🤖 +${diffData.total_financial_exposure_usd.toLocaleString()} Financial Risk Delta
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Amendment: {diffData.amendment_name} | Term Extension: +{diffData.extension_years} Years
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Legal Risk Shift Score</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--error)' }}>
+                            {diffData.cumulative_risk_score} / 100
+                          </h3>
+                          <span className="badge badge-failed" style={{ fontSize: '0.72rem', marginTop: '4px', display: 'inline-block' }}>
+                            {diffData.risk_classification.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Side by Side Diff Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>📑 Structural Clause Redline & Exposure Analysis</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th style={{ width: '15%' }}>Covenant Topic</th>
+                              <th style={{ width: '25%' }}>Original Executed Covenant</th>
+                              <th style={{ width: '25%' }}>Amended Covenant Proposal</th>
+                              <th style={{ width: '12%' }}>Financial Exposure</th>
+                              <th style={{ width: '23%' }}>AI Audit Trap Detection</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {diffData.clause_diffs.map((item: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.clause_topic}</td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)', background: 'rgba(239, 68, 68, 0.03)', padding: '10px' }}>{item.original_covenant}</td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--foreground)', fontWeight: 600, background: 'rgba(16, 185, 129, 0.04)', padding: '10px' }}>{item.amended_covenant}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--error)', fontFamily: 'monospace' }}>
+                                  +${item.financial_delta_usd.toLocaleString()}
+                                  <span className="badge badge-warning" style={{ fontSize: '0.65rem', display: 'block', marginTop: '4px' }}>{item.risk_level}</span>
+                                </td>
+                                <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>{item.ai_audit_verdict}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
