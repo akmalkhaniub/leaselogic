@@ -365,8 +365,17 @@ export default function LeaseLogicApp() {
   const [bmsData, setBmsData] = useState<any>(null);
   const [loadingBms, setLoadingBms] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics'>('abstract');
+  // Dynamic Lease Early Termination state
+  const [breakDate, setBreakDate] = useState('2027-12-31');
+  const [breakRemainingMonths, setBreakRemainingMonths] = useState(36);
+  const [breakMonthlyRent, setBreakMonthlyRent] = useState(18750);
+  const [breakTiAllowance, setBreakTiAllowance] = useState(250000);
+  const [breakBrokerCommission, setBreakBrokerCommission] = useState(75000);
+  const [breakData, setBreakData] = useState<any>(null);
+  const [loadingBreak, setLoadingBreak] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1171,6 +1180,33 @@ export default function LeaseLogicApp() {
       console.error('Error running BMS diagnostics:', err);
     } finally {
       setLoadingBms(false);
+    }
+  };
+
+  // Run Dynamic Lease Early Termination & Break-Option Penalty Optimizer
+  const handleRunBreakOptimizer = async () => {
+    if (!selectedLease) return;
+    setLoadingBreak(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/early-termination-optimizer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          break_effective_date: breakDate,
+          remaining_months: breakRemainingMonths,
+          monthly_rent: breakMonthlyRent,
+          ti_allowance_granted: breakTiAllowance,
+          broker_commission_paid: breakBrokerCommission
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBreakData(data);
+      }
+    } catch (err) {
+      console.error('Error running early termination optimizer:', err);
+    } finally {
+      setLoadingBreak(false);
     }
   };
 
@@ -5300,6 +5336,9 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'bms_diagnostics' ? 'active' : ''}`} onClick={() => { setActiveTab('bms_diagnostics'); handleRunBmsDiagnostics(); }}>
                   🏢 BMS Diagnostics
                 </div>
+                <div className={`tab ${activeTab === 'break_optimizer' ? 'active' : ''}`} onClick={() => { setActiveTab('break_optimizer'); handleRunBreakOptimizer(); }}>
+                  💰 Break Optimizer
+                </div>
               </div>
 
               {activeTab === 'abstract' ? (
@@ -9405,6 +9444,162 @@ export default function LeaseLogicApp() {
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'break_optimizer' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>💰 Dynamic Lease Early Termination & Break-Option Penalty Optimizer</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Calculates break fees, unamortized landlord concessions (TI & broker commissions), and compares Hold-to-Term vs Break vs Sublease.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Target Break Date</label>
+                      <input 
+                        type="date"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={breakDate}
+                        onChange={(e) => setBreakDate(e.target.value)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Remaining Months</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={breakRemainingMonths}
+                        onChange={(e) => setBreakRemainingMonths(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Monthly Base Rent ($)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={breakMonthlyRent}
+                        onChange={(e) => setBreakMonthlyRent(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>TI Allowance Granted ($)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={breakTiAllowance}
+                        onChange={(e) => setBreakTiAllowance(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Broker Commission ($)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={breakBrokerCommission}
+                        onChange={(e) => setBreakBrokerCommission(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunBreakOptimizer} disabled={loadingBreak} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingBreak ? 'Calculating...' : '💰 Optimize Exit'}
+                    </button>
+                  </div>
+
+                  {/* Break Output */}
+                  {breakData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Corporate Net Exit Savings</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            💰 +${breakData.net_savings_usd.toLocaleString()} Net Cash Saved ({breakData.savings_pct}% Cost Reduction)
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Break Settlement: ${breakData.total_break_settlement_usd.toLocaleString()} vs Hold-to-Term Cost: ${breakData.hold_to_term_obligation_usd.toLocaleString()}
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Critical Notice Deadline</span>
+                          <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--error)' }}>
+                            {breakData.notice_cutoff_deadline}
+                          </h4>
+                          <span className="badge badge-completed" style={{ fontSize: '0.72rem', marginTop: '4px', display: 'inline-block' }}>
+                            RECOMMENDED: {breakData.recommended_action}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Exit Scenarios Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>📊 Real Estate Exit Strategy Comparative Evaluation</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Strategy Pathway</th>
+                              <th>Total Outlay Commitment</th>
+                              <th>Net Savings Realized</th>
+                              <th>Risk / Concession Profile</th>
+                              <th>Financial & Operational Summary</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {breakData.exit_scenarios.map((s: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{s.strategy}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--foreground)' }}>${s.total_cash_outlay_usd.toLocaleString()}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: s.net_savings_usd > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+                                  {s.net_savings_usd > 0 ? `+$${s.net_savings_usd.toLocaleString()}` : '$0'}
+                                </td>
+                                <td>
+                                  <span className={`badge badge-${s.risk_level.includes('OPTIMAL') ? 'completed' : s.risk_level.includes('ZERO') ? 'pending' : 'warning'}`} style={{ fontSize: '0.68rem' }}>
+                                    {s.risk_level}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{s.summary}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Legal Break Notice Text Area */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', color: 'var(--primary)' }}>📄 Formal Certified Notice of Lease Break Option Exercise</h4>
+                        <textarea
+                          readOnly
+                          rows={8}
+                          className="chat-input"
+                          style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '12px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
+                          value={breakData.certified_break_notice_text}
+                        />
                       </div>
                     </div>
                   )}
