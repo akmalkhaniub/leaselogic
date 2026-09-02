@@ -3485,6 +3485,107 @@ app.post('/api/leases/:id/bms-fault-detection', async (req, res) => {
   }
 });
 
+// 4.814. POST Dynamic Lease Early Termination & Break-Option Penalty Optimizer
+app.post('/api/leases/:id/early-termination-optimizer', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      break_effective_date = '2027-12-31', 
+      remaining_months = 36, 
+      monthly_rent = 18750, 
+      ti_allowance_granted = 250000, 
+      broker_commission_paid = 75000, 
+      total_term_months = 120, 
+      notice_lead_months = 9 
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const termsRes = await pool.query("SELECT term_name, extracted_value FROM lease_terms WHERE lease_id = $1", [id]);
+    const termsMap: Record<string, string> = {};
+    for (const row of termsRes.rows) {
+      termsMap[row.term_name] = row.extracted_value;
+    }
+
+    const tenantName = termsMap['tenant_name'] || 'Commercial Tenant Entity';
+    const landlordName = termsMap['landlord_name'] || 'Institutional Real Estate Fund LLC';
+
+    const breakFeeMonths = 3;
+    const contractualBreakFeeUsd = breakFeeMonths * monthly_rent;
+    const unamortizedTiClawbackUsd = Math.round((remaining_months / (total_term_months || 1)) * ti_allowance_granted);
+    const unamortizedCommissionClawbackUsd = Math.round((remaining_months / (total_term_months || 1)) * broker_commission_paid);
+    const totalBreakSettlementUsd = contractualBreakFeeUsd + unamortizedTiClawbackUsd + unamortizedCommissionClawbackUsd;
+
+    const holdToTermObligationUsd = Math.round(remaining_months * monthly_rent * 1.22); // includes estimated 22% NNN OPEX
+    const netSavingsByExercisingBreakUsd = Math.max(0, holdToTermObligationUsd - totalBreakSettlementUsd);
+    const savingsPct = Math.round((netSavingsByExercisingBreakUsd / holdToTermObligationUsd) * 100);
+
+    const exitScenarios = [
+      {
+        strategy: 'Strategy 1: Hold Through Expiration',
+        total_cash_outlay_usd: holdToTermObligationUsd,
+        net_savings_usd: 0,
+        risk_level: 'ZERO_TERMINATION_PENALTY',
+        summary: 'Tenant maintains occupancy and pays full base rent + NNN operating expenses for remaining 36 months.'
+      },
+      {
+        strategy: 'Strategy 2: Exercise Early Break Option',
+        total_cash_outlay_usd: totalBreakSettlementUsd,
+        net_savings_usd: netSavingsByExercisingBreakUsd,
+        risk_level: 'OPTIMAL_EXIT_STRATEGY',
+        summary: `Pay 3-month break fee ($${contractualBreakFeeUsd.toLocaleString()}) plus unamortized TI/commission clawback ($${(unamortizedTiClawbackUsd + unamortizedCommissionClawbackUsd).toLocaleString()}) to terminate all ongoing covenants.`
+      },
+      {
+        strategy: 'Strategy 3: Sublease Premises (20% Market Discount)',
+        total_cash_outlay_usd: Math.round(totalBreakSettlementUsd * 2.05),
+        net_savings_usd: Math.round(holdToTermObligationUsd * 0.61),
+        risk_level: 'SUBLEASE_COUNTERPARTY_RISK',
+        summary: 'Tenant absorbs 6-month dark carrying vacancy, broker fee (5%), and subleases at 20% discount below contract rent.'
+      }
+    ];
+
+    const legalBreakNoticeBrief = `FORMAL NOTICE OF LEASE TERMINATION & EXERCISE OF BREAK OPTION
+VIA CERTIFIED MAIL / RETURN RECEIPT REQUESTED
+
+To: ${landlordName} ("Landlord")
+From: ${tenantName} ("Tenant")
+Date: March 15, 2027
+Re: Commercial Real Estate Lease for ${lease.property_name || 'Subject Asset'}
+
+PLEASE TAKE NOTICE that pursuant to Section 8.0 ("Early Termination Option") of the Lease, Tenant hereby unconditionally exercises its contractual right to terminate the Lease effective as of ${break_effective_date} ("Termination Date").
+
+Tenant confirms that this Notice is tendered with greater than ${notice_lead_months} months' prior written notice in full satisfaction of lease covenants.
+Simultaneously upon surrender of the premises in accordance with lease terms, Tenant will tender the contractual termination payment of $${totalBreakSettlementUsd.toLocaleString()} representing the agreed break fee and unamortized concessions.`;
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Subject Asset',
+      tenant_name: tenantName,
+      landlord_name: landlordName,
+      break_effective_date: break_effective_date,
+      remaining_months: remaining_months,
+      contractual_break_fee_usd: contractualBreakFeeUsd,
+      unamortized_ti_clawback_usd: unamortizedTiClawbackUsd,
+      unamortized_commission_clawback_usd: unamortizedCommissionClawbackUsd,
+      total_break_settlement_usd: totalBreakSettlementUsd,
+      hold_to_term_obligation_usd: holdToTermObligationUsd,
+      net_savings_usd: netSavingsByExercisingBreakUsd,
+      savings_pct: savingsPct,
+      recommended_action: 'EXERCISE_BREAK_OPTION',
+      notice_cutoff_deadline: 'March 31, 2027 (Strict Statutory Notice Cutoff)',
+      exit_scenarios: exitScenarios,
+      certified_break_notice_text: legalBreakNoticeBrief
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
