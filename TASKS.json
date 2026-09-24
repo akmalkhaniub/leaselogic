@@ -1,0 +1,13 @@
+[
+  {
+    "id": "LL-001",
+    "status": "TODO",
+    "priority": 1,
+    "title": "Package Chunking Evaluation into CLI Tool",
+    "description": "Add a standalone CLI runner `python -m eval.run_benchmarks --dataset sample_leases/` that executes fixed, structural, and semantic chunking benchmarks and outputs Recall@k tables.",
+    "acceptance_criteria": [
+      "CLI outputs comparative ASCII/Markdown benchmark table",
+      "Runs offline with mock embeddings"
+    ]
+  }
+]
