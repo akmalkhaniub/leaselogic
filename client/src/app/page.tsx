@@ -403,8 +403,18 @@ export default function LeaseLogicApp() {
   const [waterData, setWaterData] = useState<any>(null);
   const [loadingWater, setLoadingWater] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak'>('abstract');
+  // Institutional ARGUS-Grade 10-Year DCF Forecaster state
+  const [dcfYear1Rent, setDcfYear1Rent] = useState(850000);
+  const [dcfRentGrowth, setDcfRentGrowth] = useState(3.0);
+  const [dcfYear1Opex, setDcfYear1Opex] = useState(220000);
+  const [dcfOpexGrowth, setDcfOpexGrowth] = useState(2.5);
+  const [dcfExitCap, setDcfExitCap] = useState(6.25);
+  const [dcfDiscountRate, setDcfDiscountRate] = useState(8.5);
+  const [dcfData, setDcfData] = useState<any>(null);
+  const [loadingDcf, setLoadingDcf] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1323,6 +1333,39 @@ export default function LeaseLogicApp() {
       console.error('Error running water submetering engine:', err);
     } finally {
       setLoadingWater(false);
+    }
+  };
+
+  // Run Institutional ARGUS-Grade 10-Year DCF Cash Flow Forecaster
+  const handleRunArgusDcf = async () => {
+    if (!selectedLease) return;
+    setLoadingDcf(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/argus-dcf-forecaster`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          year_1_gross_rent_usd: dcfYear1Rent,
+          annual_rent_growth_pct: dcfRentGrowth,
+          year_1_opex_usd: dcfYear1Opex,
+          annual_opex_growth_pct: dcfOpexGrowth,
+          exit_cap_rate_pct: dcfExitCap,
+          discount_rate_pct: dcfDiscountRate,
+          renewal_probability_pct: 70,
+          tenant_downtime_months: 6,
+          market_leasing_commission_pct: 5.0,
+          new_ti_allowance_sqft: 35.0,
+          leased_sqft: 35000
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDcfData(data);
+      }
+    } catch (err) {
+      console.error('Error running ARGUS DCF forecaster:', err);
+    } finally {
+      setLoadingDcf(false);
     }
   };
 
@@ -5463,6 +5506,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'water_leak' ? 'active' : ''}`} onClick={() => { setActiveTab('water_leak'); handleRunWaterSubmetering(); }}>
                   💧 Water & Leak IoT
+                </div>
+                <div className={`tab ${activeTab === 'argus_dcf' ? 'active' : ''}`} onClick={() => { setActiveTab('argus_dcf'); handleRunArgusDcf(); }}>
+                  📊 ARGUS 10-Yr DCF
                 </div>
               </div>
 
@@ -10259,6 +10305,185 @@ export default function LeaseLogicApp() {
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant CAM Water Allocation</span>
                           <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--foreground)' }}>${waterData.tenant_recharge_usd.toLocaleString()}</h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Proportionate {waterData.tenant_share_pct}% building share</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'argus_dcf' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>📊 Institutional ARGUS-Grade 10-Year DCF Cash Flow & Valuation Forecaster</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Underwrites 10-year discounted cash flows, Year 5 lease rollover void periods & TI concessions, and Year 11 terminal residual sale proceeds.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Year 1 Rent ($)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={dcfYear1Rent}
+                        onChange={(e) => setDcfYear1Rent(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Rent Growth (%)</label>
+                      <input 
+                        type="number"
+                        step="0.1"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={dcfRentGrowth}
+                        onChange={(e) => setDcfRentGrowth(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Year 1 OPEX ($)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={dcfYear1Opex}
+                        onChange={(e) => setDcfYear1Opex(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>OPEX Growth (%)</label>
+                      <input 
+                        type="number"
+                        step="0.1"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={dcfOpexGrowth}
+                        onChange={(e) => setDcfOpexGrowth(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Exit Cap Rate (%)</label>
+                      <input 
+                        type="number"
+                        step="0.25"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={dcfExitCap}
+                        onChange={(e) => setDcfExitCap(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Discount Rate (%)</label>
+                      <input 
+                        type="number"
+                        step="0.25"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={dcfDiscountRate}
+                        onChange={(e) => setDcfDiscountRate(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunArgusDcf} disabled={loadingDcf} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingDcf ? 'Forecasting...' : '📊 Run DCF Forecaster'}
+                    </button>
+                  </div>
+
+                  {/* DCF Output */}
+                  {dcfData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Institutional Asset DCF Valuation (NPV)</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            📊 ${dcfData.total_dcf_valuation_npv_usd.toLocaleString()} ({dcfData.unlevered_irr_pct}% Unlevered Project IRR)
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            PV of 10-Yr Operating Flows: ${dcfData.pv_operating_cash_flows_usd.toLocaleString()} | PV of Terminal Residual: ${dcfData.pv_terminal_residual_usd.toLocaleString()} | Going-In Cap: {dcfData.going_in_cap_rate_pct}%
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Year 11 Terminal Residual Valuation</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            ${dcfData.gross_terminal_value_usd.toLocaleString()}
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Exit at {dcfData.exit_cap_rate_pct}% Cap Rate on ${dcfData.terminal_exit_noi_usd.toLocaleString()} NOI
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 10-Year Annual DCF Waterfall Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflowX: 'auto' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>📅 10-Year Unlevered Annual DCF Projection Waterfall</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Project Year</th>
+                              <th>Gross Base Rent</th>
+                              <th>Operating OPEX</th>
+                              <th>Net Operating Income (NOI)</th>
+                              <th>Capital & Concession Reserves</th>
+                              <th>Net Cash Flow (NCF)</th>
+                              <th>Discounted Present Value</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {dcfData.annual_projections.map((p: any) => (
+                              <tr key={p.year}>
+                                <td style={{ fontWeight: 800, color: 'var(--primary)' }}>Year {p.year}</td>
+                                <td style={{ fontSize: '0.85rem' }}>${p.gross_rent_usd.toLocaleString()}</td>
+                                <td style={{ fontSize: '0.85rem', color: 'var(--error)' }}>-${p.opex_usd.toLocaleString()}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--foreground)' }}>${p.noi_usd.toLocaleString()}</td>
+                                <td style={{ fontSize: '0.85rem', color: p.capital_concessions_usd > 15000 ? 'var(--warning)' : 'var(--text-muted)' }}>
+                                  -${p.capital_concessions_usd.toLocaleString()}
+                                  {p.capital_concessions_usd > 15000 && <span className="badge badge-warning" style={{ fontSize: '0.62rem', display: 'block', marginTop: '2px' }}>ROLLOVER TI/LC</span>}
+                                </td>
+                                <td style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--success)' }}>${p.net_cash_flow_usd.toLocaleString()}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--primary)' }}>${p.present_value_usd.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Terminal Disposition Waterfall Card */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Exit Year 11 Capitalization</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--foreground)' }}>{dcfData.exit_cap_rate_pct}% Exit Cap</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Year 11 forward NOI: ${dcfData.terminal_exit_noi_usd.toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Gross Terminal Disposition</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>${dcfData.gross_terminal_value_usd.toLocaleString()}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Net proceeds after 1.5% fee: ${dcfData.net_terminal_proceeds_usd.toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Present Value of Terminal Proceeds</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)' }}>${dcfData.pv_terminal_residual_usd.toLocaleString()}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Discounted at {dcfData.discount_rate_pct}% over 10-year horizon</span>
                         </div>
                       </div>
                     </div>
