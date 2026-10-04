@@ -393,8 +393,18 @@ export default function LeaseLogicApp() {
   const [cmbsData, setCmbsData] = useState<any>(null);
   const [loadingCmbs, setLoadingCmbs] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt'>('abstract');
+  // Smart Water Submetering & Leak Detection state
+  const [waterTowerTonnage, setWaterTowerTonnage] = useState(750);
+  const [waterAnnualHcf, setWaterAnnualHcf] = useState(18500);
+  const [waterRateHcf, setWaterRateHcf] = useState(6.45);
+  const [sewerRateHcf, setSewerRateHcf] = useState(8.80);
+  const [waterLeasedSqft, setWaterLeasedSqft] = useState(45000);
+  const [waterBuildingSqft, setWaterBuildingSqft] = useState(120000);
+  const [waterData, setWaterData] = useState<any>(null);
+  const [loadingWater, setLoadingWater] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1285,6 +1295,34 @@ export default function LeaseLogicApp() {
       console.error('Error running CMBS debt tester:', err);
     } finally {
       setLoadingCmbs(false);
+    }
+  };
+
+  // Run Smart Water Submetering, Cooling Tower Evaporation & Leak Detection
+  const handleRunWaterSubmetering = async () => {
+    if (!selectedLease) return;
+    setLoadingWater(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/water-leak-submetering`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cooling_tower_tonnage: waterTowerTonnage,
+          annual_water_consumption_hcf: waterAnnualHcf,
+          municipal_water_rate_hcf: waterRateHcf,
+          municipal_sewer_rate_hcf: sewerRateHcf,
+          leased_sqft: waterLeasedSqft,
+          total_building_sqft: waterBuildingSqft
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWaterData(data);
+      }
+    } catch (err) {
+      console.error('Error running water submetering engine:', err);
+    } finally {
+      setLoadingWater(false);
     }
   };
 
@@ -5422,6 +5460,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'cmbs_debt' ? 'active' : ''}`} onClick={() => { setActiveTab('cmbs_debt'); handleRunCmbsTester(); }}>
                   🏢 CMBS Debt & DSCR
+                </div>
+                <div className={`tab ${activeTab === 'water_leak' ? 'active' : ''}`} onClick={() => { setActiveTab('water_leak'); handleRunWaterSubmetering(); }}>
+                  💧 Water & Leak IoT
                 </div>
               </div>
 
@@ -10042,6 +10083,182 @@ export default function LeaseLogicApp() {
                             ${cmbsData.refinancing_equity_gap_usd.toLocaleString()}
                           </h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{cmbsData.refinancing_equity_gap_usd === 0 ? 'Fully covered with zero equity shortfall' : 'Required sponsor equity recapitalization'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'water_leak' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>💧 Smart Water Submetering, Cooling Tower Evaporation & Leak Detection</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Calculates cooling tower evaporative sewer credits, detects nocturnal baseline pipe leaks (5.2 GPM), and audits tenant water CAM recharges.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tower Tonnage</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={waterTowerTonnage}
+                        onChange={(e) => setWaterTowerTonnage(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Annual Water (HCF)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={waterAnnualHcf}
+                        onChange={(e) => setWaterAnnualHcf(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Water Rate ($/HCF)</label>
+                      <input 
+                        type="number"
+                        step="0.1"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={waterRateHcf}
+                        onChange={(e) => setWaterRateHcf(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Sewer Rate ($/HCF)</label>
+                      <input 
+                        type="number"
+                        step="0.1"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={sewerRateHcf}
+                        onChange={(e) => setSewerRateHcf(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tenant Space (sqft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={waterLeasedSqft}
+                        onChange={(e) => setWaterLeasedSqft(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Building Total (sqft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={waterBuildingSqft}
+                        onChange={(e) => setWaterBuildingSqft(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunWaterSubmetering} disabled={loadingWater} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingWater ? 'Analyzing...' : '💧 Analyze Water'}
+                    </button>
+                  </div>
+
+                  {/* Water Output */}
+                  {waterData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Cooling Tower Evaporation Sewer Rebate Credit</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--success)' }}>
+                            💧 +${waterData.municipal_sewer_rebate_usd.toLocaleString()} / Year ({waterData.evaporation_gallons.toLocaleString()} Gallons Vaporized)
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            Gross Water & Sewer: ${waterData.gross_water_sewer_cost_usd.toLocaleString()} | Net Asset Cost: ${waterData.net_water_sewer_cost_usd.toLocaleString()} | Tenant CAM ({waterData.tenant_share_pct}%): ${waterData.tenant_recharge_usd.toLocaleString()}/yr
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Nocturnal Continuous Leak Waste</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--error)' }}>
+                            -${waterData.annual_leak_financial_waste_usd.toLocaleString()} / Year
+                          </h3>
+                          <span className="badge badge-failed" style={{ fontSize: '0.72rem', marginTop: '4px', display: 'inline-block' }}>
+                            {waterData.baseline_leak_gpm} GPM CONTINUOUS DRAW
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Detected Water Telemetry Anomalies Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>⚠️ IoT Smart Water Pulse Meter Telemetry & Anomaly Diagnostics</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Plumbing Subsystem</th>
+                              <th>Telemetry Anomaly Detected</th>
+                              <th>Annual Financial Loss</th>
+                              <th>Severity Level</th>
+                              <th>Recommended Actionable Work-Order</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {waterData.detected_anomalies.map((a: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{a.subsystem}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--foreground)' }}>{a.anomaly_type}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--error)', fontFamily: 'monospace' }}>
+                                  -${a.annual_financial_loss_usd.toLocaleString()}/yr
+                                </td>
+                                <td>
+                                  <span className={`badge badge-${a.severity.includes('CRITICAL') ? 'failed' : 'warning'}`} style={{ fontSize: '0.68rem' }}>
+                                    {a.severity}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{a.action_item}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Water CAM Reconciliation Card */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Cooling Evaporative Credit Deducted</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)' }}>-${waterData.municipal_sewer_rebate_usd.toLocaleString()}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sewer credit for {waterData.evaporation_hcf.toLocaleString()} HCF evaporated</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Building Net Water & Sewer OPEX</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>${waterData.net_water_sewer_cost_usd.toLocaleString()}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>After municipal sewer diversion credit</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant CAM Water Allocation</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--foreground)' }}>${waterData.tenant_recharge_usd.toLocaleString()}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Proportionate {waterData.tenant_share_pct}% building share</span>
                         </div>
                       </div>
                     </div>
