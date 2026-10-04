@@ -383,8 +383,18 @@ export default function LeaseLogicApp() {
   const [labData, setLabData] = useState<any>(null);
   const [loadingLab, setLoadingLab] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance'>('abstract');
+  // CMBS Debt Yield & DSCR Stress-Tester state
+  const [cmbsLoanBalance, setCmbsLoanBalance] = useState(18500000);
+  const [cmbsPropertyNoi, setCmbsPropertyNoi] = useState(2150000);
+  const [cmbsSofrRate, setCmbsSofrRate] = useState(5.30);
+  const [cmbsSpreadBps, setCmbsSpreadBps] = useState(225);
+  const [cmbsMinDscr, setCmbsMinDscr] = useState(1.25);
+  const [cmbsMinDebtYield, setCmbsMinDebtYield] = useState(10.5);
+  const [cmbsData, setCmbsData] = useState<any>(null);
+  const [loadingCmbs, setLoadingCmbs] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1247,6 +1257,34 @@ export default function LeaseLogicApp() {
       console.error('Error running lab compliance modeler:', err);
     } finally {
       setLoadingLab(false);
+    }
+  };
+
+  // Run CMBS Debt Yield, DSCR Loan Covenant & SOFR Stress-Tester
+  const handleRunCmbsTester = async () => {
+    if (!selectedLease) return;
+    setLoadingCmbs(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/cmbs-debt-yield-tester`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          loan_balance_usd: cmbsLoanBalance,
+          property_noi_usd: cmbsPropertyNoi,
+          sofr_rate_pct: cmbsSofrRate,
+          spread_bps: cmbsSpreadBps,
+          min_dscr_covenant: cmbsMinDscr,
+          min_debt_yield_covenant_pct: cmbsMinDebtYield
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCmbsData(data);
+      }
+    } catch (err) {
+      console.error('Error running CMBS debt tester:', err);
+    } finally {
+      setLoadingCmbs(false);
     }
   };
 
@@ -5381,6 +5419,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'lab_compliance' ? 'active' : ''}`} onClick={() => { setActiveTab('lab_compliance'); handleRunLabCompliance(); }}>
                   🏥 Lab Compliance
+                </div>
+                <div className={`tab ${activeTab === 'cmbs_debt' ? 'active' : ''}`} onClick={() => { setActiveTab('cmbs_debt'); handleRunCmbsTester(); }}>
+                  🏢 CMBS Debt & DSCR
                 </div>
               </div>
 
@@ -9821,6 +9862,187 @@ export default function LeaseLogicApp() {
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'cmbs_debt' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🏢 CMBS Debt Yield, DSCR Loan Covenant & SOFR Stress-Tester</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Underwrites institutional CMBS debt financing, DSCR covenants, cash-sweep lockbox triggers, and SOFR base rate shocks (+400 bps).
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Loan Balance ($)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={cmbsLoanBalance}
+                        onChange={(e) => setCmbsLoanBalance(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Property NOI ($)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={cmbsPropertyNoi}
+                        onChange={(e) => setCmbsPropertyNoi(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>SOFR Rate (%)</label>
+                      <input 
+                        type="number"
+                        step="0.05"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={cmbsSofrRate}
+                        onChange={(e) => setCmbsSofrRate(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spread (bps)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={cmbsSpreadBps}
+                        onChange={(e) => setCmbsSpreadBps(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Min DSCR (x)</label>
+                      <input 
+                        type="number"
+                        step="0.05"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={cmbsMinDscr}
+                        onChange={(e) => setCmbsMinDscr(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Min Debt Yield (%)</label>
+                      <input 
+                        type="number"
+                        step="0.1"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={cmbsMinDebtYield}
+                        onChange={(e) => setCmbsMinDebtYield(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <button onClick={handleRunCmbsTester} disabled={loadingCmbs} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingCmbs ? 'Underwriting...' : '🏢 Underwrite Debt'}
+                    </button>
+                  </div>
+
+                  {/* CMBS Output */}
+                  {cmbsData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: cmbsData.is_cash_sweep_active ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                        border: cmbsData.is_cash_sweep_active ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Underwritten Debt Yield & DSCR Status</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: cmbsData.is_cash_sweep_active ? 'var(--error)' : 'var(--success)' }}>
+                            🏢 {cmbsData.debt_yield_actual_pct}% Debt Yield | {cmbsData.dscr_actual}x DSCR
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            All-in Rate: {cmbsData.all_in_interest_rate_pct}% ({cmbsData.sofr_rate_pct}% SOFR + {cmbsData.spread_bps} bps) | Annual Debt Service: ${cmbsData.annual_debt_service_usd.toLocaleString()}/yr
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Cash Sweep Covenant Health</span>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0', color: cmbsData.is_cash_sweep_active ? 'var(--error)' : 'var(--success)' }}>
+                            {cmbsData.is_cash_sweep_active ? 'LOCKBOX ACTIVE' : 'COVENANT SATISFIED'}
+                          </h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Max Refi Capacity: ${cmbsData.max_refinancing_capacity_usd.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* SOFR Rate Shock Stress Matrix */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>📈 Floating SOFR Benchmark Shock Sensitivity Analysis</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Interest Rate Scenario</th>
+                              <th>SOFR Base Rate</th>
+                              <th>All-in Coupon</th>
+                              <th>Annual Debt Service</th>
+                              <th>Stressed DSCR</th>
+                              <th>Covenant Compliance Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cmbsData.stress_scenarios.map((s: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{s.scenario_name}</td>
+                                <td style={{ fontSize: '0.82rem', fontFamily: 'monospace' }}>{s.sofr_rate_pct}%</td>
+                                <td style={{ fontSize: '0.82rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--primary)' }}>{s.all_in_rate_pct}%</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 700 }}>${s.annual_debt_service_usd.toLocaleString()}/yr</td>
+                                <td style={{ fontSize: '0.9rem', fontWeight: 800, color: s.dscr < 1.05 ? 'var(--error)' : s.dscr < cmbsData.min_dscr_covenant ? 'var(--warning)' : 'var(--success)' }}>
+                                  {s.dscr}x
+                                </td>
+                                <td>
+                                  <span className={`badge badge-${s.covenant_status.includes('COMPLIANT') ? 'completed' : s.covenant_status.includes('LOCKBOX') ? 'warning' : 'failed'}`} style={{ fontSize: '0.68rem' }}>
+                                    {s.covenant_status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Refinancing Cliff & Capital Structure Card */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Implied Loan-to-Value (LTV)</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--foreground)' }}>{cmbsData.ltv_actual_pct}% LTV</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Valuation at 6.75% cap rate</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Lender Debt Yield Cap Capacity</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>${cmbsData.max_refinancing_capacity_usd.toLocaleString()}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Capped at {cmbsData.min_debt_yield_covenant_pct}% minimum yield</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Refinancing Equity Paydown Gap</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: cmbsData.refinancing_equity_gap_usd > 0 ? 'var(--error)' : 'var(--success)' }}>
+                            ${cmbsData.refinancing_equity_gap_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{cmbsData.refinancing_equity_gap_usd === 0 ? 'Fully covered with zero equity shortfall' : 'Required sponsor equity recapitalization'}</span>
+                        </div>
                       </div>
                     </div>
                   )}
