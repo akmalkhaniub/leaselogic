@@ -3673,6 +3673,95 @@ app.post('/api/leases/:id/lab-compliance-modeler', async (req, res) => {
   }
 });
 
+// 4.816. POST CMBS Debt Yield, DSCR Loan Covenant & SOFR Interest Rate Stress-Tester
+app.post('/api/leases/:id/cmbs-debt-yield-tester', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      loan_balance_usd = 18500000, 
+      property_noi_usd = 2150000, 
+      sofr_rate_pct = 5.30, 
+      spread_bps = 225, 
+      amortization_years = 30, 
+      min_dscr_covenant = 1.25, 
+      min_debt_yield_covenant_pct = 10.5 
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const allInInterestRatePct = Number((sofr_rate_pct + (spread_bps / 100)).toFixed(2));
+    
+    // Calculate Monthly Amortization Payment
+    const calcAnnualDebtService = (ratePct: number, principal: number, years: number) => {
+      const monthlyRate = (ratePct / 100) / 12;
+      const totalPayments = years * 12;
+      const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, totalPayments)) / (Math.pow(1 + monthlyRate, totalPayments) - 1);
+      return Math.round(monthlyPayment * 12);
+    };
+
+    const annualDebtServiceUsd = calcAnnualDebtService(allInInterestRatePct, loan_balance_usd, amortization_years);
+    const dscrActual = Number((property_noi_usd / annualDebtServiceUsd).toFixed(2));
+    const debtYieldActualPct = Number(((property_noi_usd / loan_balance_usd) * 100).toFixed(2));
+    
+    const impliedValuationUsd = Math.round(property_noi_usd / 0.0675); // 6.75% cap rate
+    const ltvActualPct = Number(((loan_balance_usd / impliedValuationUsd) * 100).toFixed(1));
+
+    // SOFR Sensitivity Matrix
+    const rateShocks = [0, 1.00, 2.50, 4.00];
+    const stressScenarios = rateShocks.map(shock => {
+      const stressedSofr = Number((sofr_rate_pct + shock).toFixed(2));
+      const stressedAllIn = Number((allInInterestRatePct + shock).toFixed(2));
+      const stressedAds = calcAnnualDebtService(stressedAllIn, loan_balance_usd, amortization_years);
+      const stressedDscr = Number((property_noi_usd / stressedAds).toFixed(2));
+      let status = 'COMPLIANT_PERFORMING';
+      if (stressedDscr < 1.05) {
+        status = 'DEFAULT_CLIFF_RISK';
+      } else if (stressedDscr < min_dscr_covenant) {
+        status = 'CASH_SWEEP_LOCKBOX_TRIGGERED';
+      }
+      return {
+        scenario_name: shock === 0 ? 'Baseline (Current Market)' : `SOFR Shock +${Math.round(shock * 100)} bps`,
+        sofr_rate_pct: stressedSofr,
+        all_in_rate_pct: stressedAllIn,
+        annual_debt_service_usd: stressedAds,
+        dscr: stressedDscr,
+        covenant_status: status
+      };
+    });
+
+    // Refinancing Capacity Analysis
+    const maxRefiDebtYieldUsd = Math.round(property_noi_usd / (min_debt_yield_covenant_pct / 100));
+    const refiGapEquityRequiredUsd = Math.max(0, loan_balance_usd - maxRefiDebtYieldUsd);
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Subject Real Estate Collateral',
+      loan_balance_usd: loan_balance_usd,
+      property_noi_usd: property_noi_usd,
+      sofr_rate_pct: sofr_rate_pct,
+      spread_bps: spread_bps,
+      all_in_interest_rate_pct: allInInterestRatePct,
+      annual_debt_service_usd: annualDebtServiceUsd,
+      dscr_actual: dscrActual,
+      debt_yield_actual_pct: debtYieldActualPct,
+      ltv_actual_pct: ltvActualPct,
+      min_dscr_covenant: min_dscr_covenant,
+      min_debt_yield_covenant_pct: min_debt_yield_covenant_pct,
+      is_cash_sweep_active: dscrActual < min_dscr_covenant,
+      max_refinancing_capacity_usd: maxRefiDebtYieldUsd,
+      refinancing_equity_gap_usd: refiGapEquityRequiredUsd,
+      stress_scenarios: stressScenarios
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
