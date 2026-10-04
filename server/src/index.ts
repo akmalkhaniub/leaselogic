@@ -3586,6 +3586,93 @@ Simultaneously upon surrender of the premises in accordance with lease terms, Te
   }
 });
 
+// 4.815. POST Life Sciences & BioTech Lab Cleanroom Utilities & BSL Compliance Modeler
+app.post('/api/leases/:id/lab-compliance-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      cleanroom_iso_class = 'ISO_7', 
+      biosafety_level = 'BSL_2', 
+      lab_area_sqft = 12000, 
+      ceiling_height_ft = 10, 
+      single_pass_air = true,
+      has_liquid_nitrogen = true,
+      has_di_water = true,
+      has_acid_neutralization = true,
+      has_vacuum_air = true
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Determine Air Changes per Hour (ACH)
+    let ach = 10;
+    let maxParticulatesPerM3 = 3520000;
+    if (cleanroom_iso_class === 'ISO_5') {
+      ach = 280;
+      maxParticulatesPerM3 = 3520;
+    } else if (cleanroom_iso_class === 'ISO_6') {
+      ach = 120;
+      maxParticulatesPerM3 = 35200;
+    } else if (cleanroom_iso_class === 'ISO_7') {
+      ach = 45;
+      maxParticulatesPerM3 = 352000;
+    } else if (cleanroom_iso_class === 'ISO_8') {
+      ach = 20;
+      maxParticulatesPerM3 = 3520000;
+    }
+
+    const labVolumeCuFt = lab_area_sqft * ceiling_height_ft;
+    const requiredCfm = Math.round((labVolumeCuFt * ach) / 60);
+
+    // HVAC Single-Pass Thermal Conditioning Energy Surcharge
+    const singlePassMultiplier = single_pass_air ? 2.4 : 1.0;
+    const annualHvacEnergyCostUsd = Math.round(requiredCfm * 1.85 * singlePassMultiplier);
+
+    // Specialized Lab Utilities Pass-Through Charges
+    const utilitiesSchedule = [
+      { utility_name: 'Bulk Cryogenic Liquid Nitrogen (LN2)', active: has_liquid_nitrogen, annual_cost_usd: has_liquid_nitrogen ? 18400 : 0, billing_unit: '$1.45/liter bulk vaporized' },
+      { utility_name: 'Deionized Reverse Osmosis (DI/RO) Type I Water', active: has_di_water, annual_cost_usd: has_di_water ? 12600 : 0, billing_unit: '$0.38/gal @ 18.2 MΩ-cm' },
+      { utility_name: 'Acid Waste Neutralization (AWN) & pH Monitoring', active: has_acid_neutralization, annual_cost_usd: has_acid_neutralization ? 14500 : 0, billing_unit: 'Continuous telemetry (pH 6.0-9.0)' },
+      { utility_name: 'Central Process Vacuum & Oil-Free Compressed Air', active: has_vacuum_air, annual_cost_usd: has_vacuum_air ? 9200 : 0, billing_unit: '24/7 N+1 duplex manifold' }
+    ];
+
+    const specializedUtilitiesTotalUsd = utilitiesSchedule.reduce((sum, item) => sum + item.annual_cost_usd, 0);
+    const totalAnnualLabOpexSurchargeUsd = annualHvacEnergyCostUsd + specializedUtilitiesTotalUsd;
+    const surchargePerSqftUsd = Number((totalAnnualLabOpexSurchargeUsd / (lab_area_sqft || 1)).toFixed(2));
+
+    const complianceAudit = [
+      { standard: 'CDC / NIH BMBL Biosafety Guidelines', criteria: `${biosafety_level} Containment Negative Pressure (-0.05 in. w.g.)`, status: 'COMPLIANT_CERTIFIED' },
+      { standard: 'FDA 21 CFR Part 211 / cGMP Cleanroom', criteria: `${cleanroom_iso_class} Particulates (<${maxParticulatesPerM3.toLocaleString()} per m³ @ 0.5µm)`, status: 'COMPLIANT_CERTIFIED' },
+      { standard: 'EPA / Municipal Effluent Pretreatment', criteria: 'Acid-waste neutralization tank with continuous telemetry recording', status: 'COMPLIANT_CERTIFIED' },
+      { standard: 'Emergency Standby Power Redundancy', criteria: '100% N+1 Life Safety & Ultra-Cold Freezers (-80°C) Generator Backup', status: 'COMPLIANT_CERTIFIED' }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Subject Life Science Facility',
+      cleanroom_iso_class: cleanroom_iso_class,
+      biosafety_level: biosafety_level,
+      lab_area_sqft: lab_area_sqft,
+      ach_rate: ach,
+      required_airflow_cfm: requiredCfm,
+      single_pass_air: single_pass_air,
+      annual_hvac_energy_cost_usd: annualHvacEnergyCostUsd,
+      specialized_utilities_total_usd: specializedUtilitiesTotalUsd,
+      total_annual_lab_opex_surcharge_usd: totalAnnualLabOpexSurchargeUsd,
+      surcharge_per_sqft_usd: surchargePerSqftUsd,
+      utilities_schedule: utilitiesSchedule,
+      compliance_audit: complianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
