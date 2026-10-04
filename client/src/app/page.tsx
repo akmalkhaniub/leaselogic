@@ -374,8 +374,17 @@ export default function LeaseLogicApp() {
   const [breakData, setBreakData] = useState<any>(null);
   const [loadingBreak, setLoadingBreak] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer'>('abstract');
+  // Life Sciences & BioTech Lab Cleanroom Utilities state
+  const [labIsoClass, setLabIsoClass] = useState('ISO_7');
+  const [labBslLevel, setLabBslLevel] = useState('BSL_2');
+  const [labAreaSqft, setLabAreaSqft] = useState(12000);
+  const [labCeilingHeight, setLabCeilingHeight] = useState(10);
+  const [labSinglePassAir, setLabSinglePassAir] = useState(true);
+  const [labData, setLabData] = useState<any>(null);
+  const [loadingLab, setLoadingLab] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance'>('abstract');
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1207,6 +1216,37 @@ export default function LeaseLogicApp() {
       console.error('Error running early termination optimizer:', err);
     } finally {
       setLoadingBreak(false);
+    }
+  };
+
+  // Run Life Sciences & BioTech Lab Cleanroom Utilities & BSL Modeler
+  const handleRunLabCompliance = async () => {
+    if (!selectedLease) return;
+    setLoadingLab(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/lab-compliance-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cleanroom_iso_class: labIsoClass,
+          biosafety_level: labBslLevel,
+          lab_area_sqft: labAreaSqft,
+          ceiling_height_ft: labCeilingHeight,
+          single_pass_air: labSinglePassAir,
+          has_liquid_nitrogen: true,
+          has_di_water: true,
+          has_acid_neutralization: true,
+          has_vacuum_air: true
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLabData(data);
+      }
+    } catch (err) {
+      console.error('Error running lab compliance modeler:', err);
+    } finally {
+      setLoadingLab(false);
     }
   };
 
@@ -5338,6 +5378,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'break_optimizer' ? 'active' : ''}`} onClick={() => { setActiveTab('break_optimizer'); handleRunBreakOptimizer(); }}>
                   💰 Break Optimizer
+                </div>
+                <div className={`tab ${activeTab === 'lab_compliance' ? 'active' : ''}`} onClick={() => { setActiveTab('lab_compliance'); handleRunLabCompliance(); }}>
+                  🏥 Lab Compliance
                 </div>
               </div>
 
@@ -9600,6 +9643,184 @@ export default function LeaseLogicApp() {
                           style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '12px', fontSize: '0.82rem', fontFamily: 'monospace', background: '#f8fafc', color: 'var(--foreground)', lineHeight: 1.5, width: '100%' }}
                           value={breakData.certified_break_notice_text}
                         />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'lab_compliance' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>🏥 Life Sciences & BioTech Lab Cleanroom Utilities & BSL Compliance Modeler</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Models cleanroom ISO particulate standards (ISO 5-8), CDC/NIH biosafety containment, 100% single-pass air loads, and specialized tenant lab utilities.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Controls */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr auto', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Cleanroom Class</label>
+                      <select 
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={labIsoClass}
+                        onChange={(e) => setLabIsoClass(e.target.value)}
+                      >
+                        <option value="ISO_5">ISO 5 (Class 100 - 280 ACH)</option>
+                        <option value="ISO_6">ISO 6 (Class 1,000 - 120 ACH)</option>
+                        <option value="ISO_7">ISO 7 (Class 10,000 - 45 ACH)</option>
+                        <option value="ISO_8">ISO 8 (Class 100,000 - 20 ACH)</option>
+                        <option value="UNCLASSIFIED">Wet Lab Standard (10 ACH)</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Biosafety Level</label>
+                      <select 
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={labBslLevel}
+                        onChange={(e) => setLabBslLevel(e.target.value)}
+                      >
+                        <option value="BSL_1">BSL-1 (Basic Teaching/Research)</option>
+                        <option value="BSL_2">BSL-2 (Moderate Biohazard / Negative Pressure)</option>
+                        <option value="BSL_3">BSL-3 (High Containment / Double HEPA)</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lab Space (sqft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={labAreaSqft}
+                        onChange={(e) => setLabAreaSqft(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ceiling Height (ft)</label>
+                      <input 
+                        type="number"
+                        className="chat-input"
+                        style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.85rem', background: '#ffffff', color: 'var(--foreground)' }}
+                        value={labCeilingHeight}
+                        onChange={(e) => setLabCeilingHeight(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', justifyContent: 'center' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Single-Pass Air</label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox"
+                          checked={labSinglePassAir}
+                          onChange={(e) => setLabSinglePassAir(e.target.checked)}
+                        />
+                        100% Outside Air
+                      </label>
+                    </div>
+
+                    <button onClick={handleRunLabCompliance} disabled={loadingLab} className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>
+                      {loadingLab ? 'Modeling...' : '🏥 Run Lab Modeler'}
+                    </button>
+                  </div>
+
+                  {/* Lab Output */}
+                  {labData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: '16px 20px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Annual Lab OPEX Surcharge</span>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                            🏥 +${labData.total_annual_lab_opex_surcharge_usd.toLocaleString()} / Year (${labData.surcharge_per_sqft_usd}/sqft)
+                          </h2>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                            HVAC 100% Single-Pass Load: ${labData.annual_hvac_energy_cost_usd.toLocaleString()}/yr | Specialized Utilities: ${labData.specialized_utilities_total_usd.toLocaleString()}/yr
+                          </p>
+                        </div>
+
+                        <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Airflow & Exchange Rate</span>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--foreground)' }}>
+                            {labData.required_airflow_cfm.toLocaleString()} CFM ({labData.ach_rate} ACH)
+                          </h3>
+                          <span className="badge badge-completed" style={{ fontSize: '0.72rem', marginTop: '4px', display: 'inline-block' }}>
+                            {labData.cleanroom_iso_class.replace(/_/g, ' ')} | {labData.biosafety_level}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Specialized Lab Utilities Table */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>🧪 Central Lab Utilities Pass-Through Submetering Schedule</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Utility System Subsystem</th>
+                              <th>Operational Metering Unit</th>
+                              <th>Annual Tenant Rebill</th>
+                              <th>Service Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {labData.utilities_schedule.map((u: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{u.utility_name}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{u.billing_unit}</td>
+                                <td style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--foreground)' }}>${u.annual_cost_usd.toLocaleString()}/yr</td>
+                                <td>
+                                  <span className="badge badge-completed" style={{ fontSize: '0.68rem' }}>
+                                    ACTIVE SUBMETERED
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Regulatory Compliance Checklist */}
+                      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(15,23,42,0.06)', background: '#f8fafc' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--success)' }}>🛡️ BioTech & Cleanroom Regulatory Governance Checklist</h4>
+                        </div>
+                        <table className="terms-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Regulatory Standard</th>
+                              <th>Engineering Specification Criteria</th>
+                              <th>Audit Verification Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {labData.compliance_audit.map((c: any, idx: number) => (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{c.standard}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--foreground)' }}>{c.criteria}</td>
+                                <td>
+                                  <span className="badge badge-completed" style={{ fontSize: '0.68rem' }}>
+                                    {c.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
