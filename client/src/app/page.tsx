@@ -447,8 +447,21 @@ export default function LeaseLogicApp() {
   const [csData, setCsData] = useState<any>(null);
   const [loadingCs, setLoadingCs] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage'>('abstract');
+  // Real Estate Syndication Waterfall & GP/LP Promote state
+  const [wfTotalEquity, setWfTotalEquity] = useState(10000000);
+  const [wfLpShare, setWfLpShare] = useState(90.0);
+  const [wfGpShare, setWfGpShare] = useState(10.0);
+  const [wfPrefReturn, setWfPrefReturn] = useState(8.0);
+  const [wfHoldYears, setWfHoldYears] = useState(5);
+  const [wfDistributableCash, setWfDistributableCash] = useState(16500000);
+  const [wfTier1LpSplit, setWfTier1LpSplit] = useState(80.0);
+  const [wfTier2LpSplit, setWfTier2LpSplit] = useState(70.0);
+  const [wfData, setWfData] = useState<any>(null);
+  const [loadingWf, setLoadingWf] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall'>('abstract');
+
 
 
 
@@ -1492,6 +1505,37 @@ export default function LeaseLogicApp() {
       setLoadingCs(false);
     }
   };
+
+  // Run Real Estate Syndication Waterfall & GP/LP Promote Calculator
+  const handleRunSyndicationWaterfall = async () => {
+    if (!selectedLease) return;
+    setLoadingWf(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/syndication-waterfall-calculator`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          total_equity_invested_usd: wfTotalEquity,
+          lp_equity_share_pct: wfLpShare,
+          gp_equity_share_pct: wfGpShare,
+          preferred_return_pct: wfPrefReturn,
+          holding_period_years: wfHoldYears,
+          total_distributable_cash_usd: wfDistributableCash,
+          tier1_hurdle_split_lp_pct: wfTier1LpSplit,
+          tier2_hurdle_split_lp_pct: wfTier2LpSplit
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWfData(data);
+      }
+    } catch (err) {
+      console.error('Error running syndication waterfall calculator:', err);
+    } finally {
+      setLoadingWf(false);
+    }
+  };
+
 
 
 
@@ -5647,7 +5691,11 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'cold_storage' ? 'active' : ''}`} onClick={() => { setActiveTab('cold_storage'); handleRunColdStorage(); }}>
                   🏭 Cold Storage IoT
                 </div>
+                <div className={`tab ${activeTab === 'syndication_waterfall' ? 'active' : ''}`} onClick={() => { setActiveTab('syndication_waterfall'); handleRunSyndicationWaterfall(); }}>
+                  💼 GP/LP Syndication
+                </div>
               </div>
+
 
 
 
@@ -11258,7 +11306,192 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
+              ) : activeTab === 'syndication_waterfall' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        💼 Real Estate Syndication Waterfall & GP/LP Promote Calculator
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Model institutional private equity partnership distribution waterfalls, preferred return hurdles, GP carried interest promote splits, and LP/GP MOIC multiples.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunSyndicationWaterfall}
+                      disabled={loadingWf}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingWf ? 'Computing Waterfall...' : '💼 Run Waterfall Distribution'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Total Equity Invested ($)</label>
+                      <input
+                        type="number"
+                        value={wfTotalEquity}
+                        onChange={(e) => setWfTotalEquity(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>LP Equity Share (%)</label>
+                      <input
+                        type="number"
+                        value={wfLpShare}
+                        onChange={(e) => setWfLpShare(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>GP Sponsor Share (%)</label>
+                      <input
+                        type="number"
+                        value={wfGpShare}
+                        onChange={(e) => setWfGpShare(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Preferred Return (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={wfPrefReturn}
+                        onChange={(e) => setWfPrefReturn(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Holding Period (Yrs)</label>
+                      <input
+                        type="number"
+                        value={wfHoldYears}
+                        onChange={(e) => setWfHoldYears(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Distributable Cash ($)</label>
+                      <input
+                        type="number"
+                        value={wfDistributableCash}
+                        onChange={(e) => setWfDistributableCash(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingWf && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Calculating syndication promote tiers, hurdle cash distributions & equity multiples...
+                    </div>
+                  )}
+
+                  {!loadingWf && wfData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>LP Total Return</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${wfData.total_lp_distribution_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            MOIC: {wfData.lp_moic}x | Net IRR: ~{wfData.lp_net_irr_pct}% on ${wfData.lp_equity_invested_usd.toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>GP Sponsor Return</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${wfData.total_gp_distribution_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            MOIC: {wfData.gp_moic}x | Net IRR: ~{wfData.gp_net_irr_pct}% on ${wfData.gp_equity_invested_usd.toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>GP Promote (Carry)</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            +${wfData.gp_promote_carried_interest_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Incentive promote fee earned above hurdle
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Blended Deal Multiple</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            {wfData.deal_moic}x MOIC
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            ${wfData.total_distributable_cash_usd.toLocaleString()} / ${wfData.total_equity_invested_usd.toLocaleString()} Equity
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Multi-Tier Waterfall Table */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase', color: 'var(--foreground)' }}>
+                          Multi-Tier Distribution Waterfall Schedule
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid rgba(15,23,42,0.08)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Waterfall Tier</th>
+                              <th style={{ padding: '8px 12px' }}>Hurdle / Split Structure</th>
+                              <th style={{ padding: '8px 12px' }}>Total Distributed</th>
+                              <th style={{ padding: '8px 12px' }}>LP Cash Flow</th>
+                              <th style={{ padding: '8px 12px' }}>GP Cash Flow</th>
+                              <th style={{ padding: '8px 12px' }}>GP Promote Share</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {wfData.tier_breakdown.map((tier: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.04)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--foreground)' }}>{tier.tier_name}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{tier.hurdle_description}</td>
+                                <td style={{ padding: '10px 12px', fontWeight: 800, fontFamily: 'monospace' }}>${tier.total_tier_distributed_usd.toLocaleString()}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--primary)', fontWeight: 700 }}>${tier.lp_share_usd.toLocaleString()}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--success)', fontWeight: 700 }}>${tier.gp_share_usd.toLocaleString()}</td>
+                                <td style={{ padding: '10px 12px' }}>
+                                  {tier.gp_promote_usd > 0 ? (
+                                    <span className="badge badge-warning" style={{ fontSize: '0.65rem' }}>+${tier.gp_promote_usd.toLocaleString()} PROMOTE</span>
+                                  ) : (
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Pari Passu</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Capital Alignment & Fee Structure Summary */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>LP Capital Protection</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--foreground)' }}>100% Return of Capital + {wfData.preferred_return_pct}% Pref</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>LP receives cumulative $10.08M before any sponsor promote participation kicks in.</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Sponsor Co-Investment Alignment</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--success)' }}>${wfData.gp_equity_invested_usd.toLocaleString()} GP "Skin in the Game"</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>10% GP co-investment aligns sponsor interests directly with LP returns.</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : null}
+
 
 
 
