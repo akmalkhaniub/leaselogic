@@ -497,8 +497,22 @@ export default function LeaseLogicApp() {
   const [uhiData, setUhiData] = useState<any>(null);
   const [loadingUhi, setLoadingUhi] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi'>('abstract');
+  // Lease Abandonment, Mitigation Damages & Re-Letting Recovery state
+  const [abUnexpiredMonths, setAbUnexpiredMonths] = useState(36);
+  const [abMonthlyRent, setAbMonthlyRent] = useState(28500);
+  const [abDiscountRate, setAbDiscountRate] = useState(7.5);
+  const [abDowntimeMonths, setAbDowntimeMonths] = useState(8);
+  const [abReplacementRent, setAbReplacementRent] = useState(26000);
+  const [abCommissionPct, setAbCommissionPct] = useState(5.0);
+  const [abTiAllowSqft, setAbTiAllowSqft] = useState(25.0);
+  const [abReletSqft, setAbReletSqft] = useState(12000);
+  const [abLegalCosts, setAbLegalCosts] = useState(18500);
+  const [abSecurityDeposit, setAbSecurityDeposit] = useState(57000);
+  const [abData, setAbData] = useState<any>(null);
+  const [loadingAb, setLoadingAb] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery'>('abstract');
 
 
 
@@ -1666,6 +1680,38 @@ export default function LeaseLogicApp() {
       console.error('Error running cool roof UHI modeler:', err);
     } finally {
       setLoadingUhi(false);
+    }
+  };
+
+  // Run Lease Abandonment, Mitigation Damages & Re-Letting Recovery Calculator
+  const handleRunAbandonmentRecovery = async () => {
+    if (!selectedLease) return;
+    setLoadingAb(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/abandonment-recovery-calculator`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unexpired_term_months: abUnexpiredMonths,
+          contract_monthly_rent_usd: abMonthlyRent,
+          discount_rate_pct: abDiscountRate,
+          reletting_downtime_months: abDowntimeMonths,
+          replacement_monthly_rent_usd: abReplacementRent,
+          leasing_commission_rate_pct: abCommissionPct,
+          tenant_improvement_allowance_sqft: abTiAllowSqft,
+          relet_space_sqft: abReletSqft,
+          legal_and_lockout_costs_usd: abLegalCosts,
+          security_deposit_held_usd: abSecurityDeposit
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAbData(data);
+      }
+    } catch (err) {
+      console.error('Error running abandonment recovery calculator:', err);
+    } finally {
+      setLoadingAb(false);
     }
   };
 
@@ -5836,6 +5882,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'cool_roof_uhi' ? 'active' : ''}`} onClick={() => { setActiveTab('cool_roof_uhi'); handleRunCoolRoofUhi(); }}>
                   🛰️ Cool Roof & UHI
+                </div>
+                <div className={`tab ${activeTab === 'abandonment_recovery' ? 'active' : ''}`} onClick={() => { setActiveTab('abandonment_recovery'); handleRunAbandonmentRecovery(); }}>
+                  🏢 Abandonment Recovery
                 </div>
               </div>
 
@@ -12222,6 +12271,210 @@ export default function LeaseLogicApp() {
                             +${uhiData.annual_demand_charge_savings_usd.toLocaleString()}/yr Peak Electric Demand Avoidance
                           </h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Lowers summer time-of-use electrical grid demand charges via reduced roof thermal absorption.</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'abandonment_recovery' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Header & Controls */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                        🏢 Lease Abandonment, Mitigation Damages & Re-Letting Recovery Calculator
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Compute accelerated unexpired rent discounted to Present Value (PV), landlord statutory duty-to-mitigate re-letting credits, re-tenanting broker TI outlays, and net recoverable legal claims.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunAbandonmentRecovery}
+                      disabled={loadingAb}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingAb ? 'Calculating Net Statutory Damages...' : '🏢 Compute Recoverable Damages Claim'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Unexpired Term (Mo)</label>
+                      <input
+                        type="number"
+                        value={abUnexpiredMonths}
+                        onChange={(e) => setAbUnexpiredMonths(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Contract Rent ($/Mo)</label>
+                      <input
+                        type="number"
+                        value={abMonthlyRent}
+                        onChange={(e) => setAbMonthlyRent(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Discount Rate (%)</label>
+                      <input
+                        type="number"
+                        step="0.25"
+                        value={abDiscountRate}
+                        onChange={(e) => setAbDiscountRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Downtime Dark (Mo)</label>
+                      <input
+                        type="number"
+                        value={abDowntimeMonths}
+                        onChange={(e) => setAbDowntimeMonths(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Re-Let Market Rent ($/Mo)</label>
+                      <input
+                        type="number"
+                        value={abReplacementRent}
+                        onChange={(e) => setAbReplacementRent(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Relet Space (SF)</label>
+                      <input
+                        type="number"
+                        value={abReletSqft}
+                        onChange={(e) => setAbReletSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>TI Outlay ($/SF)</label>
+                      <input
+                        type="number"
+                        value={abTiAllowSqft}
+                        onChange={(e) => setAbTiAllowSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Security Deposit ($)</label>
+                      <input
+                        type="number"
+                        value={abSecurityDeposit}
+                        onChange={(e) => setAbSecurityDeposit(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingAb && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating statutory discount rates, re-letting mitigation credits and net recoverable claim...
+                    </div>
+                  )}
+
+                  {!loadingAb && abData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>PV Gross Contract Rent</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${abData.pv_gross_contract_rent_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Face Value: ${abData.gross_unexpired_rent_usd.toLocaleString()} ({abData.unexpired_term_months} mo @ {abData.discount_rate_pct}% PV discount)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>PV Mitigation Rent Credit</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            -${abData.pv_mitigation_rent_credit_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Replacement tenant re-letting offset (commencing Month {abData.reletting_downtime_months + 1})
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Re-Tenant Mitigation Outlay</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--warning)' }}>
+                            +${abData.total_mitigation_expenses_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            ${abData.broker_commission_usd.toLocaleString()} LC + ${abData.tenant_improvement_outlay_usd.toLocaleString()} TI + ${abData.legal_and_lockout_costs_usd.toLocaleString()} Legal
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Recoverable Damages Claim</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--error)' }}>
+                            ${abData.net_recoverable_damages_claim_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            After applying -${abData.security_deposit_held_usd.toLocaleString()} security deposit collateral offset
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Loss Progression Timeline Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          📅 Default Loss Progression & Mitigation Cash Flow Timeline
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Tenancy Phase</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Contract Rent ($/Mo)</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Replacement Rent ($/Mo)</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Landlord Monthly Loss</th>
+                              <th style={{ padding: '8px 12px' }}>Commercial Status & Notes</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {abData.loss_progression_schedule.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.phase}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>${item.monthly_contract_rent.toLocaleString()}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', color: item.replacement_rent > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+                                  ${item.replacement_rent.toLocaleString()}
+                                </td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--error)' }}>
+                                  ${item.landlord_monthly_loss.toLocaleString()}/mo
+                                </td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>
+                                  {item.description}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Legal Enforceability Standards */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          ⚖️ Judicial Enforceability & Commercial Lease Restatement Compliance
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                          {abData.legal_enforceability_audit.map((audit: any, idx: number) => (
+                            <div key={idx} style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '12px', background: 'rgba(248,250,252,0.6)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--foreground)' }}>{audit.standard}</span>
+                                <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', color: 'var(--success)' }}>
+                                  {audit.status}
+                                </span>
+                              </div>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{audit.rationale}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
