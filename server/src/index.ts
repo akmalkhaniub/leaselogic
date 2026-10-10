@@ -4042,6 +4042,118 @@ app.post('/api/leases/:id/ev-microgrid-modeler', async (req, res) => {
   }
 });
 
+// 4.820. POST Commercial Construction Delay, Liquidated Damages & Force Majeure Evaluator
+app.post('/api/leases/:id/construction-delay-evaluator', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      contractual_delivery_date = '2026-03-01',
+      actual_substantial_completion_date = '2026-06-15',
+      landlord_daily_liquidated_damages = 2500,
+      tenant_rent_abatement_multiplier = 2.0,
+      grace_period_days = 30,
+      force_majeure_claimed_days = 21,
+      monthly_base_rent = 45000
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Calendar & delay timeline
+    const startMs = new Date(contractual_delivery_date).getTime();
+    const endMs = new Date(actual_substantial_completion_date).getTime();
+    const grossDelayDays = Math.max(0, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)));
+
+    // Excusable vs Inexcusable allocation
+    const netInexcusableDelayDays = Math.max(0, grossDelayDays - grace_period_days - force_majeure_claimed_days);
+
+    // Financial calculations
+    const contractualLiquidatedDamagesUsd = netInexcusableDelayDays * landlord_daily_liquidated_damages;
+    const dailyRentRateUsd = Math.round(monthly_base_rent / 30);
+    const rentAbatementDays = Math.round(netInexcusableDelayDays * tenant_rent_abatement_multiplier);
+    const totalRentAbatementValueUsd = rentAbatementDays * dailyRentRateUsd;
+    const totalTenantCompensationUsd = contractualLiquidatedDamagesUsd + totalRentAbatementValueUsd;
+
+    // Termination cliff
+    const terminationCliffDays = 120;
+    const daysUntilCancellationCliff = Math.max(0, terminationCliffDays - grossDelayDays);
+    const cancellationRightActive = grossDelayDays >= terminationCliffDays;
+
+    const delayEventsAudit = [
+      {
+        event_name: 'Custom AHU HVAC Switchgear Port Congestion',
+        days_claimed: 21,
+        classification: 'EXCUSABLE_FORCE_MAJEURE',
+        verdict: 'APPROVED_UNDER_SECTION_28',
+        notes: 'Verifiable national maritime port labor embargo outside general contractor control.'
+      },
+      {
+        event_name: 'Electrical Substation Transformer Contractor Default',
+        days_claimed: 34,
+        classification: 'INEXCUSABLE_CONTRACTOR_DELAY',
+        verdict: 'DISALLOWED_LANDLORD_LIABILITY',
+        notes: 'Subcontractor procurement oversight falls under primary Landlord Work obligation.'
+      },
+      {
+        event_name: 'Municipal Fire Marshal Egress Resubmission & Inspection',
+        days_claimed: 21,
+        classification: 'INEXCUSABLE_PERMIT_DELAY',
+        verdict: 'DISALLOWED_LANDLORD_LIABILITY',
+        notes: 'Failed initial sprinkler hydrostatic test due to landlord plumbing contractor defect.'
+      }
+    ];
+
+    const formalDemandLetter = `RE: FORMAL NOTICE OF SUBSTANTIAL COMPLETION DELAY, LIQUIDATED DAMAGES & RENT ABATEMENT OFFSET
+Property: ${lease.property_name || 'Commercial Development'} (Lease ID: ${id})
+Tenant Entity: Commercial Corporate Tenant
+
+Dear Landlord,
+
+Pursuant to Section 4 (Delivery of Possession & Construction Delays) of the Lease Agreement:
+1. Contractual Delivery Date: ${contractual_delivery_date}
+2. Substantial Completion Date: ${actual_substantial_completion_date} (Gross Delay: ${grossDelayDays} days)
+3. Accounting for ${grace_period_days} days permitted contractual grace period and ${force_majeure_claimed_days} days excusable Force Majeure, Net Landlord Delay is ${netInexcusableDelayDays} days.
+
+Tenant hereby exercises its rights to:
+a) Liquidated Damages: $${contractualLiquidatedDamagesUsd.toLocaleString()} ($${landlord_daily_liquidated_damages.toLocaleString()}/day x ${netInexcusableDelayDays} days)
+b) Rent Abatement: ${rentAbatementDays} days ($${totalRentAbatementValueUsd.toLocaleString()}) applied to initial lease months.
+Total compensation due: $${totalTenantCompensationUsd.toLocaleString()}.
+
+Please confirm application of these credits against upcoming rent statements.`;
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Subject Development Asset',
+      contractual_delivery_date: contractual_delivery_date,
+      actual_substantial_completion_date: actual_substantial_completion_date,
+      gross_delay_days: grossDelayDays,
+      grace_period_days: grace_period_days,
+      force_majeure_claimed_days: force_majeure_claimed_days,
+      net_inexcusable_delay_days: netInexcusableDelayDays,
+      landlord_daily_liquidated_damages: landlord_daily_liquidated_damages,
+      contractual_liquidated_damages_usd: contractualLiquidatedDamagesUsd,
+      monthly_base_rent: monthly_base_rent,
+      daily_rent_rate_usd: dailyRentRateUsd,
+      tenant_rent_abatement_multiplier: tenant_rent_abatement_multiplier,
+      rent_abatement_days: rentAbatementDays,
+      total_rent_abatement_value_usd: totalRentAbatementValueUsd,
+      total_tenant_compensation_usd: totalTenantCompensationUsd,
+      termination_cliff_days: terminationCliffDays,
+      days_until_cancellation_cliff: daysUntilCancellationCliff,
+      cancellation_right_active: cancellationRightActive,
+      delay_events_audit: delayEventsAudit,
+      formal_demand_letter: formalDemandLetter
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
