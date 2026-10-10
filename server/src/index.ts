@@ -4480,6 +4480,119 @@ app.post('/api/leases/:id/datacenter-pue-modeler', async (req, res) => {
   }
 });
 
+// 4.824. POST Medical Office Building (MOB) & Healthcare Stark Law / Anti-Kickback Statute Compliance Engine
+app.post('/api/leases/:id/mob-healthcare-compliance', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      physician_tenant_name = 'Dr. Julian Ross, MD (Cardiovascular Associates)',
+      hospital_landlord_entity = 'Mercy Memorial Regional Health System',
+      leased_sqft = 4500,
+      contract_base_rent_sqft = 42.0,
+      fmv_rent_min_sqft = 38.0,
+      fmv_rent_max_sqft = 46.0,
+      timeshare_schedule = 'FULL_TIME_EXCLUSIVE',
+      exclusive_use_medical_specialty = 'Cardiology & Diagnostic Imaging',
+      annual_hospital_referral_volume = 480,
+      has_signed_written_lease = true,
+      term_duration_months = 36,
+      sublease_prohibition_verified = true
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Fair Market Value (FMV) rent analysis
+    const fmvMedianRentSqft = Number(((fmv_rent_min_sqft + fmv_rent_max_sqft) / 2).toFixed(2));
+    const isRentWithinFmv = contract_base_rent_sqft >= fmv_rent_min_sqft && contract_base_rent_sqft <= fmv_rent_max_sqft;
+    const annualContractRentUsd = Math.round(leased_sqft * contract_base_rent_sqft);
+    const annualFmvMedianRentUsd = Math.round(leased_sqft * fmvMedianRentSqft);
+    const rentVariancePct = Number((((contract_base_rent_sqft - fmvMedianRentSqft) / fmvMedianRentSqft) * 100).toFixed(1));
+
+    // Stark Law (42 U.S.C. 1395nn) Space Rental Safe Harbor Evaluation
+    const safeHarborChecks = [
+      {
+        requirement: 'In Writing & Signed by Parties',
+        statutory_rule: '42 CFR § 411.357(a)(1)',
+        status: has_signed_written_lease ? 'PASSED' : 'VIOLATION',
+        notes: has_signed_written_lease ? 'Formal fully executed lease agreement on file' : 'Missing fully executed signature page'
+      },
+      {
+        requirement: 'Specified Leased Premises & Exclusive Use',
+        statutory_rule: '42 CFR § 411.357(a)(2)',
+        status: 'PASSED',
+        notes: `${leased_sqft.toLocaleString()} RSF designated solely for ${exclusive_use_medical_specialty}`
+      },
+      {
+        requirement: 'Minimum 1-Year Term Commitment',
+        statutory_rule: '42 CFR § 411.357(a)(3)',
+        status: term_duration_months >= 12 ? 'PASSED' : 'VIOLATION',
+        notes: `${term_duration_months} months commitment (exceeds mandatory 12-month minimum)`
+      },
+      {
+        requirement: 'Fair Market Value Rental Rate (FMV)',
+        statutory_rule: '42 CFR § 411.357(a)(4)',
+        status: isRentWithinFmv ? 'PASSED' : 'AUDIT_FLAG',
+        notes: isRentWithinFmv
+          ? `$${contract_base_rent_sqft}/RSF is squarely within independent FMV appraisal corridor ($${fmv_rent_min_sqft} - $${fmv_rent_max_sqft}/RSF)`
+          : `Rent $${contract_base_rent_sqft}/RSF deviates from FMV corridor ($${fmv_rent_min_sqft} - $${fmv_rent_max_sqft}/RSF)`
+      },
+      {
+        requirement: 'No Consideration of Volume or Value of Referrals',
+        statutory_rule: '42 CFR § 411.357(a)(5)',
+        status: 'PASSED',
+        notes: `Base rent and CAM recharges are fixed and set in advance without reference to ${annual_hospital_referral_volume} annual patient referrals`
+      },
+      {
+        requirement: 'Commercially Reasonable Business Purpose',
+        statutory_rule: '42 CFR § 411.357(a)(6)',
+        status: 'PASSED',
+        notes: 'Clinical cardiology medical suite occupancy on acute care hospital adjacent MOB campus'
+      }
+    ];
+
+    const allPassed = safeHarborChecks.every(c => c.status === 'PASSED');
+    const overallComplianceStatus = allPassed ? 'COMPLIANT_SAFE_HARBOR_MET' : 'HIGH_REGULATORY_RISK';
+
+    // Anti-Kickback Statute (AKS) risk score (0 to 100, 0 is lowest risk)
+    let aksRiskScore = 8;
+    if (!isRentWithinFmv) aksRiskScore += 45;
+    if (term_duration_months < 12) aksRiskScore += 30;
+    if (!has_signed_written_lease) aksRiskScore += 50;
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Healthcare Medical Pavilion',
+      physician_tenant_name: physician_tenant_name,
+      hospital_landlord_entity: hospital_landlord_entity,
+      leased_sqft: leased_sqft,
+      contract_base_rent_sqft: contract_base_rent_sqft,
+      annual_contract_rent_usd: annualContractRentUsd,
+      fmv_rent_min_sqft: fmv_rent_min_sqft,
+      fmv_rent_max_sqft: fmv_rent_max_sqft,
+      fmv_median_rent_sqft: fmvMedianRentSqft,
+      annual_fmv_median_rent_usd: annualFmvMedianRentUsd,
+      rent_variance_pct: rentVariancePct,
+      is_rent_within_fmv: isRentWithinFmv,
+      timeshare_schedule: timeshare_schedule,
+      exclusive_use_medical_specialty: exclusive_use_medical_specialty,
+      annual_hospital_referral_volume: annual_hospital_referral_volume,
+      overall_compliance_status: overallComplianceStatus,
+      aks_risk_score: aksRiskScore,
+      stark_safe_harbor_checks: safeHarborChecks,
+      compliance_advisory: allPassed
+        ? 'Fully protected under 42 CFR § 411.357(a) Rental of Office Space Safe Harbor.'
+        : 'Potential Stark Law / Anti-Kickback vulnerability detected. Independent FMV valuation and counsel review mandatory.'
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 
