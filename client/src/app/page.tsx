@@ -484,8 +484,21 @@ export default function LeaseLogicApp() {
   const [mobData, setMobData] = useState<any>(null);
   const [loadingMob, setLoadingMob] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance'>('abstract');
+  // Satellite Earth Observation & Urban Heat Island (UHI) Cool Roof state
+  const [uhiRoofAreaSqft, setUhiRoofAreaSqft] = useState(85000);
+  const [uhiMembraneType, setUhiMembraneType] = useState('AGED_BLACK_EPDM');
+  const [uhiExistingReflectance, setUhiExistingReflectance] = useState(0.08);
+  const [uhiCoatingType, setUhiCoatingType] = useState('TITANIUM_DIOXIDE_POLYUREA');
+  const [uhiCoolReflectance, setUhiCoolReflectance] = useState(0.88);
+  const [uhiCdd, setUhiCdd] = useState(1650);
+  const [uhiInstallCostSqft, setUhiInstallCostSqft] = useState(3.25);
+  const [uhiRebateSqft, setUhiRebateSqft] = useState(0.65);
+  const [uhiElectricRateKwh, setUhiElectricRateKwh] = useState(0.145);
+  const [uhiData, setUhiData] = useState<any>(null);
+  const [loadingUhi, setLoadingUhi] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi'>('abstract');
 
 
 
@@ -1622,6 +1635,37 @@ export default function LeaseLogicApp() {
       console.error('Error running MOB Stark Law compliance engine:', err);
     } finally {
       setLoadingMob(false);
+    }
+  };
+
+  // Run Satellite Earth Observation & Urban Heat Island (UHI) Cool Roof Modeler
+  const handleRunCoolRoofUhi = async () => {
+    if (!selectedLease) return;
+    setLoadingUhi(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/cool-roof-uhi-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roof_area_sqft: uhiRoofAreaSqft,
+          existing_membrane_type: uhiMembraneType,
+          existing_solar_reflectance: uhiExistingReflectance,
+          cool_roof_coating_type: uhiCoatingType,
+          cool_roof_solar_reflectance: uhiCoolReflectance,
+          cooling_degree_days: uhiCdd,
+          installation_cost_sqft: uhiInstallCostSqft,
+          utility_rebate_sqft: uhiRebateSqft,
+          electricity_rate_kwh: uhiElectricRateKwh
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUhiData(data);
+      }
+    } catch (err) {
+      console.error('Error running cool roof UHI modeler:', err);
+    } finally {
+      setLoadingUhi(false);
     }
   };
 
@@ -5789,6 +5833,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'mob_compliance' ? 'active' : ''}`} onClick={() => { setActiveTab('mob_compliance'); handleRunMobCompliance(); }}>
                   🏥 MOB Healthcare
+                </div>
+                <div className={`tab ${activeTab === 'cool_roof_uhi' ? 'active' : ''}`} onClick={() => { setActiveTab('cool_roof_uhi'); handleRunCoolRoofUhi(); }}>
+                  🛰️ Cool Roof & UHI
                 </div>
               </div>
 
@@ -11981,6 +12028,201 @@ export default function LeaseLogicApp() {
                         <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--foreground)', lineHeight: 1.5 }}>
                           {mobData.compliance_advisory}
                         </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'cool_roof_uhi' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Header & Controls */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                        🛰️ Satellite Earth Observation & Urban Heat Island (UHI) Cool Roof Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Simulate Landsat-9/Sentinel-2 thermal albedo measurements, roof surface cooling (-60°F), HVAC chiller kWh reduction, peak demand shaving, and LEED/ASTM E1980 Solar Reflectance Index (SRI).
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunCoolRoofUhi}
+                      disabled={loadingUhi}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingUhi ? 'Modeling Thermal Dynamics...' : '🛰️ Run Satellite & Cool Roof Simulation'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Roof Surface Area (SF)</label>
+                      <input
+                        type="number"
+                        value={uhiRoofAreaSqft}
+                        onChange={(e) => setUhiRoofAreaSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Baseline Membrane</label>
+                      <select
+                        value={uhiMembraneType}
+                        onChange={(e) => setUhiMembraneType(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      >
+                        <option value="AGED_BLACK_EPDM">Aged Black EPDM (0.08 Albedo)</option>
+                        <option value="BUILT_UP_ASPHALT">Built-Up Asphalt (0.12 Albedo)</option>
+                        <option value="MODIFIED_BITUMEN">Modified Bitumen (0.18 Albedo)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Cool Coating System</label>
+                      <select
+                        value={uhiCoatingType}
+                        onChange={(e) => setUhiCoatingType(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      >
+                        <option value="TITANIUM_DIOXIDE_POLYUREA">TiO2 Polyurea Coating (0.88)</option>
+                        <option value="HIGH_ALBEDO_TPO">White High-Albedo TPO (0.85)</option>
+                        <option value="FLUOROPOLYMER_ELASTOMER">Fluoropolymer Elastomer (0.91)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Cooling Degree Days (CDD)</label>
+                      <input
+                        type="number"
+                        value={uhiCdd}
+                        onChange={(e) => setUhiCdd(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Install Cost ($/SF)</label>
+                      <input
+                        type="number"
+                        step="0.25"
+                        value={uhiInstallCostSqft}
+                        onChange={(e) => setUhiInstallCostSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Utility Rebate ($/SF)</label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        value={uhiRebateSqft}
+                        onChange={(e) => setUhiRebateSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Electricity Rate ($/kWh)</label>
+                      <input
+                        type="number"
+                        step="0.005"
+                        value={uhiElectricRateKwh}
+                        onChange={(e) => setUhiElectricRateKwh(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingUhi && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating Landsat/Sentinel albedo indices, chiller thermodynamic load, and payback ROI...
+                    </div>
+                  )}
+
+                  {!loadingUhi && uhiData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Surface Temp Drop</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            -{uhiData.surface_temp_reduction_f}°F ({uhiData.post_retrofit_surface_temp_f}°F)
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Baseline: {uhiData.baseline_surface_temp_f}°F under solar noon
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Solar Reflectance Index</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            {uhiData.post_retrofit_sri} SRI (vs {uhiData.baseline_sri})
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Exceeds LEED v4.1 Heat Island Reduction threshold (82 SRI)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Annual Utility Savings</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${uhiData.total_annual_utility_savings_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {uhiData.annual_hvac_cooling_kwh_savings.toLocaleString()} kWh/yr + {uhiData.peak_demand_reduction_kw} kW peak shave
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Simple Payback & 10-Yr NPV</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: '#0ea5e9' }}>
+                            {uhiData.simple_payback_years} Yrs (${uhiData.ten_year_npv_usd.toLocaleString()} NPV)
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Net CapEx: ${uhiData.net_capital_investment_usd.toLocaleString()} (after ${uhiData.utility_incentive_rebate_usd.toLocaleString()} rebate)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Satellite Observation Albedo Telemetry Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛰️ Earth Observation Thermal Infrared & Albedo Verification
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Satellite Sensor / Spectral Band</th>
+                              <th style={{ padding: '8px 12px' }}>Pre-Retrofit Baseline</th>
+                              <th style={{ padding: '8px 12px' }}>Projected Post-Cool Roof</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Thermal Impact</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {uhiData.satellite_thermal_telemetry.map((telemetry: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{telemetry.band}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--error)' }}>{telemetry.baseline}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--success)', fontWeight: 600 }}>{telemetry.projected_post_retrofit}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>
+                                  {telemetry.delta}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Microclimate Community Cooling */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Perimeter Microclimate Cooling</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--success)' }}>
+                            -{uhiData.microclimate_ambient_temp_drop_f}°F Ambient Air Temperature Reduction
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mitigates urban heat island effect across commercial campus parking and ground-level pedestrian plazas.</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Utility Demand Shaving</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            +${uhiData.annual_demand_charge_savings_usd.toLocaleString()}/yr Peak Electric Demand Avoidance
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Lowers summer time-of-use electrical grid demand charges via reduced roof thermal absorption.</span>
+                        </div>
                       </div>
                     </div>
                   )}
