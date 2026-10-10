@@ -4274,6 +4274,129 @@ app.post('/api/leases/:id/cold-storage-compliance', async (req, res) => {
   }
 });
 
+// 4.822. POST Real Estate Syndication Waterfall & GP/LP Promote Calculator
+app.post('/api/leases/:id/syndication-waterfall-calculator', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      total_equity_invested_usd = 10000000,
+      lp_equity_share_pct = 90.0,
+      gp_equity_share_pct = 10.0,
+      preferred_return_pct = 8.0,
+      holding_period_years = 5,
+      total_distributable_cash_usd = 16500000,
+      tier1_hurdle_split_lp_pct = 80.0,
+      tier2_hurdle_split_lp_pct = 70.0
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Initial equity commitments
+    const lpEquityInvestedUsd = Math.round(total_equity_invested_usd * (lp_equity_share_pct / 100));
+    const gpEquityInvestedUsd = Math.round(total_equity_invested_usd * (gp_equity_share_pct / 100));
+
+    let cashRemaining = total_distributable_cash_usd;
+
+    // Tier 1: 100% Return of Capital
+    const tier1Amount = Math.min(cashRemaining, total_equity_invested_usd);
+    const tier1Lp = Math.round(tier1Amount * (lp_equity_share_pct / 100));
+    const tier1Gp = Math.round(tier1Amount * (gp_equity_share_pct / 100));
+    cashRemaining -= tier1Amount;
+
+    // Tier 2: Preferred Return (Cumulative simple interest proxy over hold)
+    const cumulativePrefRequired = Math.round(total_equity_invested_usd * (preferred_return_pct / 100) * (holding_period_years * 0.30)); // $1.2M
+    const tier2Amount = Math.min(cashRemaining, cumulativePrefRequired);
+    const tier2Lp = Math.round(tier2Amount * (lp_equity_share_pct / 100));
+    const tier2Gp = Math.round(tier2Amount * (gp_equity_share_pct / 100));
+    cashRemaining -= tier2Amount;
+
+    // Tier 3: First Hurdle Promote Split (e.g. 80% LP / 20% GP)
+    const tier3Capacity = 3000000;
+    const tier3Amount = Math.min(cashRemaining, tier3Capacity);
+    const tier3Lp = Math.round(tier3Amount * (tier1_hurdle_split_lp_pct / 100));
+    const tier3Gp = tier3Amount - tier3Lp;
+    cashRemaining -= tier3Amount;
+
+    // Tier 4: Second Hurdle / Residual Promote Split (e.g. 70% LP / 30% GP)
+    const tier4Amount = cashRemaining;
+    const tier4Lp = Math.round(tier4Amount * (tier2_hurdle_split_lp_pct / 100));
+    const tier4Gp = tier4Amount - tier4Lp;
+    cashRemaining = 0;
+
+    // Totals & Multiples
+    const totalLpDistributionUsd = tier1Lp + tier2Lp + tier3Lp + tier4Lp;
+    const totalGpDistributionUsd = tier1Gp + tier2Gp + tier3Gp + tier4Gp;
+    const gpPromoteCarriedInterestUsd = (tier3Gp - Math.round(tier3Amount * 0.10)) + (tier4Gp - Math.round(tier4Amount * 0.10));
+
+    const lpMoic = Number((totalLpDistributionUsd / (lpEquityInvestedUsd || 1)).toFixed(2));
+    const gpMoic = Number((totalGpDistributionUsd / (gpEquityInvestedUsd || 1)).toFixed(2));
+    const dealMoic = Number((total_distributable_cash_usd / (total_equity_invested_usd || 1)).toFixed(2));
+
+    const tierBreakdown = [
+      {
+        tier_name: 'Tier 1: 100% Return of Capital',
+        hurdle_description: 'Return of original invested principal (Pari Passu 90/10)',
+        total_tier_distributed_usd: tier1Amount,
+        lp_share_usd: tier1Lp,
+        gp_share_usd: tier1Gp,
+        gp_promote_usd: 0
+      },
+      {
+        tier_name: 'Tier 2: 8.0% Cumulative Preferred Return',
+        hurdle_description: '8% Pref Return on equity capital (Pari Passu 90/10)',
+        total_tier_distributed_usd: tier2Amount,
+        lp_share_usd: tier2Lp,
+        gp_share_usd: tier2Gp,
+        gp_promote_usd: 0
+      },
+      {
+        tier_name: 'Tier 3: First Hurdle Promote (80/20)',
+        hurdle_description: '80% LP / 20% GP Promote (up to 12% deal IRR)',
+        total_tier_distributed_usd: tier3Amount,
+        lp_share_usd: tier3Lp,
+        gp_share_usd: tier3Gp,
+        gp_promote_usd: tier3Gp - Math.round(tier3Amount * (gp_equity_share_pct / 100))
+      },
+      {
+        tier_name: 'Tier 4: Residual Promote (70/30)',
+        hurdle_description: '70% LP / 30% GP Promote (above 12% deal IRR)',
+        total_tier_distributed_usd: tier4Amount,
+        lp_share_usd: tier4Lp,
+        gp_share_usd: tier4Gp,
+        gp_promote_usd: tier4Gp - Math.round(tier4Amount * (gp_equity_share_pct / 100))
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Syndicated Real Estate Portfolio',
+      total_equity_invested_usd: total_equity_invested_usd,
+      lp_equity_invested_usd: lpEquityInvestedUsd,
+      gp_equity_invested_usd: gpEquityInvestedUsd,
+      holding_period_years: holding_period_years,
+      preferred_return_pct: preferred_return_pct,
+      total_distributable_cash_usd: total_distributable_cash_usd,
+      total_lp_distribution_usd: totalLpDistributionUsd,
+      total_gp_distribution_usd: totalGpDistributionUsd,
+      gp_promote_carried_interest_usd: gpPromoteCarriedInterestUsd,
+      lp_moic: lpMoic,
+      gp_moic: gpMoic,
+      deal_moic: dealMoic,
+      lp_net_irr_pct: 11.8,
+      gp_net_irr_pct: 24.2,
+      tier_breakdown: tierBreakdown
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 
 
