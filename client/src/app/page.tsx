@@ -436,8 +436,20 @@ export default function LeaseLogicApp() {
   const [cdData, setCdData] = useState<any>(null);
   const [loadingCd, setLoadingCd] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay'>('abstract');
+  // Cold Storage & Logistics Temperature Telemetry state
+  const [csFacilitySqft, setCsFacilitySqft] = useState(85000);
+  const [csFreezerSqft, setCsFreezerSqft] = useState(45000);
+  const [csCoolerSqft, setCsCoolerSqft] = useState(40000);
+  const [csRefrigerant, setCsRefrigerant] = useState('NH3_AMMONIA_CENTRAL');
+  const [csThroughput, setCsThroughput] = useState(1200);
+  const [csInventoryValue, setCsInventoryValue] = useState(12500000);
+  const [csMaxExcursionMins, setCsMaxExcursionMins] = useState(45);
+  const [csData, setCsData] = useState<any>(null);
+  const [loadingCs, setLoadingCs] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage'>('abstract');
+
 
 
   
@@ -1451,6 +1463,36 @@ export default function LeaseLogicApp() {
       setLoadingCd(false);
     }
   };
+
+  // Run Cold Storage & Logistics Temperature Telemetry Compliance Modeler
+  const handleRunColdStorage = async () => {
+    if (!selectedLease) return;
+    setLoadingCs(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/cold-storage-compliance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          facility_sqft: csFacilitySqft,
+          freezer_sqft: csFreezerSqft,
+          cooler_sqft: csCoolerSqft,
+          refrigerant_system: csRefrigerant,
+          daily_pallet_throughput: csThroughput,
+          annual_inventory_value_usd: csInventoryValue,
+          max_permissible_excursion_mins: csMaxExcursionMins
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCsData(data);
+      }
+    } catch (err) {
+      console.error('Error running cold storage compliance:', err);
+    } finally {
+      setLoadingCs(false);
+    }
+  };
+
 
 
 
@@ -5602,7 +5644,11 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'construction_delay' ? 'active' : ''}`} onClick={() => { setActiveTab('construction_delay'); handleRunConstructionDelay(); }}>
                   🏗️ Construction Delays
                 </div>
+                <div className={`tab ${activeTab === 'cold_storage' ? 'active' : ''}`} onClick={() => { setActiveTab('cold_storage'); handleRunColdStorage(); }}>
+                  🏭 Cold Storage IoT
+                </div>
               </div>
+
 
 
 
@@ -10989,7 +11035,231 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
+              ) : activeTab === 'cold_storage' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        🏭 Cold Storage & Logistics Temperature Telemetry Compliance
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Monitor multi-zone refrigeration thermal loads (Tons of Refrigeration), real-time IoT temperature excursions, FSMA cold-chain compliance, and landlord central plant maintenance covenants.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunColdStorage}
+                      disabled={loadingCs}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingCs ? 'Monitoring...' : '🏭 Refresh Cold Telemetry'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Facility Area (sqft)</label>
+                      <input
+                        type="number"
+                        value={csFacilitySqft}
+                        onChange={(e) => setCsFacilitySqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Freezer (-20°F) sqft</label>
+                      <input
+                        type="number"
+                        value={csFreezerSqft}
+                        onChange={(e) => setCsFreezerSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Cooler (35°F) sqft</label>
+                      <input
+                        type="number"
+                        value={csCoolerSqft}
+                        onChange={(e) => setCsCoolerSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Refrigerant System</label>
+                      <select
+                        value={csRefrigerant}
+                        onChange={(e) => setCsRefrigerant(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem', background: '#fff' }}
+                      >
+                        <option value="NH3_AMMONIA_CENTRAL">NH3 Anhydrous Ammonia Central</option>
+                        <option value="CO2_TRANSCRITICAL">CO2 Transcritical Booster</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Pallets / Day</label>
+                      <input
+                        type="number"
+                        value={csThroughput}
+                        onChange={(e) => setCsThroughput(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Max Excursion (Mins)</label>
+                      <input
+                        type="number"
+                        value={csMaxExcursionMins}
+                        onChange={(e) => setCsMaxExcursionMins(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingCs && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Analyzing multi-zone refrigeration thermal loads, power draw & IoT sensor telemetry...
+                    </div>
+                  )}
+
+                  {!loadingCs && csData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Cooling Capacity</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            {csData.total_plant_capacity_tr.toLocaleString()} TR
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Freezer: {csData.freezer_tonnage_tr.toLocaleString()} TR | Cooler: {csData.cooler_tonnage_tr.toLocaleString()} TR
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Electric Demand</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            {(csData.total_refrigeration_annual_kwh / 1000000).toFixed(1)}M kWh/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            ${csData.annual_electric_cost_usd.toLocaleString()}/yr ($${csData.electric_cost_per_sqft_usd}/sqft)
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Inventory Protected</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${(csData.annual_inventory_value_usd / 1000000).toFixed(1)}M USD
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Throughput: {csData.daily_pallet_throughput.toLocaleString()} pallets/day
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Refrigerant Loop</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            {csData.refrigerant_system.replace(/_/g, ' ')}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            EPA Section 112(r) RMP & OSHA PSM Monitored
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Multi-Zone Temperature Telemetry Grid */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase', color: 'var(--foreground)' }}>
+                          Live Cold-Chain Zone Telemetry & Envelope Thermal Ratings
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                          {csData.zones.map((zone: any, idx: number) => (
+                            <div key={idx} style={{ padding: '16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid rgba(15,23,42,0.06)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <h5 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--foreground)' }}>{zone.zone_name}</h5>
+                                <span className="badge badge-completed" style={{ fontSize: '0.65rem' }}>{zone.status}</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '1.6rem', fontWeight: 800, color: zone.target_temp_f < 0 ? 'var(--primary)' : 'var(--foreground)' }}>
+                                  {zone.current_temp_f}°F
+                                </span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                  (Target: {zone.target_temp_f}°F | Load: {zone.thermal_tons_tr} TR)
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid rgba(15,23,42,0.06)', paddingTop: '6px' }}>
+                                🧱 {zone.insulation_r_value}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Excursion Telemetry Incidents */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase', color: 'var(--foreground)' }}>
+                          IoT Temperature Excursion Incidents & Lease Liability Allocation
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid rgba(15,23,42,0.08)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Incident ID</th>
+                              <th style={{ padding: '8px 12px' }}>Zone</th>
+                              <th style={{ padding: '8px 12px' }}>Peak Temp</th>
+                              <th style={{ padding: '8px 12px' }}>Duration</th>
+                              <th style={{ padding: '8px 12px' }}>Inventory At Risk</th>
+                              <th style={{ padding: '8px 12px' }}>Root Cause</th>
+                              <th style={{ padding: '8px 12px' }}>Lease Obligation</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {csData.telemetry_excursions.map((exc: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.04)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 700, fontFamily: 'monospace' }}>{exc.incident_id}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{exc.zone}</td>
+                                <td style={{ padding: '10px 12px', fontWeight: 800, color: exc.recorded_peak_temp_f > 0 ? 'var(--danger)' : 'var(--primary)' }}>
+                                  +{exc.recorded_peak_temp_f}°F
+                                </td>
+                                <td style={{ padding: '10px 12px', fontWeight: 700 }}>
+                                  {exc.duration_minutes} mins {exc.duration_minutes > exc.permissible_limit_mins ? '⚠️' : ''}
+                                </td>
+                                <td style={{ padding: '10px 12px', fontWeight: 700, color: exc.inventory_exposure_usd > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>
+                                  {exc.inventory_exposure_usd > 0 ? `$${exc.inventory_exposure_usd.toLocaleString()}` : '$0'}
+                                </td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{exc.root_cause}</td>
+                                <td style={{ padding: '10px 12px' }}>
+                                  <span className={`badge ${exc.lease_liability.includes('LANDLORD') ? 'badge-danger' : 'badge-completed'}`} style={{ fontSize: '0.62rem' }}>
+                                    {exc.lease_liability}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Regulatory Certifications */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase', color: 'var(--foreground)' }}>
+                          Cold Chain Regulatory & Safety Compliance
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                          {csData.regulatory_audits.map((audit: any, idx: number) => (
+                            <div key={idx} style={{ padding: '12px', borderRadius: '6px', background: '#f8fafc', border: '1px solid rgba(15,23,42,0.04)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                <span style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--foreground)' }}>{audit.standard}</span>
+                                <span className="badge badge-completed" style={{ fontSize: '0.62rem' }}>{audit.status}</span>
+                              </div>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{audit.criteria}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : null}
+
 
 
 
