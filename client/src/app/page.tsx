@@ -470,8 +470,22 @@ export default function LeaseLogicApp() {
   const [dcData, setDcData] = useState<any>(null);
   const [loadingDc, setLoadingDc] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue'>('abstract');
+  // Medical Office Building (MOB) & Healthcare Stark Law Compliance state
+  const [mobPhysicianName, setMobPhysicianName] = useState('Dr. Julian Ross, MD (Cardiovascular Associates)');
+  const [mobHospitalEntity, setMobHospitalEntity] = useState('Mercy Memorial Regional Health System');
+  const [mobLeasedSqft, setMobLeasedSqft] = useState(4500);
+  const [mobContractRentSqft, setMobContractRentSqft] = useState(42.0);
+  const [mobFmvMinSqft, setMobFmvMinSqft] = useState(38.0);
+  const [mobFmvMaxSqft, setMobFmvMaxSqft] = useState(46.0);
+  const [mobSpecialty, setMobSpecialty] = useState('Cardiology & Diagnostic Imaging');
+  const [mobReferralVolume, setMobReferralVolume] = useState(480);
+  const [mobTermMonths, setMobTermMonths] = useState(36);
+  const [mobHasSignedLease, setMobHasSignedLease] = useState(true);
+  const [mobData, setMobData] = useState<any>(null);
+  const [loadingMob, setLoadingMob] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance'>('abstract');
 
 
 
@@ -1574,6 +1588,40 @@ export default function LeaseLogicApp() {
       console.error('Error running data center PUE modeler:', err);
     } finally {
       setLoadingDc(false);
+    }
+  };
+
+  // Run Medical Office Building (MOB) & Healthcare Stark Law Compliance Engine
+  const handleRunMobCompliance = async () => {
+    if (!selectedLease) return;
+    setLoadingMob(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/mob-healthcare-compliance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          physician_tenant_name: mobPhysicianName,
+          hospital_landlord_entity: mobHospitalEntity,
+          leased_sqft: mobLeasedSqft,
+          contract_base_rent_sqft: mobContractRentSqft,
+          fmv_rent_min_sqft: mobFmvMinSqft,
+          fmv_rent_max_sqft: mobFmvMaxSqft,
+          timeshare_schedule: 'FULL_TIME_EXCLUSIVE',
+          exclusive_use_medical_specialty: mobSpecialty,
+          annual_hospital_referral_volume: mobReferralVolume,
+          has_signed_written_lease: mobHasSignedLease,
+          term_duration_months: mobTermMonths,
+          sublease_prohibition_verified: true
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMobData(data);
+      }
+    } catch (err) {
+      console.error('Error running MOB Stark Law compliance engine:', err);
+    } finally {
+      setLoadingMob(false);
     }
   };
 
@@ -5738,6 +5786,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'datacenter_pue' ? 'active' : ''}`} onClick={() => { setActiveTab('datacenter_pue'); handleRunDatacenterPue(); }}>
                   🛰️ Data Center PUE
+                </div>
+                <div className={`tab ${activeTab === 'mob_compliance' ? 'active' : ''}`} onClick={() => { setActiveTab('mob_compliance'); handleRunMobCompliance(); }}>
+                  🏥 MOB Healthcare
                 </div>
               </div>
 
@@ -11731,6 +11782,205 @@ export default function LeaseLogicApp() {
                             </div>
                           ))}
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'mob_compliance' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Header & Controls */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                        🏥 Medical Office Building (MOB) & Healthcare Stark Law Compliance Engine
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Audit hospital-physician space leases against Stark Law 42 CFR § 411.357(a) Space Rental Safe Harbor, Anti-Kickback Statute (AKS) risk, and Fair Market Value (FMV) appraisal corridors.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunMobCompliance}
+                      disabled={loadingMob}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingMob ? 'Auditing Regulatory Compliance...' : '🏥 Run Stark Law & AKS Audit'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Physician Tenant</label>
+                      <input
+                        type="text"
+                        value={mobPhysicianName}
+                        onChange={(e) => setMobPhysicianName(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Hospital Landlord Entity</label>
+                      <input
+                        type="text"
+                        value={mobHospitalEntity}
+                        onChange={(e) => setMobHospitalEntity(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Leased Space (RSF)</label>
+                      <input
+                        type="number"
+                        value={mobLeasedSqft}
+                        onChange={(e) => setMobLeasedSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Contract Rent ($/RSF)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={mobContractRentSqft}
+                        onChange={(e) => setMobContractRentSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>FMV Floor ($/RSF)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={mobFmvMinSqft}
+                        onChange={(e) => setMobFmvMinSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>FMV Ceiling ($/RSF)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={mobFmvMaxSqft}
+                        onChange={(e) => setMobFmvMaxSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Term Duration (Months)</label>
+                      <input
+                        type="number"
+                        value={mobTermMonths}
+                        onChange={(e) => setMobTermMonths(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual Hospital Referrals</label>
+                      <input
+                        type="number"
+                        value={mobReferralVolume}
+                        onChange={(e) => setMobReferralVolume(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingMob && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating Stark Law Safe Harbor provisions, AKS compliance & FMV valuation corridor...
+                    </div>
+                  )}
+
+                  {!loadingMob && mobData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Stark Law Safe Harbor</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.25rem', fontWeight: 800, color: mobData.overall_compliance_status === 'COMPLIANT_SAFE_HARBOR_MET' ? 'var(--success)' : 'var(--error)' }}>
+                            {mobData.overall_compliance_status === 'COMPLIANT_SAFE_HARBOR_MET' ? '✅ COMPLIANT (SAFE HARBOR MET)' : '⚠️ AUDIT RISK DETECTED'}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            42 CFR § 411.357(a) Space Rental Rule
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Contract vs FMV Median</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.25rem', fontWeight: 800, color: mobData.is_rent_within_fmv ? 'var(--primary)' : 'var(--warning)' }}>
+                            ${mobData.contract_base_rent_sqft}/RSF ({mobData.rent_variance_pct > 0 ? `+${mobData.rent_variance_pct}%` : `${mobData.rent_variance_pct}%`})
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            FMV Appraisal Corridor: ${mobData.fmv_rent_min_sqft} - ${mobData.fmv_rent_max_sqft}/RSF
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Contract Rent</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.25rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${mobData.annual_contract_rent_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Independent FMV Median: ${mobData.annual_fmv_median_rent_usd.toLocaleString()}/yr
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Anti-Kickback Risk Score</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.25rem', fontWeight: 800, color: mobData.aks_risk_score <= 15 ? 'var(--success)' : 'var(--error)' }}>
+                            {mobData.aks_risk_score} / 100 ({mobData.aks_risk_score <= 15 ? 'LOW RISK' : 'ELEVATED RISK'})
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Referral Independence Protection Certified
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Safe Harbor Statutory Checklist Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          ⚖️ Stark Law 42 CFR § 411.357(a) Statutory Safe Harbor Audit Checklist
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Statutory Safe Harbor Criterion</th>
+                              <th style={{ padding: '8px 12px' }}>Legal Citation</th>
+                              <th style={{ padding: '8px 12px' }}>Audit Status</th>
+                              <th style={{ padding: '8px 12px' }}>Compliance Findings & Evidentiary Notes</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {mobData.stark_safe_harbor_checks.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.requirement}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{item.statutory_rule}</td>
+                                <td style={{ padding: '10px 12px' }}>
+                                  <span style={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status === 'PASSED' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status === 'PASSED' ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>
+                                  {item.notes}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Advisory Notice */}
+                      <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Regulatory Counsel Legal Advisory</span>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--foreground)', lineHeight: 1.5 }}>
+                          {mobData.compliance_advisory}
+                        </p>
                       </div>
                     </div>
                   )}
