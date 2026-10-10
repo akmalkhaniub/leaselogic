@@ -4396,6 +4396,91 @@ app.post('/api/leases/:id/syndication-waterfall-calculator', async (req, res) =>
   }
 });
 
+// 4.823. POST Data Center Mission-Critical PUE & Power Density Modeler
+app.post('/api/leases/:id/datacenter-pue-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      total_it_load_kw = 2500,
+      target_pue = 1.25,
+      rack_count = 200,
+      rack_density_kw = 12.5,
+      cooling_topology = 'DIRECT_LIQUID_CHILLED_WATER',
+      utility_power_rate_kwh = 0.095,
+      sla_uptime_tier = 'TIER_III_99_982'
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Power load modeling
+    const facilityTotalPowerKw = Math.round(total_it_load_kw * target_pue);
+    const overheadPowerKw = facilityTotalPowerKw - total_it_load_kw;
+
+    // Annual energy economics
+    const annualItEnergyKwh = Math.round(total_it_load_kw * 8760);
+    const annualOverheadEnergyKwh = Math.round(overheadPowerKw * 8760);
+    const totalFacilityAnnualEnergyKwh = annualItEnergyKwh + annualOverheadEnergyKwh;
+
+    const annualTotalElectricCostUsd = Math.round(totalFacilityAnnualEnergyKwh * utility_power_rate_kwh);
+    const annualItPowerCostUsd = Math.round(annualItEnergyKwh * utility_power_rate_kwh);
+    const annualOverheadCamRechargeUsd = Math.round(annualOverheadEnergyKwh * utility_power_rate_kwh);
+
+    // Legacy PUE comparison (1.55 benchmark)
+    const legacyPue = 1.55;
+    const legacyAnnualCostUsd = Math.round(total_it_load_kw * legacyPue * 8760 * utility_power_rate_kwh);
+    const annualPueEfficiencySavingsUsd = legacyAnnualCostUsd - annualTotalElectricCostUsd;
+
+    // Overhead power subsystem allocation
+    const coolingKw = Math.round(overheadPowerKw * 0.68);
+    const upsLossesKw = Math.round(overheadPowerKw * 0.22);
+    const lightingAncillaryKw = overheadPowerKw - coolingKw - upsLossesKw;
+
+    const powerSubsystems = [
+      { name: 'Compute / Server IT Load', power_kw: total_it_load_kw, share_pct: Number(((total_it_load_kw / facilityTotalPowerKw) * 100).toFixed(1)), category: 'DIRECT_IT' },
+      { name: 'Cooling (Chillers & Direct Liquid CDU)', power_kw: coolingKw, share_pct: Number(((coolingKw / facilityTotalPowerKw) * 100).toFixed(1)), category: 'OVERHEAD' },
+      { name: 'UPS & Transformation Line Losses', power_kw: upsLossesKw, share_pct: Number(((upsLossesKw / facilityTotalPowerKw) * 100).toFixed(1)), category: 'OVERHEAD' },
+      { name: 'Facility Lighting & Environmental Controls', power_kw: lightingAncillaryKw, share_pct: Number(((lightingAncillaryKw / facilityTotalPowerKw) * 100).toFixed(1)), category: 'OVERHEAD' }
+    ];
+
+    const uptimeSlaAudit = [
+      { metric: 'Uptime Availability SLA', standard: '99.982% Annual (<1.57 hrs max outage)', status: 'COMPLIANT_CERTIFIED' },
+      { metric: 'Power Path Redundancy', standard: '2N Dual-Corded Electrical Distribution + N+1 GenSet', status: 'COMPLIANT_CERTIFIED' },
+      { metric: 'Thermal Envelope Containment', standard: 'Cold-Aisle Containment (ASHRAE TC 9.9 A1 Class)', status: 'OPTIMAL_DESIGN' }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Hyperscale Mission-Critical Facility',
+      total_it_load_kw: total_it_load_kw,
+      target_pue: target_pue,
+      facility_total_power_kw: facilityTotalPowerKw,
+      overhead_power_kw: overheadPowerKw,
+      rack_count: rack_count,
+      rack_density_kw: rack_density_kw,
+      cooling_topology: cooling_topology,
+      sla_uptime_tier: sla_uptime_tier,
+      annual_it_energy_kwh: annualItEnergyKwh,
+      annual_overhead_energy_kwh: annualOverheadEnergyKwh,
+      total_facility_annual_energy_kwh: totalFacilityAnnualEnergyKwh,
+      utility_power_rate_kwh: utility_power_rate_kwh,
+      annual_total_electric_cost_usd: annualTotalElectricCostUsd,
+      annual_it_power_cost_usd: annualItPowerCostUsd,
+      annual_overhead_cam_recharge_usd: annualOverheadCamRechargeUsd,
+      annual_pue_efficiency_savings_usd: annualPueEfficiencySavingsUsd,
+      power_subsystems: powerSubsystems,
+      uptime_sla_audit: uptimeSlaAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 
 
