@@ -413,8 +413,21 @@ export default function LeaseLogicApp() {
   const [dcfData, setDcfData] = useState<any>(null);
   const [loadingDcf, setLoadingDcf] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf'>('abstract');
+  // EV Fleet Charging & Microgrid Demand Charge state
+  const [mgLevel2Ports, setMgLevel2Ports] = useState(24);
+  const [mgDcfcPorts, setMgDcfcPorts] = useState(4);
+  const [mgBessBufferKw, setMgBessBufferKw] = useState(250);
+  const [mgDemandChargeRate, setMgDemandChargeRate] = useState(18.50);
+  const [mgElectricKwhRate, setMgElectricKwhRate] = useState(0.18);
+  const [mgTenantFeeKwh, setMgTenantFeeKwh] = useState(0.32);
+  const [mgDailyKwh, setMgDailyKwh] = useState(2400);
+  const [mgData, setMgData] = useState<any>(null);
+  const [loadingMg, setLoadingMg] = useState(false);
+
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid'>('abstract');
+
   
   // Portfolio Cross-Query Copilot state
   const [crossQueryData, setCrossQueryData] = useState<any>(null);
@@ -1368,6 +1381,37 @@ export default function LeaseLogicApp() {
       setLoadingDcf(false);
     }
   };
+
+  // Run EV Fleet Charging & Microgrid Demand Charge Management Modeler
+  const handleRunEvMicrogrid = async () => {
+    if (!selectedLease) return;
+    setLoadingMg(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/ev-microgrid-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level2_ports: mgLevel2Ports,
+          dcfc_ports: mgDcfcPorts,
+          bess_buffer_kw: mgBessBufferKw,
+          utility_demand_charge_per_kw: mgDemandChargeRate,
+          electricity_kwh_rate: mgElectricKwhRate,
+          tenant_charging_fee_kwh: mgTenantFeeKwh,
+          daily_avg_charging_kwh: mgDailyKwh
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMgData(data);
+      }
+    } catch (err) {
+      console.error('Error running EV microgrid modeler:', err);
+    } finally {
+      setLoadingMg(false);
+    }
+  };
+
+
 
   // Fetch Autonomous Tenant Credit Risk & Bankruptcy Early Warning Monitor
   const handleFetchCreditMonitor = async () => {
@@ -5510,7 +5554,11 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'argus_dcf' ? 'active' : ''}`} onClick={() => { setActiveTab('argus_dcf'); handleRunArgusDcf(); }}>
                   📊 ARGUS 10-Yr DCF
                 </div>
+                <div className={`tab ${activeTab === 'ev_microgrid' ? 'active' : ''}`} onClick={() => { setActiveTab('ev_microgrid'); handleRunEvMicrogrid(); }}>
+                  ⚡ EV & Microgrid
+                </div>
               </div>
+
 
               {activeTab === 'abstract' ? (
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '16px' }}>
@@ -10489,7 +10537,218 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
+              ) : activeTab === 'ev_microgrid' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        ⚡ EV Fleet Charging & Microgrid Demand Charge Management
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Model commercial Level 2 and DC Fast Charging loads, BESS peak demand charge shaving, IRA Section 30C incentives, and tenant recharge revenue.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunEvMicrogrid}
+                      disabled={loadingMg}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingMg ? 'Simulating...' : '⚡ Refresh Microgrid Model'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Level 2 Ports (7.2 kW)</label>
+                      <input
+                        type="number"
+                        value={mgLevel2Ports}
+                        onChange={(e) => setMgLevel2Ports(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>DCFC Ports (150 kW)</label>
+                      <input
+                        type="number"
+                        value={mgDcfcPorts}
+                        onChange={(e) => setMgDcfcPorts(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>BESS Buffer (kW)</label>
+                      <input
+                        type="number"
+                        value={mgBessBufferKw}
+                        onChange={(e) => setMgBessBufferKw(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Demand Charge ($/kW/mo)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={mgDemandChargeRate}
+                        onChange={(e) => setMgDemandChargeRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Procurement ($/kWh)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={mgElectricKwhRate}
+                        onChange={(e) => setMgElectricKwhRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Tenant Fee ($/kWh)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={mgTenantFeeKwh}
+                        onChange={(e) => setMgTenantFeeKwh(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingMg && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating EV microgrid demand curves and peak shaving arbitrage...
+                    </div>
+                  )}
+
+                  {!loadingMg && mgData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Shaved Peak Grid Draw</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            {mgData.managed_peak_kw} kW
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Unmanaged Peak: {mgData.gross_unmanaged_peak_kw} kW (-{mgData.shaved_peak_demand_kw} kW shaved)
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Demand Savings</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            +${mgData.annual_demand_savings_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Avoided 15-min utility demand penalty
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Operating Profit</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${mgData.net_annual_operating_profit_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Rev: ${mgData.annual_charging_revenue_usd.toLocaleString()} | Cost: ${mgData.annual_energy_cost_usd.toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Simple Payback</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            {mgData.payback_years} Years
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Net CapEx: ${mgData.net_capex_usd.toLocaleString()} (IRA 30C offset)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* CapEx & IRA Subsidy Summary */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Gross Infrastructure CapEx</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--foreground)' }}>${mgData.gross_capex_usd.toLocaleString()}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Level 2 + DCFC hardware & grid interconnection</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Federal Section 30C Credit</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)' }}>-${mgData.federal_tax_credit_usd.toLocaleString()}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>30% direct subsidy for commercial refueling property</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Effective Outlay</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>${mgData.net_capex_usd.toLocaleString()}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sponsor out-of-pocket investment</span>
+                        </div>
+                      </div>
+
+                      {/* 24-Hour Load & Dispatch Table */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase', color: 'var(--foreground)' }}>
+                          24-Hour Load Curve & BESS Peak Shaving Dispatch
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid rgba(15,23,42,0.08)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Time of Day</th>
+                              <th style={{ padding: '8px 12px' }}>Unmanaged Load</th>
+                              <th style={{ padding: '8px 12px' }}>BESS Discharge Buffer</th>
+                              <th style={{ padding: '8px 12px' }}>Net Grid Demand</th>
+                              <th style={{ padding: '8px 12px' }}>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {mgData.hourly_profile.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.04)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 700, fontFamily: 'monospace' }}>{item.hour}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{item.unmanaged_kw} kW</td>
+                                <td style={{ padding: '10px 12px', color: item.bess_dispatch_kw > 0 ? 'var(--primary)' : 'var(--text-muted)', fontWeight: item.bess_dispatch_kw > 0 ? 700 : 400 }}>
+                                  {item.bess_dispatch_kw > 0 ? `-${item.bess_dispatch_kw} kW (Peak Shave)` : '0 kW (Standby)'}
+                                </td>
+                                <td style={{ padding: '10px 12px', fontWeight: 800, color: item.shaved_kw > 400 ? 'var(--warning)' : 'var(--success)' }}>
+                                  {item.shaved_kw} kW
+                                </td>
+                                <td style={{ padding: '10px 12px' }}>
+                                  <span className={`badge ${item.bess_dispatch_kw > 0 ? 'badge-primary' : 'badge-completed'}`} style={{ fontSize: '0.65rem' }}>
+                                    {item.bess_dispatch_kw > 0 ? 'BESS DISCHARGING' : 'GRID STANDARD'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Regulatory & Code Compliance */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase', color: 'var(--foreground)' }}>
+                          Interconnection & Standard Certifications
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                          {mgData.compliance_audit.map((audit: any, idx: number) => (
+                            <div key={idx} style={{ padding: '12px', borderRadius: '6px', background: '#f8fafc', border: '1px solid rgba(15,23,42,0.04)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                <span style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--foreground)' }}>{audit.standard}</span>
+                                <span className="badge badge-completed" style={{ fontSize: '0.62rem' }}>{audit.status}</span>
+                              </div>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{audit.criteria}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : null}
+
+
             </div>
           </div>
         )}
