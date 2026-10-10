@@ -459,8 +459,20 @@ export default function LeaseLogicApp() {
   const [wfData, setWfData] = useState<any>(null);
   const [loadingWf, setLoadingWf] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall'>('abstract');
+  // Data Center Mission-Critical PUE & Power Density state
+  const [dcItLoadKw, setDcItLoadKw] = useState(2500);
+  const [dcTargetPue, setDcTargetPue] = useState(1.25);
+  const [dcRackCount, setDcRackCount] = useState(200);
+  const [dcRackDensity, setDcRackDensity] = useState(12.5);
+  const [dcCoolingTopology, setDcCoolingTopology] = useState('DIRECT_LIQUID_CHILLED_WATER');
+  const [dcUtilityRate, setDcUtilityRate] = useState(0.095);
+  const [dcSlaTier, setDcSlaTier] = useState('TIER_III_99_982');
+  const [dcData, setDcData] = useState<any>(null);
+  const [loadingDc, setLoadingDc] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue'>('abstract');
+
 
 
 
@@ -1535,6 +1547,36 @@ export default function LeaseLogicApp() {
       setLoadingWf(false);
     }
   };
+
+  // Run Data Center Mission-Critical PUE & Power Density Modeler
+  const handleRunDatacenterPue = async () => {
+    if (!selectedLease) return;
+    setLoadingDc(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/datacenter-pue-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          total_it_load_kw: dcItLoadKw,
+          target_pue: dcTargetPue,
+          rack_count: dcRackCount,
+          rack_density_kw: dcRackDensity,
+          cooling_topology: dcCoolingTopology,
+          utility_power_rate_kwh: dcUtilityRate,
+          sla_uptime_tier: dcSlaTier
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDcData(data);
+      }
+    } catch (err) {
+      console.error('Error running data center PUE modeler:', err);
+    } finally {
+      setLoadingDc(false);
+    }
+  };
+
 
 
 
@@ -5694,7 +5736,11 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'syndication_waterfall' ? 'active' : ''}`} onClick={() => { setActiveTab('syndication_waterfall'); handleRunSyndicationWaterfall(); }}>
                   💼 GP/LP Syndication
                 </div>
+                <div className={`tab ${activeTab === 'datacenter_pue' ? 'active' : ''}`} onClick={() => { setActiveTab('datacenter_pue'); handleRunDatacenterPue(); }}>
+                  🛰️ Data Center PUE
+                </div>
               </div>
+
 
 
 
@@ -11485,6 +11531,205 @@ export default function LeaseLogicApp() {
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Sponsor Co-Investment Alignment</span>
                           <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--success)' }}>${wfData.gp_equity_invested_usd.toLocaleString()} GP "Skin in the Game"</h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>10% GP co-investment aligns sponsor interests directly with LP returns.</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'datacenter_pue' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Header & Controls */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                        🛰️ Data Center Mission-Critical PUE & Power Density Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Simulate hyperscale IT electrical load, cooling overhead (chilled water / direct-to-chip liquid), PUE energy efficiency ratios, power pass-through CAM recharge, and Tier III SLA compliance.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunDatacenterPue}
+                      disabled={loadingDc}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingDc ? 'Modeling Power Infrastructure...' : '🛰️ Calculate PUE & Power Load'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>IT Critical Load (kW)</label>
+                      <input
+                        type="number"
+                        value={dcItLoadKw}
+                        onChange={(e) => setDcItLoadKw(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Target PUE Ratio</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={dcTargetPue}
+                        onChange={(e) => setDcTargetPue(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Rack Count</label>
+                      <input
+                        type="number"
+                        value={dcRackCount}
+                        onChange={(e) => setDcRackCount(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Rack Density (kW/rack)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={dcRackDensity}
+                        onChange={(e) => setDcRackDensity(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Utility Rate ($/kWh)</label>
+                      <input
+                        type="number"
+                        step="0.005"
+                        value={dcUtilityRate}
+                        onChange={(e) => setDcUtilityRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Cooling Topology</label>
+                      <select
+                        value={dcCoolingTopology}
+                        onChange={(e) => setDcCoolingTopology(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      >
+                        <option value="DIRECT_LIQUID_CHILLED_WATER">Direct Liquid + Chilled Water</option>
+                        <option value="EVAPORATIVE_ECONOMIZER">Evaporative Economizer</option>
+                        <option value="AIR_COOLED_CRAH">Air-Cooled CRAH / CRAC</option>
+                        <option value="IMMERSION_TWO_PHASE">Two-Phase Immersion Cooling</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {loadingDc && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating facility electrical load, thermal dissipation, and PUE energy savings...
+                    </div>
+                  )}
+
+                  {!loadingDc && dcData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Facility Draw</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            {dcData.facility_total_power_kw.toLocaleString()} kW
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {dcData.total_it_load_kw.toLocaleString()} kW IT + {dcData.overhead_power_kw.toLocaleString()} kW cooling/overhead
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Target PUE Efficiency</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            {dcData.target_pue} PUE
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            vs 1.55 legacy baseline (+${dcData.annual_pue_efficiency_savings_usd.toLocaleString()}/yr savings)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Total Power Cost</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${dcData.annual_total_electric_cost_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            ${dcData.annual_it_power_cost_usd.toLocaleString()} IT + ${dcData.annual_overhead_cam_recharge_usd.toLocaleString()} CAM
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Uptime SLA Tier</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: '#0ea5e9' }}>
+                            {dcData.sla_uptime_tier.replace(/_/g, ' ')}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            2N Concurrent Maintainability & Redundancy
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Subsystems Breakdown Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          ⚡ Power Subsystem Load Distribution & CAM Allocation
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Subsystem / Infrastructure</th>
+                              <th style={{ padding: '8px 12px' }}>Classification</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Draw (kW)</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Facility Share (%)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {dcData.power_subsystems.map((sub: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{sub.name}</td>
+                                <td style={{ padding: '10px 12px' }}>
+                                  <span style={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: sub.category === 'DIRECT_IT' ? 'rgba(37,99,235,0.1)' : 'rgba(100,116,139,0.1)',
+                                    color: sub.category === 'DIRECT_IT' ? 'var(--primary)' : 'var(--text-muted)'
+                                  }}>
+                                    {sub.category}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700 }}>
+                                  {sub.power_kw.toLocaleString()} kW
+                                </td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--foreground)' }}>
+                                  {sub.share_pct}%
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Uptime SLA & Thermal Audit */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Mission-Critical Tier SLA & Environmental Compliance
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                          {dcData.uptime_sla_audit.map((audit: any, idx: number) => (
+                            <div key={idx} style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '12px', background: 'rgba(248,250,252,0.6)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--foreground)' }}>{audit.metric}</span>
+                                <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', color: 'var(--success)' }}>
+                                  {audit.status}
+                                </span>
+                              </div>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{audit.standard}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
