@@ -425,8 +425,20 @@ export default function LeaseLogicApp() {
   const [loadingMg, setLoadingMg] = useState(false);
 
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid'>('abstract');
+  // Commercial Construction Delay & Liquidated Damages state
+  const [cdDeliveryDate, setCdDeliveryDate] = useState('2026-03-01');
+  const [cdCompletionDate, setCdCompletionDate] = useState('2026-06-15');
+  const [cdDailyDamages, setCdDailyDamages] = useState(2500);
+  const [cdAbatementMultiplier, setCdAbatementMultiplier] = useState(2.0);
+  const [cdGracePeriod, setCdGracePeriod] = useState(30);
+  const [cdForceMajeureDays, setCdForceMajeureDays] = useState(21);
+  const [cdMonthlyRent, setCdMonthlyRent] = useState(45000);
+  const [cdData, setCdData] = useState<any>(null);
+  const [loadingCd, setLoadingCd] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay'>('abstract');
+
 
   
   // Portfolio Cross-Query Copilot state
@@ -1410,6 +1422,36 @@ export default function LeaseLogicApp() {
       setLoadingMg(false);
     }
   };
+
+  // Run Commercial Construction Delay, Liquidated Damages & Force Majeure Evaluator
+  const handleRunConstructionDelay = async () => {
+    if (!selectedLease) return;
+    setLoadingCd(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/construction-delay-evaluator`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractual_delivery_date: cdDeliveryDate,
+          actual_substantial_completion_date: cdCompletionDate,
+          landlord_daily_liquidated_damages: cdDailyDamages,
+          tenant_rent_abatement_multiplier: cdAbatementMultiplier,
+          grace_period_days: cdGracePeriod,
+          force_majeure_claimed_days: cdForceMajeureDays,
+          monthly_base_rent: cdMonthlyRent
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCdData(data);
+      }
+    } catch (err) {
+      console.error('Error running construction delay evaluator:', err);
+    } finally {
+      setLoadingCd(false);
+    }
+  };
+
 
 
 
@@ -5557,7 +5599,11 @@ export default function LeaseLogicApp() {
                 <div className={`tab ${activeTab === 'ev_microgrid' ? 'active' : ''}`} onClick={() => { setActiveTab('ev_microgrid'); handleRunEvMicrogrid(); }}>
                   ⚡ EV & Microgrid
                 </div>
+                <div className={`tab ${activeTab === 'construction_delay' ? 'active' : ''}`} onClick={() => { setActiveTab('construction_delay'); handleRunConstructionDelay(); }}>
+                  🏗️ Construction Delays
+                </div>
               </div>
+
 
 
               {activeTab === 'abstract' ? (
@@ -10746,7 +10792,205 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
+              ) : activeTab === 'construction_delay' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        🏗️ Commercial Construction Delay, Liquidated Damages & Force Majeure Evaluator
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Audit delivery milestones, quantify contractual daily liquidated damages, rent abatement multipliers, excusable force majeure, and tenant cancellation rights.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunConstructionDelay}
+                      disabled={loadingCd}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingCd ? 'Evaluating...' : '🏗️ Evaluate Construction Delay'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Contractual Delivery</label>
+                      <input
+                        type="date"
+                        value={cdDeliveryDate}
+                        onChange={(e) => setCdDeliveryDate(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Substantial Completion</label>
+                      <input
+                        type="date"
+                        value={cdCompletionDate}
+                        onChange={(e) => setCdCompletionDate(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Liquidated Damages ($/day)</label>
+                      <input
+                        type="number"
+                        value={cdDailyDamages}
+                        onChange={(e) => setCdDailyDamages(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Abatement Multiplier (x)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={cdAbatementMultiplier}
+                        onChange={(e) => setCdAbatementMultiplier(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Grace Period (Days)</label>
+                      <input
+                        type="number"
+                        value={cdGracePeriod}
+                        onChange={(e) => setCdGracePeriod(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Force Majeure (Days)</label>
+                      <input
+                        type="number"
+                        value={cdForceMajeureDays}
+                        onChange={(e) => setCdForceMajeureDays(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingCd && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Auditing construction schedule critical path, liquidated damages & force majeure clauses...
+                    </div>
+                  )}
+
+                  {!loadingCd && cdData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Gross Project Delay</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--warning)' }}>
+                            {cdData.gross_delay_days} Days
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: cdData.cancellation_right_active ? 'var(--danger)' : 'var(--text-muted)' }}>
+                            {cdData.cancellation_right_active ? '⚠️ CANCELLATION RIGHT TRIGGERED' : `Cliff: ${cdData.days_until_cancellation_cliff} days until unilateral walk-away`}
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Inexcusable Delay</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--danger)' }}>
+                            {cdData.net_inexcusable_delay_days} Days
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Grace: {cdData.grace_period_days}d | Force Majeure: {cdData.force_majeure_claimed_days}d
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Contractual Liquidated Damages</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${cdData.contractual_liquidated_damages_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            ${cdData.landlord_daily_liquidated_damages.toLocaleString()}/day x {cdData.net_inexcusable_delay_days} days
+                          </span>
+                        </div>
+
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Tenant Recovery</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${cdData.total_tenant_compensation_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Damages + {cdData.rent_abatement_days} days Rent Abatement (${cdData.total_rent_abatement_value_usd.toLocaleString()})
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Delay Events Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase', color: 'var(--foreground)' }}>
+                          Milestone Delay Causes & Force Majeure Allocation Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid rgba(15,23,42,0.08)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Event / Critical Path Incident</th>
+                              <th style={{ padding: '8px 12px' }}>Days</th>
+                              <th style={{ padding: '8px 12px' }}>Classification</th>
+                              <th style={{ padding: '8px 12px' }}>Audit Verdict</th>
+                              <th style={{ padding: '8px 12px' }}>Legal Context</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cdData.delay_events_audit.map((event: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.04)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--foreground)' }}>{event.event_name}</td>
+                                <td style={{ padding: '10px 12px', fontWeight: 800 }}>{event.days_claimed}d</td>
+                                <td style={{ padding: '10px 12px' }}>
+                                  <span className={`badge ${event.classification.includes('EXCUSABLE') ? 'badge-completed' : 'badge-warning'}`} style={{ fontSize: '0.65rem' }}>
+                                    {event.classification}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px 12px', fontWeight: 700, color: event.verdict.includes('APPROVED') ? 'var(--success)' : 'var(--danger)' }}>
+                                  {event.verdict}
+                                </td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{event.notes}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Formal Demand Notice Document */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: 0, textTransform: 'uppercase', color: 'var(--foreground)' }}>
+                            Certified Notice of Substantial Completion Delay & Liquidated Damages Offset
+                          </h4>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(cdData.formal_demand_letter)}
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                          >
+                            📋 Copy Notice Letter
+                          </button>
+                        </div>
+                        <pre style={{
+                          background: '#f8fafc',
+                          padding: '16px',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(15,23,42,0.06)',
+                          fontSize: '0.80rem',
+                          lineHeight: 1.6,
+                          whiteSpace: 'pre-wrap',
+                          fontFamily: 'monospace',
+                          color: 'var(--foreground)'
+                        }}>
+                          {cdData.formal_demand_letter}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : null}
+
 
 
             </div>
