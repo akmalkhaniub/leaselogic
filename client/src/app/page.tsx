@@ -547,8 +547,25 @@ export default function LeaseLogicApp() {
   const [condData, setCondData] = useState<any>(null);
   const [loadingCond, setLoadingCond] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking'>('abstract');
+  // Vertiport, Advanced Air Mobility (AAM) & Rooftop Drone Hub state
+  const [vertRooftopSqft, setVertRooftopSqft] = useState(18500);
+  const [vertTlofDiameter, setVertTlofDiameter] = useState(50.0);
+  const [vertFatoDiameter, setVertFatoDiameter] = useState(85.0);
+  const [vertMtowLbs, setVertMtowLbs] = useState(7000);
+  const [vertLiveLoadPsf, setVertLiveLoadPsf] = useState(125);
+  const [vertDailySlots, setVertDailySlots] = useState(36);
+  const [vertDailyDrones, setVertDailyDrones] = useState(120);
+  const [vertBaseRent, setVertBaseRent] = useState(42000);
+  const [vertLandingFee, setVertLandingFee] = useState(65);
+  const [vertRevSharePct, setVertRevSharePct] = useState(8.5);
+  const [vertChargerKw, setVertChargerKw] = useState(750);
+  const [vertNoiseMaxDba, setVertNoiseMaxDba] = useState(68.0);
+  const [vertMeasuredNoise, setVertMeasuredNoise] = useState(64.2);
+  const [vertData, setVertData] = useState<any>(null);
+  const [loadingVert, setLoadingVert] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam'>('abstract');
 
 
 
@@ -1820,6 +1837,41 @@ export default function LeaseLogicApp() {
       console.error('Error running condemnation taking calculator:', err);
     } finally {
       setLoadingCond(false);
+    }
+  };
+
+  // Run Vertiport, Advanced Air Mobility (AAM) & Rooftop Drone Hub Lease Modeler
+  const handleRunVertiportAam = async () => {
+    if (!selectedLease) return;
+    setLoadingVert(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/vertiport-aam-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rooftop_footprint_sqft: vertRooftopSqft,
+          tlof_diameter_ft: vertTlofDiameter,
+          fato_diameter_ft: vertFatoDiameter,
+          max_aircraft_takeoff_weight_lbs: vertMtowLbs,
+          rooftop_live_load_capacity_psf: vertLiveLoadPsf,
+          evtol_daily_flight_slots: vertDailySlots,
+          cargo_drone_daily_operations: vertDailyDrones,
+          monthly_vertiport_base_rent_usd: vertBaseRent,
+          landing_fee_per_evtol_usd: vertLandingFee,
+          revenue_share_pct: vertRevSharePct,
+          rapid_charger_capacity_kw: vertChargerKw,
+          noise_covenant_max_dba: vertNoiseMaxDba,
+          measured_takeoff_noise_dba: vertMeasuredNoise
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setVertData(data);
+      }
+    } catch (err) {
+      console.error('Error running vertiport AAM modeler:', err);
+    } finally {
+      setLoadingVert(false);
     }
   };
 
@@ -5999,6 +6051,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'condemnation_taking' ? 'active' : ''}`} onClick={() => { setActiveTab('condemnation_taking'); handleRunCondemnationTaking(); }}>
                   ⚖️ Condemnation & Taking
+                </div>
+                <div className={`tab ${activeTab === 'vertiport_aam' ? 'active' : ''}`} onClick={() => { setActiveTab('vertiport_aam'); handleRunVertiportAam(); }}>
+                  🚁 Vertiport & AAM
                 </div>
               </div>
 
@@ -13035,6 +13090,211 @@ export default function LeaseLogicApp() {
                           </h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Statutory relocation assistance and unamortized trade fixtures award.</span>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'vertiport_aam' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Header & Controls */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                        🚁 Vertiport, Advanced Air Mobility (AAM) & Rooftop Drone Hub Lease Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Simulate FAA AC 150/5390-4 FATO/TLOF obstacle clearance, rooftop structural live loads (PSF), eVTOL rapid charging demand pass-through, and acoustic decibel noise covenants.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunVertiportAam}
+                      disabled={loadingVert}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingVert ? 'Modeling Air Mobility...' : '🚁 Calculate Vertiport Operations'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Rooftop Space (SF)</label>
+                      <input
+                        type="number"
+                        value={vertRooftopSqft}
+                        onChange={(e) => setVertRooftopSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>TLOF Diameter (Ft)</label>
+                      <input
+                        type="number"
+                        value={vertTlofDiameter}
+                        onChange={(e) => setVertTlofDiameter(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>FATO Diameter (Ft)</label>
+                      <input
+                        type="number"
+                        value={vertFatoDiameter}
+                        onChange={(e) => setVertFatoDiameter(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Daily eVTOL Slots</label>
+                      <input
+                        type="number"
+                        value={vertDailySlots}
+                        onChange={(e) => setVertDailySlots(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Base Rent ($/Mo)</label>
+                      <input
+                        type="number"
+                        value={vertBaseRent}
+                        onChange={(e) => setVertBaseRent(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Landing Fee ($/slot)</label>
+                      <input
+                        type="number"
+                        value={vertLandingFee}
+                        onChange={(e) => setVertLandingFee(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Revenue Share (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={vertRevSharePct}
+                        onChange={(e) => setVertRevSharePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>DC Charger (kW)</label>
+                      <input
+                        type="number"
+                        value={vertChargerKw}
+                        onChange={(e) => setVertChargerKw(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Noise Limit (dBA)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={vertNoiseMaxDba}
+                        onChange={(e) => setVertNoiseMaxDba(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Measured Noise (dBA)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={vertMeasuredNoise}
+                        onChange={(e) => setVertMeasuredNoise(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingVert && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating FAA AC 150/5390-4 safety surfaces, live loads, and landing fee revenues...
+                    </div>
+                  )}
+
+                  {!loadingVert && vertData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Landlord Income</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${vertData.total_monthly_landlord_income_usd.toLocaleString()}/mo
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Base: ${vertData.monthly_vertiport_base_rent_usd.toLocaleString()} + Rev Share: ${vertData.monthly_landlord_rev_share_usd.toLocaleString()} (${vertData.annual_total_landlord_income_usd.toLocaleString()}/yr)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>FAA Clear Zone Compliance</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: vertData.is_footprint_compliant ? 'var(--success)' : 'var(--error)' }}>
+                            {vertData.is_footprint_compliant ? '✅ FAA COMPLIANT' : '⚠️ CLEARANCE DEFICIT'}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {vertData.rooftop_footprint_sqft.toLocaleString()} SF available vs {vertData.required_safety_clearance_sqft.toLocaleString()} SF safety envelope
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Acoustic Decibel Envelope</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: vertData.is_acoustic_compliant ? 'var(--success)' : 'var(--error)' }}>
+                            {vertData.measured_takeoff_noise_dba} dBA ({vertData.noise_margin_dba > 0 ? `+${vertData.noise_margin_dba} dBA margin` : `${vertData.noise_margin_dba} dBA breach`})
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Lease Noise Ceiling: Max {vertData.noise_covenant_max_dba} dBA
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Electric Charging Pass-Through</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${vertData.monthly_total_electric_pass_through_usd.toLocaleString()}/mo
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {vertData.monthly_charging_kwh.toLocaleString()} kWh/mo @ {vertData.rapid_charger_capacity_kw} kW peak demand
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* FAA Advisory Circular Safety Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ FAA AC 150/5390-4 Aeronautical & Structural Safety Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Aeronautical / Engineering Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Technical Requirement</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Compliance Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {vertData.faa_safety_audit.map((audit: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{audit.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{audit.requirement}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: audit.status.includes('COMPLIANT') || audit.status.includes('SOUND') || audit.status.includes('ACTIVE') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: audit.status.includes('COMPLIANT') || audit.status.includes('SOUND') || audit.status.includes('ACTIVE') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {audit.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
