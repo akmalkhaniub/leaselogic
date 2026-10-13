@@ -564,8 +564,49 @@ export default function LeaseLogicApp() {
   const [vertData, setVertData] = useState<any>(null);
   const [loadingVert, setLoadingVert] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam'>('abstract');
+  // Agri-Solar / Agrivoltaics & Dual-Use Ground Lease state
+  const [agriTotalAcreage, setAgriTotalAcreage] = useState(250);
+  const [agriSolarAcres, setAgriSolarAcres] = useState(180);
+  const [agriCoUseAcres, setAgriCoUseAcres] = useState(150);
+  const [agriCoUseType, setAgriCoUseType] = useState('sheep_solar_grazing');
+  const [agriDcCapacityMw, setAgriDcCapacityMw] = useState(45);
+  const [agriSolarBaseRentAcre, setAgriSolarBaseRentAcre] = useState(1400);
+  const [agriEscalationPct, setAgriEscalationPct] = useState(2.5);
+  const [agriAgRentAcre, setAgriAgRentAcre] = useState(120);
+  const [agriRevSharePct, setAgriRevSharePct] = useState(1.75);
+  const [agriGenMwh, setAgriGenMwh] = useState(85000);
+  const [agriPpaPrice, setAgriPpaPrice] = useState(48.5);
+  const [agriDecomBondMw, setAgriDecomBondMw] = useState(25000);
+  const [agriTaxStatus, setAgriTaxStatus] = useState('full_preservation');
+  const [agriRollbackExposure, setAgriRollbackExposure] = useState(45000);
+  const [agriTermYears, setAgriTermYears] = useState(30);
+  const [agriDiscountPct, setAgriDiscountPct] = useState(6.5);
+  const [agriBaselineRent, setAgriBaselineRent] = useState(150);
+  const [agriData, setAgriData] = useState<any>(null);
+  const [loadingAgri, setLoadingAgri] = useState(false);
+
+  // Port Maritime Logistics & Foreign-Trade Zone (FTZ) Subzone state
+  const [portDockLengthFt, setPortDockLengthFt] = useState(1200);
+  const [portYardAcres, setPortYardAcres] = useState(45);
+  const [portDraftFt, setPortDraftFt] = useState(48);
+  const [portTeuThroughput, setPortTeuThroughput] = useState(240000);
+  const [portFtzStatus, setPortFtzStatus] = useState('ACTIVE_OPERATING_SUBZONE');
+  const [portCargoValueUsd, setPortCargoValueUsd] = useState(420000000);
+  const [portAvgTariffPct, setPortAvgTariffPct] = useState(6.8);
+  const [portInvertedTariffPct, setPortInvertedTariffPct] = useState(3.2);
+  const [portMpfSavings, setPortMpfSavings] = useState(285000);
+  const [portWharfageTeu, setPortWharfageTeu] = useState(42.50);
+  const [portDockageDailyFt, setPortDockageDailyFt] = useState(14.25);
+  const [portVesselCalls, setPortVesselCalls] = useState(110);
+  const [portVesselHours, setPortVesselHours] = useState(36);
+  const [portRailSplitPct, setPortRailSplitPct] = useState(35.0);
+  const [portBaseRentAcre, setPortBaseRentAcre] = useState(65000);
+  const [portWharfageRoyaltyPct, setPortWharfageRoyaltyPct] = useState(12.5);
+  const [portData, setPortData] = useState<any>(null);
+  const [loadingPort, setLoadingPort] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics'>('abstract');
 
 
 
@@ -1872,6 +1913,83 @@ export default function LeaseLogicApp() {
       console.error('Error running vertiport AAM modeler:', err);
     } finally {
       setLoadingVert(false);
+    }
+  };
+
+  // Run Agri-Solar / Agrivoltaics & Dual-Use Ground Lease Modeler
+  const handleRunAgrivoltaics = async () => {
+    if (!selectedLease) return;
+    setLoadingAgri(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/agrivoltaics-ground-lease`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          total_acreage: agriTotalAcreage,
+          solar_footprint_acres: agriSolarAcres,
+          agricultural_co_use_acres: agriCoUseAcres,
+          co_use_type: agriCoUseType,
+          dc_system_capacity_mw: agriDcCapacityMw,
+          solar_base_rent_per_acre_year: agriSolarBaseRentAcre,
+          solar_escalation_rate_pct: agriEscalationPct,
+          ag_co_use_rent_per_acre_year: agriAgRentAcre,
+          solar_gross_revenue_share_pct: agriRevSharePct,
+          estimated_annual_generation_mwh: agriGenMwh,
+          ppa_power_price_per_mwh: agriPpaPrice,
+          decommissioning_bond_per_mw: agriDecomBondMw,
+          ag_tax_exemption_status: agriTaxStatus,
+          annual_rollback_tax_exposure_usd: agriRollbackExposure,
+          lease_term_years: agriTermYears,
+          discount_rate_pct: agriDiscountPct,
+          baseline_traditional_ag_rent_acre_usd: agriBaselineRent
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAgriData(data);
+      }
+    } catch (err) {
+      console.error('Error running agrivoltaics ground lease modeler:', err);
+    } finally {
+      setLoadingAgri(false);
+    }
+  };
+
+  // Run Port Maritime Logistics & Foreign-Trade Zone (FTZ) Subzone Modeler
+  const handleRunPortFtz = async () => {
+    if (!selectedLease) return;
+    setLoadingPort(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/port-ftz-logistics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          terminal_dock_length_ft: portDockLengthFt,
+          container_yard_acres: portYardAcres,
+          berth_depth_draft_ft: portDraftFt,
+          annual_teu_throughput: portTeuThroughput,
+          ftz_subzone_status: portFtzStatus,
+          dutiable_cargo_value_usd: portCargoValueUsd,
+          average_tariff_rate_pct: portAvgTariffPct,
+          inverted_tariff_savings_pct: portInvertedTariffPct,
+          customs_mpf_weekly_entry_savings_usd: portMpfSavings,
+          wharfage_rate_per_teu_usd: portWharfageTeu,
+          dockage_daily_rate_per_ft_usd: portDockageDailyFt,
+          annual_vessel_calls: portVesselCalls,
+          average_vessel_stay_hours: portVesselHours,
+          rail_intermodal_split_pct: portRailSplitPct,
+          ground_lease_base_rent_acre_usd: portBaseRentAcre,
+          landlord_wharfage_royalty_pct: portWharfageRoyaltyPct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPortData(data);
+      }
+    } catch (err) {
+      console.error('Error running port FTZ logistics modeler:', err);
+    } finally {
+      setLoadingPort(false);
     }
   };
 
@@ -6054,6 +6172,12 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'vertiport_aam' ? 'active' : ''}`} onClick={() => { setActiveTab('vertiport_aam'); handleRunVertiportAam(); }}>
                   🚁 Vertiport & AAM
+                </div>
+                <div className={`tab ${activeTab === 'agrivoltaics_ground_lease' ? 'active' : ''}`} onClick={() => { setActiveTab('agrivoltaics_ground_lease'); handleRunAgrivoltaics(); }}>
+                  🌾 Agri-Solar Dual-Use
+                </div>
+                <div className={`tab ${activeTab === 'port_ftz_logistics' ? 'active' : ''}`} onClick={() => { setActiveTab('port_ftz_logistics'); handleRunPortFtz(); }}>
+                  🚢 Port & FTZ Logistics
                 </div>
               </div>
 
@@ -13287,6 +13411,501 @@ export default function LeaseLogicApp() {
                                     borderRadius: '12px',
                                     background: audit.status.includes('COMPLIANT') || audit.status.includes('SOUND') || audit.status.includes('ACTIVE') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                                     color: audit.status.includes('COMPLIANT') || audit.status.includes('SOUND') || audit.status.includes('ACTIVE') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {audit.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'agrivoltaics_ground_lease' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🌾 Agri-Solar / Agrivoltaics & Dual-Use Rural Ground Lease Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Utility-scale solar co-located with pastoral agriculture (sheep grazing, specialty crops), statutory ag-exemption preservation, and 30-year cash flow NPV.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunAgrivoltaics}
+                      disabled={loadingAgri}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingAgri ? 'Simulating Yields...' : '🌾 Model Agrivoltaics Economics'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Total Site Acreage</label>
+                      <input
+                        type="number"
+                        value={agriTotalAcreage}
+                        onChange={(e) => setAgriTotalAcreage(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Solar Footprint (Acres)</label>
+                      <input
+                        type="number"
+                        value={agriSolarAcres}
+                        onChange={(e) => setAgriSolarAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ag Co-Use (Acres)</label>
+                      <input
+                        type="number"
+                        value={agriCoUseAcres}
+                        onChange={(e) => setAgriCoUseAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Co-Use Ag Enterprise</label>
+                      <select
+                        value={agriCoUseType}
+                        onChange={(e) => setAgriCoUseType(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      >
+                        <option value="sheep_solar_grazing">🐑 Sheep Solar Grazing</option>
+                        <option value="pollinator_apiary">🐝 Pollinator Apiary & Honey</option>
+                        <option value="shade_tolerant_crops">🥬 Shade-Tolerant Specialty Crops</option>
+                        <option value="hay_forage_production">🌾 Hay & Forage Production</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Solar DC Capacity (MWdc)</label>
+                      <input
+                        type="number"
+                        value={agriDcCapacityMw}
+                        onChange={(e) => setAgriDcCapacityMw(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Solar Base Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={agriSolarBaseRentAcre}
+                        onChange={(e) => setAgriSolarBaseRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual Escalation (%)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={agriEscalationPct}
+                        onChange={(e) => setAgriEscalationPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ag Co-Use Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={agriAgRentAcre}
+                        onChange={(e) => setAgriAgRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Gross Revenue Share (%)</label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        value={agriRevSharePct}
+                        onChange={(e) => setAgriRevSharePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual Gen (MWh/yr)</label>
+                      <input
+                        type="number"
+                        value={agriGenMwh}
+                        onChange={(e) => setAgriGenMwh(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>PPA Price ($/MWh)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={agriPpaPrice}
+                        onChange={(e) => setAgriPpaPrice(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ag Statutory Exemption</label>
+                      <select
+                        value={agriTaxStatus}
+                        onChange={(e) => setAgriTaxStatus(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      >
+                        <option value="full_preservation">🛡️ Full Ag Exemption Preserved</option>
+                        <option value="partial_clawback">⚠️ Partial Solar Footprint Clawback</option>
+                        <option value="complete_rollback">❌ Complete Rollback Tax Penalty</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {loadingAgri && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Calculating agrivoltaic dual-use revenues, tax rollback assessments, and 30-year NPV...
+                    </div>
+                  )}
+
+                  {!loadingAgri && agriData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Year 1 Landowner Cash Flow</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${agriData.year1_gross_landowner_income_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            {agriData.income_uplift_multiplier}x Uplift vs Traditional Ag (${agriData.baseline_traditional_ag_income_usd.toLocaleString()})
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>30-Year Cumulative NPV</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${agriData.npv_cumulative_cash_flow_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Undiscounted: ${agriData.cumulative_total_cash_flow_usd.toLocaleString()} ({agriData.discount_rate_pct}% WACC)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Ag Exemption Tax Protection</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: agriData.net_preserved_ag_savings_usd > 0 ? 'var(--success)' : 'var(--error)' }}>
+                            {agriData.net_preserved_ag_savings_usd > 0 ? `+$${agriData.net_preserved_ag_savings_usd.toLocaleString()}/yr Sheltered` : `-$${agriData.rollback_tax_penalty_usd.toLocaleString()}/yr Penalty`}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Status: {agriData.ag_tax_exemption_status.replace(/_/g, ' ').toUpperCase()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Decommissioning Bond Escrow</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${agriData.total_decommissioning_bond_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            5-Yr Tranche: ${agriData.annual_escrow_funding_per_year_usd.toLocaleString()}/yr (Yrs 15-20)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Cash Flow Schedule Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          📅 Agrivoltaics Multi-Year Revenue Waterfall (Sample Milestone Years)
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Lease Year</th>
+                              <th style={{ padding: '8px 12px' }}>Solar Ground Rent</th>
+                              <th style={{ padding: '8px 12px' }}>Ag Co-Use Rent</th>
+                              <th style={{ padding: '8px 12px' }}>Solar Royalty</th>
+                              <th style={{ padding: '8px 12px' }}>Total Gross Flow</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Discounted PV Flow</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {agriData.cash_flow_schedule.map((row: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 700 }}>Year {row.year}</td>
+                                <td style={{ padding: '10px 12px' }}>${row.solar_base_rent_usd.toLocaleString()}</td>
+                                <td style={{ padding: '10px 12px' }}>${row.ag_co_use_rent_usd.toLocaleString()}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--primary)', fontWeight: 600 }}>${row.solar_royalty_usd.toLocaleString()}</td>
+                                <td style={{ padding: '10px 12px', fontWeight: 700 }}>${row.total_gross_cash_flow_usd.toLocaleString()}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>
+                                  ${row.pv_discounted_cash_flow_usd.toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Agrivoltaics Synergy Audit Card */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Co-Location Synergies & Agricultural Land Preservation Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Assessment Metric</th>
+                              <th style={{ padding: '8px 12px' }}>Operational Impact</th>
+                              <th style={{ padding: '8px 12px' }}>Financial / Technical Benefit</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {agriData.agrivoltaics_synergy_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.impact}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--primary)', fontWeight: 600 }}>{item.financial_benefit}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('VERIFIED') || item.status.includes('OPTIMIZED') || item.status.includes('PRESERVED') || item.status.includes('POSTED') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('VERIFIED') || item.status.includes('OPTIMIZED') || item.status.includes('PRESERVED') || item.status.includes('POSTED') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'port_ftz_logistics' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🚢 Port Maritime Logistics & Foreign-Trade Zone (FTZ) Subzone Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Deepwater container terminal lease modeling, 19 CFR Part 146 inverted tariff duty arbitrage, TEU throughput wharfage royalties, and vessel dockage concessions.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunPortFtz}
+                      disabled={loadingPort}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingPort ? 'Analyzing Terminal...' : '🚢 Model Port & FTZ Logistics'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Berth Dock Length (ft)</label>
+                      <input
+                        type="number"
+                        value={portDockLengthFt}
+                        onChange={(e) => setPortDockLengthFt(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Container Yard (Acres)</label>
+                      <input
+                        type="number"
+                        value={portYardAcres}
+                        onChange={(e) => setPortYardAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Channel Draft Depth (ft)</label>
+                      <input
+                        type="number"
+                        value={portDraftFt}
+                        onChange={(e) => setPortDraftFt(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual TEU Throughput</label>
+                      <input
+                        type="number"
+                        value={portTeuThroughput}
+                        onChange={(e) => setPortTeuThroughput(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>FTZ Subzone Status</label>
+                      <select
+                        value={portFtzStatus}
+                        onChange={(e) => setPortFtzStatus(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      >
+                        <option value="ACTIVE_OPERATING_SUBZONE">⚓ Active Operating FTZ Subzone</option>
+                        <option value="GENERAL_PURPOSE_ZONE">📦 General Purpose Port Zone</option>
+                        <option value="PENDING_BOARD_APPROVAL">⏳ Pending CBP / FTZ Board Approval</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Dutiable Cargo Value ($)</label>
+                      <input
+                        type="number"
+                        value={portCargoValueUsd}
+                        onChange={(e) => setPortCargoValueUsd(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Average Tariff Rate (%)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={portAvgTariffPct}
+                        onChange={(e) => setPortAvgTariffPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Inverted Tariff Savings (%)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={portInvertedTariffPct}
+                        onChange={(e) => setPortInvertedTariffPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ground Base Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={portBaseRentAcre}
+                        onChange={(e) => setPortBaseRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Wharfage Fee ($/TEU)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={portWharfageTeu}
+                        onChange={(e) => setPortWharfageTeu(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Wharfage Royalty (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={portWharfageRoyaltyPct}
+                        onChange={(e) => setPortWharfageRoyaltyPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Intermodal Rail Split (%)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={portRailSplitPct}
+                        onChange={(e) => setPortRailSplitPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingPort && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Analyzing deepwater draft, 19 CFR Part 146 duty arbitrage, and terminal wharfage revenues...
+                    </div>
+                  )}
+
+                  {!loadingPort && portData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Port Authority Revenue</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${portData.total_annual_port_authority_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Base Rent: ${portData.annual_terminal_base_rent_usd.toLocaleString()} + Wharfage Royalty: ${portData.landlord_wharfage_royalty_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant FTZ Supply Chain Savings</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${portData.total_tenant_ftz_supply_chain_savings_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Duty Inversion: ${portData.inverted_tariff_duty_savings_usd.toLocaleString()} + MPF Cap: ${portData.customs_mpf_weekly_entry_savings_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Container Vessel Berthing</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            {portData.total_berthing_days} Days / yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Dockage Concession: ${portData.annual_dockage_fees_usd.toLocaleString()} (${portData.port_authority_dockage_share_usd.toLocaleString()} Landlord Share)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Intermodal Rail Throughput</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            {portData.rail_intermodal_teu.toLocaleString()} TEU
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {portData.rail_intermodal_split_pct}% Rail vs {portData.truck_gate_teu.toLocaleString()} Gate Drayage
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 19 CFR Part 146 & Port Maritime Compliance Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Customs 19 CFR Part 146 & Maritime Terminal Security Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Customs & Maritime Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Operational Parameter</th>
+                              <th style={{ padding: '8px 12px' }}>Economic / Velocity Benefit</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Compliance Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {portData.maritime_compliance_audit.map((audit: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{audit.regulation}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{audit.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--primary)', fontWeight: 600 }}>{audit.benefit}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: audit.status.includes('COMPLIANT') || audit.status.includes('ACTIVATED') || audit.status.includes('OPTIMIZED') || audit.status.includes('APPROVED') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: audit.status.includes('COMPLIANT') || audit.status.includes('ACTIVATED') || audit.status.includes('OPTIMIZED') || audit.status.includes('APPROVED') ? 'var(--success)' : 'var(--error)'
                                   }}>
                                     {audit.status.replace(/_/g, ' ')}
                                   </span>
