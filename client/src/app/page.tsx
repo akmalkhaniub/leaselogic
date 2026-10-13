@@ -511,8 +511,27 @@ export default function LeaseLogicApp() {
   const [abData, setAbData] = useState<any>(null);
   const [loadingAb, setLoadingAb] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery'>('abstract');
+  // Geothermal Ground-Source Heat Pump (GSHP) & Borefield Thermal Storage state
+  const [gshpBoreholes, setGshpBoreholes] = useState(64);
+  const [gshpDepthFt, setGshpDepthFt] = useState(500);
+  const [gshpSpacingFt, setGshpSpacingFt] = useState(20);
+  const [gshpThermalK, setGshpThermalK] = useState(1.45);
+  const [gshpHeatingMbtu, setGshpHeatingMbtu] = useState(1850);
+  const [gshpCoolingTonHours, setGshpCoolingTonHours] = useState(420000);
+  const [gshpCopHeating, setGshpCopHeating] = useState(4.2);
+  const [gshpEerCooling, setGshpEerCooling] = useState(18.5);
+  const [gshpElectricRate, setGshpElectricRate] = useState(0.145);
+  const [gshpGasRateTherm, setGshpGasRateTherm] = useState(1.25);
+  const [gshpDrillingCostFt, setGshpDrillingCostFt] = useState(28.0);
+  const [gshpMechCost, setGshpMechCost] = useState(380000);
+  const [gshpIraItcPct, setGshpIraItcPct] = useState(30.0);
+  const [gshpBuildingSqft, setGshpBuildingSqft] = useState(95000);
+  const [gshpTenantSqft, setGshpTenantSqft] = useState(35000);
+  const [gshpData, setGshpData] = useState<any>(null);
+  const [loadingGshp, setLoadingGshp] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp'>('abstract');
 
 
 
@@ -1712,6 +1731,43 @@ export default function LeaseLogicApp() {
       console.error('Error running abandonment recovery calculator:', err);
     } finally {
       setLoadingAb(false);
+    }
+  };
+
+  // Run Geothermal Ground-Source Heat Pump (GSHP) & Borefield Thermal Storage Modeler
+  const handleRunGeothermalGshp = async () => {
+    if (!selectedLease) return;
+    setLoadingGshp(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/geothermal-gshp-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          borehole_count: gshpBoreholes,
+          borehole_depth_ft: gshpDepthFt,
+          borehole_spacing_ft: gshpSpacingFt,
+          ground_thermal_conductivity: gshpThermalK,
+          annual_heating_mbtu: gshpHeatingMbtu,
+          annual_cooling_ton_hours: gshpCoolingTonHours,
+          heat_pump_cop_heating: gshpCopHeating,
+          heat_pump_eer_cooling: gshpEerCooling,
+          electricity_rate_kwh: gshpElectricRate,
+          natural_gas_rate_therm: gshpGasRateTherm,
+          capital_cost_per_borehole_ft: gshpDrillingCostFt,
+          heat_pump_mechanical_cost_usd: gshpMechCost,
+          ira_itc_tax_credit_pct: gshpIraItcPct,
+          building_gross_sqft: gshpBuildingSqft,
+          leased_tenant_sqft: gshpTenantSqft
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setGshpData(data);
+      }
+    } catch (err) {
+      console.error('Error running geothermal GSHP modeler:', err);
+    } finally {
+      setLoadingGshp(false);
     }
   };
 
@@ -5885,6 +5941,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'abandonment_recovery' ? 'active' : ''}`} onClick={() => { setActiveTab('abandonment_recovery'); handleRunAbandonmentRecovery(); }}>
                   🏢 Abandonment Recovery
+                </div>
+                <div className={`tab ${activeTab === 'geothermal_gshp' ? 'active' : ''}`} onClick={() => { setActiveTab('geothermal_gshp'); handleRunGeothermalGshp(); }}>
+                  🛰️ Geothermal GSHP
                 </div>
               </div>
 
@@ -12475,6 +12534,241 @@ export default function LeaseLogicApp() {
                               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{audit.rationale}</span>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'geothermal_gshp' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Header & Controls */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                        🛰️ Geothermal Ground-Source Heat Pump (GSHP) & Borefield Thermal Storage Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Simulate vertical borehole heat exchanger physics (COP 4.2 heating / EER 18 cooling), ground thermal balance drift, multi-tenant CAM BTU submetering, and IRA § 48 30% ITC tax credits.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunGeothermalGshp}
+                      disabled={loadingGshp}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingGshp ? 'Simulating Thermal Thermodynamics...' : '🛰️ Calculate Geothermal Economics'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Borehole Count</label>
+                      <input
+                        type="number"
+                        value={gshpBoreholes}
+                        onChange={(e) => setGshpBoreholes(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Borehole Depth (Ft)</label>
+                      <input
+                        type="number"
+                        value={gshpDepthFt}
+                        onChange={(e) => setGshpDepthFt(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual Heating (MBtu)</label>
+                      <input
+                        type="number"
+                        value={gshpHeatingMbtu}
+                        onChange={(e) => setGshpHeatingMbtu(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Cooling (Ton-Hours)</label>
+                      <input
+                        type="number"
+                        value={gshpCoolingTonHours}
+                        onChange={(e) => setGshpCoolingTonHours(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Heat Pump COP Heating</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={gshpCopHeating}
+                        onChange={(e) => setGshpCopHeating(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Heat Pump EER Cooling</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={gshpEerCooling}
+                        onChange={(e) => setGshpEerCooling(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Electric Rate ($/kWh)</label>
+                      <input
+                        type="number"
+                        step="0.005"
+                        value={gshpElectricRate}
+                        onChange={(e) => setGshpElectricRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Gas Rate ($/Therm)</label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        value={gshpGasRateTherm}
+                        onChange={(e) => setGshpGasRateTherm(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Drill Cost ($/Ft)</label>
+                      <input
+                        type="number"
+                        step="1.0"
+                        value={gshpDrillingCostFt}
+                        onChange={(e) => setGshpDrillingCostFt(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>IRA ITC Credit (%)</label>
+                      <input
+                        type="number"
+                        value={gshpIraItcPct}
+                        onChange={(e) => setGshpIraItcPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingGshp && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating vertical borefield heat rejection, ground thermal conductivity and 20-yr NPV...
+                    </div>
+                  )}
+
+                  {!loadingGshp && gshpData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Utility Savings</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            +${gshpData.annual_utility_savings_usd.toLocaleString()}/yr ({gshpData.energy_savings_pct}%)
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            GSHP: ${gshpData.annual_gshp_utility_cost_usd.toLocaleString()} vs Baseline: ${gshpData.total_baseline_utility_cost_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>IRA § 48 30% ITC Credit</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${gshpData.ira_itc_credit_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Net CapEx: ${gshpData.net_capital_investment_usd.toLocaleString()} (Gross: ${gshpData.gross_total_capex_usd.toLocaleString()})
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Decarbonization Abatement</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            -{gshpData.annual_co2e_abatement_tons} MT CO2e/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Clean building electrification compliance (Local Law 97 / Title 24)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Simple Payback & 20-Yr NPV</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: '#0ea5e9' }}>
+                            {gshpData.simple_payback_years} Yrs (${gshpData.twenty_year_npv_usd.toLocaleString()} NPV)
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {gshpData.total_borehole_footage_ft.toLocaleString()} Linear Ft (~{gshpData.average_tonnage_capacity} Tonnage Capacity)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 20-Year Thermal Ground Drift Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🌡️ 20-Year Borefield Thermal Storage & Ground Temperature Drift Projection
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Operational Horizon</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Ground Temp (°F)</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>COP Heating</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>EER Cooling</th>
+                              <th style={{ padding: '8px 12px' }}>Thermal Equilibrium Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {gshpData.thermal_drift_timeline.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>Year {item.year}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>
+                                  {item.ground_temp_f}°F
+                                </td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>
+                                  {item.cop_heating}
+                                </td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>
+                                  {item.eer_cooling}
+                                </td>
+                                <td style={{ padding: '10px 12px' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('OPTIMAL') || item.status.includes('STABLE') ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                                    color: item.status.includes('OPTIMAL') || item.status.includes('STABLE') ? 'var(--success)' : 'var(--warning)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Multi-Tenant Thermal CAM Submetering Summary */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant Thermal CAM Allocation</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${gshpData.tenant_annual_cam_thermal_recharge_usd.toLocaleString()}/yr ({gshpData.tenant_share_pct}% Pro-Rata Share)
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Direct submetered BTU allocation on {gshpData.leased_tenant_sqft.toLocaleString()} RSF of {gshpData.building_gross_sqft.toLocaleString()} total building RSF.</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant Net CAM Operational Savings</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--success)' }}>
+                            +${gshpData.tenant_annual_cam_savings_usd.toLocaleString()}/yr Lower CAM Recharge
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Tenant saves over traditional boiler/chiller CAM charges through geothermal efficiency.</span>
                         </div>
                       </div>
                     </div>
