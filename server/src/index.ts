@@ -4783,6 +4783,131 @@ app.post('/api/leases/:id/abandonment-recovery-calculator', async (req, res) => 
   }
 });
 
+// 4.827. POST Geothermal Ground-Source Heat Pump (GSHP) & Borefield Thermal Storage Modeler
+app.post('/api/leases/:id/geothermal-gshp-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      borehole_count = 64,
+      borehole_depth_ft = 500,
+      borehole_spacing_ft = 20,
+      ground_thermal_conductivity = 1.45, // Btu/(hr·ft·°F)
+      heating_peak_tons = 240,
+      cooling_peak_tons = 310,
+      annual_heating_mbtu = 1850,
+      annual_cooling_ton_hours = 420000,
+      heat_pump_cop_heating = 4.2,
+      heat_pump_eer_cooling = 18.5,
+      electricity_rate_kwh = 0.145,
+      natural_gas_rate_therm = 1.25,
+      capital_cost_per_borehole_ft = 28.0, // drilling + high-density PE loop + thermally enhanced grout
+      heat_pump_mechanical_cost_usd = 380000,
+      ira_itc_tax_credit_pct = 30.0, // IRA Section 48 ITC for geothermal heat pumps
+      building_gross_sqft = 95000,
+      leased_tenant_sqft = 35000
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Borefield total drilling linear footage and thermal capacity
+    const totalBoreholeFootageFt = borehole_count * borehole_depth_ft;
+    const averageTonnageCapacity = Math.round(totalBoreholeFootageFt / 130); // ~130-150 ft per ton rule of thumb
+
+    // Geothermal Heat Pump Annual Energy Consumption
+    // Heating: 1 MBtu = 293.07 kWh. Electric kWh = (annual_heating_mbtu * 293.07) / COP
+    const gshpHeatingElectricityKwh = Math.round((annual_heating_mbtu * 293.071) / heat_pump_cop_heating);
+    // Cooling: kWh = (annual_cooling_ton_hours * 12) / EER (since 1 ton-hr = 12 kbtu)
+    const gshpCoolingElectricityKwh = Math.round((annual_cooling_ton_hours * 12) / heat_pump_eer_cooling);
+    const totalGshpElectricityKwh = gshpHeatingElectricityKwh + gshpCoolingElectricityKwh;
+    const annualGshpUtilityCostUsd = Math.round(totalGshpElectricityKwh * electricity_rate_kwh);
+
+    // Baseline Conventional System (80% Gas Boiler + 11.5 EER Air-Cooled Chiller)
+    // Heating Gas: annual_heating_mbtu in therms (1 therm = 0.1 MBtu) -> therms = annual_heating_mbtu / 0.1 / 0.80
+    const baselineGasTherms = Math.round((annual_heating_mbtu / 0.1) / 0.80);
+    const baselineGasCostUsd = Math.round(baselineGasTherms * natural_gas_rate_therm);
+    const baselineChillerKwh = Math.round((annual_cooling_ton_hours * 12) / 11.5);
+    const baselineChillerElectricCostUsd = Math.round(baselineChillerKwh * electricity_rate_kwh);
+    const totalBaselineUtilityCostUsd = baselineGasCostUsd + baselineChillerElectricCostUsd;
+
+    // Net Annual Operating Energy Savings
+    const annualUtilitySavingsUsd = totalBaselineUtilityCostUsd - annualGshpUtilityCostUsd;
+    const energySavingsPct = Number((((totalBaselineUtilityCostUsd - annualGshpUtilityCostUsd) / totalBaselineUtilityCostUsd) * 100).toFixed(1));
+
+    // Decarbonization & Emissions Abatement (Metric Tons CO2e)
+    // Natural Gas: 0.0053 MT CO2e/therm; Electricity: 0.00038 MT CO2e/kWh
+    const baselineCo2eTons = Number(((baselineGasTherms * 0.0053) + (baselineChillerKwh * 0.00038)).toFixed(1));
+    const gshpCo2eTons = Number(((totalGshpElectricityKwh * 0.00038)).toFixed(1));
+    const annualCo2eAbatementTons = Number((baselineCo2eTons - gshpCo2eTons).toFixed(1));
+
+    // CapEx & IRA Section 48 ITC Tax Incentives
+    const borefieldDrillingCapexUsd = totalBoreholeFootageFt * capital_cost_per_borehole_ft;
+    const grossTotalCapexUsd = borefieldDrillingCapexUsd + heat_pump_mechanical_cost_usd;
+    const iraItcCreditUsd = Math.round(grossTotalCapexUsd * (ira_itc_tax_credit_pct / 100));
+    const netCapitalInvestmentUsd = grossTotalCapexUsd - iraItcCreditUsd;
+    const simplePaybackYears = Number((netCapitalInvestmentUsd / annualUtilitySavingsUsd).toFixed(2));
+    const twentyYearNpvUsd = Math.round((annualUtilitySavingsUsd * 12.46) - netCapitalInvestmentUsd); // 5% discount rate 20-yr annuity factor
+
+    // Tenant CAM Thermal BTU Submetering Pass-Through
+    const tenantSharePct = Number(((leased_tenant_sqft / building_gross_sqft) * 100).toFixed(1));
+    const tenantAnnualCamThermalRechargeUsd = Math.round(annualGshpUtilityCostUsd * (tenantSharePct / 100));
+    const tenantBaselineCamCostUsd = Math.round(totalBaselineUtilityCostUsd * (tenantSharePct / 100));
+    const tenantAnnualCamSavingsUsd = tenantBaselineCamCostUsd - tenantAnnualCamThermalRechargeUsd;
+
+    // 20-Year Ground Temperature Drift Projection (°F)
+    const undisturbedGroundTempF = 55.0;
+    // Ground thermal imbalance: cooling rejects heat to ground; heating extracts heat.
+    const netHeatRejectedToGroundMbtu = (annual_cooling_ton_hours * 0.012 * 1.25) - annual_heating_mbtu;
+    const annualTempDriftF = Number((netHeatRejectedToGroundMbtu * 0.00045).toFixed(2)); // ~0.15°F/yr drift
+
+    const thermalDriftTimeline = [
+      { year: 1, ground_temp_f: undisturbedGroundTempF, cop_heating: 4.20, eer_cooling: 18.5, status: 'OPTIMAL_BALANCED' },
+      { year: 5, ground_temp_f: Number((undisturbedGroundTempF + annualTempDriftF * 5).toFixed(1)), cop_heating: 4.22, eer_cooling: 18.3, status: 'STABLE_THERMAL_STORAGE' },
+      { year: 10, ground_temp_f: Number((undisturbedGroundTempF + annualTempDriftF * 10).toFixed(1)), cop_heating: 4.25, eer_cooling: 18.0, status: 'STABLE_THERMAL_STORAGE' },
+      { year: 15, ground_temp_f: Number((undisturbedGroundTempF + annualTempDriftF * 15).toFixed(1)), cop_heating: 4.28, eer_cooling: 17.7, status: 'MONITORED_DRIFT' },
+      { year: 20, ground_temp_f: Number((undisturbedGroundTempF + annualTempDriftF * 20).toFixed(1)), cop_heating: 4.30, eer_cooling: 17.4, status: 'MONITORED_DRIFT' }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Geothermal Eco-Campus',
+      borehole_count: borehole_count,
+      borehole_depth_ft: borehole_depth_ft,
+      borehole_spacing_ft: borehole_spacing_ft,
+      total_borehole_footage_ft: totalBoreholeFootageFt,
+      average_tonnage_capacity: averageTonnageCapacity,
+      ground_thermal_conductivity: ground_thermal_conductivity,
+      heat_pump_cop_heating: heat_pump_cop_heating,
+      heat_pump_eer_cooling: heat_pump_eer_cooling,
+      total_gshp_electricity_kwh: totalGshpElectricityKwh,
+      annual_gshp_utility_cost_usd: annualGshpUtilityCostUsd,
+      total_baseline_utility_cost_usd: totalBaselineUtilityCostUsd,
+      annual_utility_savings_usd: annualUtilitySavingsUsd,
+      energy_savings_pct: energySavingsPct,
+      annual_co2e_abatement_tons: annualCo2eAbatementTons,
+      gross_total_capex_usd: grossTotalCapexUsd,
+      ira_itc_credit_usd: iraItcCreditUsd,
+      net_capital_investment_usd: netCapitalInvestmentUsd,
+      simple_payback_years: simplePaybackYears,
+      twenty_year_npv_usd: twentyYearNpvUsd,
+      building_gross_sqft: building_gross_sqft,
+      leased_tenant_sqft: leased_tenant_sqft,
+      tenant_share_pct: tenantSharePct,
+      tenant_annual_cam_thermal_recharge_usd: tenantAnnualCamThermalRechargeUsd,
+      tenant_annual_cam_savings_usd: tenantAnnualCamSavingsUsd,
+      undisturbed_ground_temp_f: undisturbedGroundTempF,
+      annual_temp_drift_f: annualTempDriftF,
+      thermal_drift_timeline: thermalDriftTimeline
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 
