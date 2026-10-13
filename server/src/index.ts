@@ -4908,6 +4908,118 @@ app.post('/api/leases/:id/geothermal-gshp-modeler', async (req, res) => {
   }
 });
 
+// 4.828. POST Condemnation & Eminent Domain Partial Taking Compensation Calculator
+app.post('/api/leases/:id/condemnation-taking-calculator', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      pre_taking_property_value_usd = 18500000,
+      total_site_acreage = 6.5,
+      condemned_land_acreage = 0.85,
+      condemned_land_value_acre_usd = 850000,
+      destroyed_improvements_value_usd = 220000, // landscaping, curb cuts, perimeter lighting, monument sign
+      post_taking_remainder_value_usd = 15400000,
+      building_gross_sqft = 75000,
+      leased_tenant_sqft = 25000,
+      monthly_contract_rent_usd = 68750,
+      pre_taking_parking_stalls = 320,
+      lost_parking_stalls = 68,
+      zoning_minimum_parking_ratio = 4.0, // stalls per 1,000 SF (requires 300 stalls)
+      lease_condemnation_clause_type = 'LANDLORD_BONUS_CLAUSE', // 'LANDLORD_BONUS_CLAUSE' | 'SEPARATE_TENANT_CLAIM_RESERVED'
+      tenant_unamortized_ti_value_usd = 340000,
+      statutory_relocation_allowance_usd = 85000
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Direct Taking Compensation (Part Taken)
+    const directLandTakingAwardUsd = Math.round(condemned_land_acreage * condemned_land_value_acre_usd);
+    const directTotalTakingAwardUsd = directLandTakingAwardUsd + destroyed_improvements_value_usd;
+
+    // Before-and-After Appraisal Method Severance Damages
+    // Total Loss = Pre-Taking Value - Post-Taking Remainder Value
+    const totalDiminutionInValueUsd = pre_taking_property_value_usd - post_taking_remainder_value_usd;
+    // Severance Damages to remainder = Total Loss - Direct Taking
+    const severanceDamagesToRemainderUsd = Math.max(0, totalDiminutionInValueUsd - directTotalTakingAwardUsd);
+    const totalCondemnationAwardUsd = directTotalTakingAwardUsd + severanceDamagesToRemainderUsd;
+
+    // Zoning Parking & Site Compliance Impact
+    const postTakingParkingStalls = pre_taking_parking_stalls - lost_parking_stalls;
+    const requiredParkingStalls = Math.round((building_gross_sqft / 1000) * zoning_minimum_parking_ratio);
+    const postTakingParkingRatio = Number(((postTakingParkingStalls / (building_gross_sqft / 1000))).toFixed(2));
+    const isZoningCompliant = postTakingParkingStalls >= requiredParkingStalls;
+    const parkingDeficitStalls = Math.max(0, requiredParkingStalls - postTakingParkingStalls);
+
+    // Lease Termination Trigger Evaluation
+    const acreageLostPct = Number(((condemned_land_acreage / total_site_acreage) * 100).toFixed(1));
+    const parkingLostPct = Number(((lost_parking_stalls / pre_taking_parking_stalls) * 100).toFixed(1));
+    const hasTenantTerminationRight = parkingLostPct >= 20.0 || !isZoningCompliant;
+
+    // Pro-Rata Rent Abatement Schedule (if tenant elects to remain)
+    // Abatement is proportional to parking and utility reduction (typically 50% of parking loss ratio)
+    const contractualRentAbatementPct = Number((parkingLostPct * 0.65).toFixed(1));
+    const monthlyRentAbatementUsd = Math.round(monthly_contract_rent_usd * (contractualRentAbatementPct / 100));
+    const adjustedMonthlyRentUsd = monthly_contract_rent_usd - monthlyRentAbatementUsd;
+    const annualRentReductionUsd = monthlyRentAbatementUsd * 12;
+
+    // Award Apportionment Waterfall (Landlord vs Tenant)
+    let landlordAwardShareUsd = totalCondemnationAwardUsd;
+    let tenantAwardShareUsd = 0;
+
+    if (lease_condemnation_clause_type === 'SEPARATE_TENANT_CLAIM_RESERVED') {
+      // Tenant captures unamortized TI + statutory relocation assistance directly
+      tenantAwardShareUsd = Math.min(tenant_unamortized_ti_value_usd, severanceDamagesToRemainderUsd) + statutory_relocation_allowance_usd;
+      landlordAwardShareUsd = totalCondemnationAwardUsd - tenantAwardShareUsd;
+    } else {
+      // Standard waiver of eminent domain: landlord captures 100% of taking and severance award,
+      // but tenant retains non-competing independent claim against condemning authority for relocation expenses
+      tenantAwardShareUsd = statutory_relocation_allowance_usd;
+    }
+
+    const awardApportionmentWaterfall = [
+      { party: 'Landlord / Fee Owner', category: 'Fee Simple Land & Improvement Value', amount_usd: directTotalTakingAwardUsd, share_pct: Number(((directTotalTakingAwardUsd / totalCondemnationAwardUsd) * 100).toFixed(1)) },
+      { party: 'Landlord / Fee Owner', category: 'Remainder Severance & Ingress Damage', amount_usd: landlordAwardShareUsd - directTotalTakingAwardUsd, share_pct: Number((((landlordAwardShareUsd - directTotalTakingAwardUsd) / totalCondemnationAwardUsd) * 100).toFixed(1)) },
+      { party: 'Commercial Tenant', category: 'Unamortized Fixtures & Relocation Assistance', amount_usd: tenantAwardShareUsd, share_pct: Number(((tenantAwardShareUsd / (totalCondemnationAwardUsd + statutory_relocation_allowance_usd)) * 100).toFixed(1)) }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Commercial Corridor Shopping Center',
+      pre_taking_property_value_usd: pre_taking_property_value_usd,
+      post_taking_remainder_value_usd: post_taking_remainder_value_usd,
+      total_diminution_in_value_usd: totalDiminutionInValueUsd,
+      direct_land_taking_award_usd: directLandTakingAwardUsd,
+      destroyed_improvements_value_usd: destroyed_improvements_value_usd,
+      direct_total_taking_award_usd: directTotalTakingAwardUsd,
+      severance_damages_to_remainder_usd: severanceDamagesToRemainderUsd,
+      total_condemnation_award_usd: totalCondemnationAwardUsd,
+      acreage_lost_pct: acreageLostPct,
+      parking_lost_pct: parkingLostPct,
+      post_taking_parking_stalls: postTakingParkingStalls,
+      required_parking_stalls: requiredParkingStalls,
+      post_taking_parking_ratio: postTakingParkingRatio,
+      is_zoning_compliant: isZoningCompliant,
+      parking_deficit_stalls: parkingDeficitStalls,
+      has_tenant_termination_right: hasTenantTerminationRight,
+      contractual_rent_abatement_pct: contractualRentAbatementPct,
+      monthly_rent_abatement_usd: monthlyRentAbatementUsd,
+      adjusted_monthly_rent_usd: adjustedMonthlyRentUsd,
+      annual_rent_reduction_usd: annualRentReductionUsd,
+      landlord_award_share_usd: landlordAwardShareUsd,
+      tenant_award_share_usd: tenantAwardShareUsd,
+      lease_condemnation_clause_type: lease_condemnation_clause_type,
+      award_apportionment_waterfall: awardApportionmentWaterfall
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 
