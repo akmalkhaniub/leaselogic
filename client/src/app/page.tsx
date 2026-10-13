@@ -530,8 +530,25 @@ export default function LeaseLogicApp() {
   const [gshpData, setGshpData] = useState<any>(null);
   const [loadingGshp, setLoadingGshp] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp'>('abstract');
+  // Condemnation & Eminent Domain Partial Taking Compensation state
+  const [condPreValue, setCondPreValue] = useState(18500000);
+  const [condTotalAcreage, setCondTotalAcreage] = useState(6.5);
+  const [condCondemnedAcreage, setCondCondemnedAcreage] = useState(0.85);
+  const [condLandValueAcre, setCondLandValueAcre] = useState(850000);
+  const [condDestroyedImprovements, setCondDestroyedImprovements] = useState(220000);
+  const [condPostRemainderValue, setCondPostRemainderValue] = useState(15400000);
+  const [condMonthlyRent, setCondMonthlyRent] = useState(68750);
+  const [condPreParking, setCondPreParking] = useState(320);
+  const [condLostParking, setCondLostParking] = useState(68);
+  const [condZoningMinRatio, setCondZoningMinRatio] = useState(4.0);
+  const [condClauseType, setCondClauseType] = useState('LANDLORD_BONUS_CLAUSE');
+  const [condTenantTi, setCondTenantTi] = useState(340000);
+  const [condRelocation, setCondRelocation] = useState(85000);
+  const [condData, setCondData] = useState<any>(null);
+  const [loadingCond, setLoadingCond] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking'>('abstract');
 
 
 
@@ -1768,6 +1785,41 @@ export default function LeaseLogicApp() {
       console.error('Error running geothermal GSHP modeler:', err);
     } finally {
       setLoadingGshp(false);
+    }
+  };
+
+  // Run Condemnation & Eminent Domain Partial Taking Compensation Calculator
+  const handleRunCondemnationTaking = async () => {
+    if (!selectedLease) return;
+    setLoadingCond(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/condemnation-taking-calculator`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pre_taking_property_value_usd: condPreValue,
+          total_site_acreage: condTotalAcreage,
+          condemned_land_acreage: condCondemnedAcreage,
+          condemned_land_value_acre_usd: condLandValueAcre,
+          destroyed_improvements_value_usd: condDestroyedImprovements,
+          post_taking_remainder_value_usd: condPostRemainderValue,
+          monthly_contract_rent_usd: condMonthlyRent,
+          pre_taking_parking_stalls: condPreParking,
+          lost_parking_stalls: condLostParking,
+          zoning_minimum_parking_ratio: condZoningMinRatio,
+          lease_condemnation_clause_type: condClauseType,
+          tenant_unamortized_ti_value_usd: condTenantTi,
+          statutory_relocation_allowance_usd: condRelocation
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCondData(data);
+      }
+    } catch (err) {
+      console.error('Error running condemnation taking calculator:', err);
+    } finally {
+      setLoadingCond(false);
     }
   };
 
@@ -5944,6 +5996,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'geothermal_gshp' ? 'active' : ''}`} onClick={() => { setActiveTab('geothermal_gshp'); handleRunGeothermalGshp(); }}>
                   🛰️ Geothermal GSHP
+                </div>
+                <div className={`tab ${activeTab === 'condemnation_taking' ? 'active' : ''}`} onClick={() => { setActiveTab('condemnation_taking'); handleRunCondemnationTaking(); }}>
+                  ⚖️ Condemnation & Taking
                 </div>
               </div>
 
@@ -12769,6 +12824,216 @@ export default function LeaseLogicApp() {
                             +${gshpData.tenant_annual_cam_savings_usd.toLocaleString()}/yr Lower CAM Recharge
                           </h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Tenant saves over traditional boiler/chiller CAM charges through geothermal efficiency.</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'condemnation_taking' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Header & Controls */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                        ⚖️ Condemnation & Eminent Domain Partial Taking Compensation Calculator
+                      </h3>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        Compute Before-and-After appraisal values, remainder parcel severance damages, zoning parking ratio non-conformity, contractual rent abatements, and judicial award apportionment waterfalls.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunCondemnationTaking}
+                      disabled={loadingCond}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingCond ? 'Calculating Eminent Domain Award...' : '⚖️ Compute Condemnation Award'}
+                    </button>
+                  </div>
+
+                  {/* Parameter Controls */}
+                  <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Pre-Taking Value ($)</label>
+                      <input
+                        type="number"
+                        value={condPreValue}
+                        onChange={(e) => setCondPreValue(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Total Acreage (Ac)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={condTotalAcreage}
+                        onChange={(e) => setCondTotalAcreage(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Condemned Land (Ac)</label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        value={condCondemnedAcreage}
+                        onChange={(e) => setCondCondemnedAcreage(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Land Value ($/Ac)</label>
+                      <input
+                        type="number"
+                        value={condLandValueAcre}
+                        onChange={(e) => setCondLandValueAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Post Remainder Value ($)</label>
+                      <input
+                        type="number"
+                        value={condPostRemainderValue}
+                        onChange={(e) => setCondPostRemainderValue(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Monthly Rent ($)</label>
+                      <input
+                        type="number"
+                        value={condMonthlyRent}
+                        onChange={(e) => setCondMonthlyRent(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Pre-Taking Stalls</label>
+                      <input
+                        type="number"
+                        value={condPreParking}
+                        onChange={(e) => setCondPreParking(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Lost Stalls</label>
+                      <input
+                        type="number"
+                        value={condLostParking}
+                        onChange={(e) => setCondLostParking(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Clause Type</label>
+                      <select
+                        value={condClauseType}
+                        onChange={(e) => setCondClauseType(e.target.value)}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      >
+                        <option value="LANDLORD_BONUS_CLAUSE">Landlord 100% Condemnation Award Bonus</option>
+                        <option value="SEPARATE_TENANT_CLAIM_RESERVED">Tenant Trade Fixtures Claim Reserved</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {loadingCond && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating before-and-after appraisals, severance damages, and zoning parking ratio...
+                    </div>
+                  )}
+
+                  {!loadingCond && condData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Top Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Condemnation Award</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${condData.total_condemnation_award_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Direct Taking: ${condData.direct_total_taking_award_usd.toLocaleString()} | Severance: ${condData.severance_damages_to_remainder_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Zoning Parking Compliance</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: condData.is_zoning_compliant ? 'var(--success)' : 'var(--error)' }}>
+                            {condData.post_taking_parking_ratio} / 1k SF ({condData.is_zoning_compliant ? 'COMPLIANT' : 'NON-CONFORMING'})
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Lost {condData.parking_lost_pct}% of parking stalls ({condData.post_taking_parking_stalls} remaining vs {condData.required_parking_stalls} code min)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Monthly Rent Abatement</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            -${condData.monthly_rent_abatement_usd.toLocaleString()}/mo (-{condData.contractual_rent_abatement_pct}%)
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Adjusted Rent: ${condData.adjusted_monthly_rent_usd.toLocaleString()}/mo (-${condData.annual_rent_reduction_usd.toLocaleString()}/yr)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant Termination Right</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: condData.has_tenant_termination_right ? 'var(--warning)' : 'var(--foreground)' }}>
+                            {condData.has_tenant_termination_right ? '⚡ OPTION TRIGGERED' : 'NO CANCELLATION RIGHT'}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {condData.has_tenant_termination_right ? 'Parking loss exceeds 20% / site non-conforming' : 'Loss below contractual termination threshold'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Award Apportionment Waterfall Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🏛️ Judicial Condemnation Award Apportionment Waterfall
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Beneficiary / Claimant</th>
+                              <th style={{ padding: '8px 12px' }}>Damage Category</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Apportioned Award ($)</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Award Share (%)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {condData.award_apportionment_waterfall.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.party}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.category}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--foreground)' }}>
+                                  ${item.amount_usd.toLocaleString()}
+                                </td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--primary)' }}>
+                                  {item.share_pct}%
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Landlord vs Tenant Distribution Summary */}
+                      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Landlord Net Recovery</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${condData.landlord_award_share_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Captures 100% fee simple taking and remaining parcel severance damages under lease WEC clause.</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant Independent Recovery</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${condData.tenant_award_share_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Statutory relocation assistance and unamortized trade fixtures award.</span>
                         </div>
                       </div>
                     </div>
