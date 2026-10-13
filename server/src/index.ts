@@ -5129,6 +5129,308 @@ app.post('/api/leases/:id/vertiport-aam-modeler', async (req, res) => {
 
 
 
+// 4.830. POST Agri-Solar / Agrivoltaics & Dual-Use Rural Ground Lease Modeler
+app.post('/api/leases/:id/agrivoltaics-ground-lease', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      total_acreage = 250,
+      solar_footprint_acres = 180,
+      agricultural_co_use_acres = 150,
+      co_use_type = 'sheep_solar_grazing', // 'sheep_solar_grazing' | 'pollinator_apiary' | 'shade_tolerant_crops' | 'hay_forage_production'
+      dc_system_capacity_mw = 45,
+      solar_base_rent_per_acre_year = 1400,
+      solar_escalation_rate_pct = 2.5,
+      ag_co_use_rent_per_acre_year = 120,
+      solar_gross_revenue_share_pct = 1.75,
+      estimated_annual_generation_mwh = 85000,
+      ppa_power_price_per_mwh = 48.5,
+      decommissioning_bond_per_mw = 25000,
+      ag_tax_exemption_status = 'full_preservation', // 'full_preservation' | 'partial_clawback' | 'complete_rollback'
+      annual_rollback_tax_exposure_usd = 45000,
+      lease_term_years = 30,
+      discount_rate_pct = 6.5,
+      baseline_traditional_ag_rent_acre_usd = 150
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Year 1 Solar & Agricultural Cash Flows
+    const year1SolarBaseRentUsd = Math.round(solar_footprint_acres * solar_base_rent_per_acre_year);
+    const year1AgCoUseRentUsd = Math.round(agricultural_co_use_acres * ag_co_use_rent_per_acre_year);
+    const annualGrossPowerSalesUsd = Math.round(estimated_annual_generation_mwh * ppa_power_price_per_mwh);
+    const year1SolarRoyaltyUsd = Math.round(annualGrossPowerSalesUsd * (solar_gross_revenue_share_pct / 100));
+    const year1GrossLandownerIncomeUsd = year1SolarBaseRentUsd + year1AgCoUseRentUsd + year1SolarRoyaltyUsd;
+
+    // Traditional Ag Baseline Comparison
+    const baselineTraditionalAgIncomeUsd = Math.round(total_acreage * baseline_traditional_ag_rent_acre_usd);
+    const year1NetIncomePremiumUsd = year1GrossLandownerIncomeUsd - baselineTraditionalAgIncomeUsd;
+    const incomeUpliftMultiplier = Number((year1GrossLandownerIncomeUsd / (baselineTraditionalAgIncomeUsd || 1)).toFixed(2));
+
+    // Property Tax / Statutory Ag Exemption Assessment
+    let rollbackTaxPenaltyUsd = 0;
+    let netPreservedAgSavingsUsd = annual_rollback_tax_exposure_usd;
+    if (ag_tax_exemption_status === 'partial_clawback') {
+      rollbackTaxPenaltyUsd = Math.round(annual_rollback_tax_exposure_usd * (solar_footprint_acres / total_acreage));
+      netPreservedAgSavingsUsd = annual_rollback_tax_exposure_usd - rollbackTaxPenaltyUsd;
+    } else if (ag_tax_exemption_status === 'complete_rollback') {
+      rollbackTaxPenaltyUsd = annual_rollback_tax_exposure_usd;
+      netPreservedAgSavingsUsd = 0;
+    }
+
+    const netLandownerIncomeAfterTaxesUsd = year1GrossLandownerIncomeUsd - rollbackTaxPenaltyUsd;
+
+    // Decommissioning Security & Escrow Reserve
+    const totalDecommissioningBondUsd = Math.round(dc_system_capacity_mw * decommissioning_bond_per_mw);
+    const annualEscrowFundingPerYearUsd = Math.round(totalDecommissioningBondUsd / 5); // Funded Yr 15-20
+
+    // Multi-Year Cash Flow Projection & 30-Year NPV
+    const cashFlowSchedule: Array<{
+      year: number;
+      solar_base_rent_usd: number;
+      ag_co_use_rent_usd: number;
+      solar_royalty_usd: number;
+      total_gross_cash_flow_usd: number;
+      net_after_tax_cash_flow_usd: number;
+      pv_discounted_cash_flow_usd: number;
+    }> = [];
+
+    let cumulativeTotalCashFlowUsd = 0;
+    let npvCumulativeCashFlowUsd = 0;
+
+    for (let yr = 1; yr <= lease_term_years; yr++) {
+      const solarRent = Math.round(year1SolarBaseRentUsd * Math.pow(1 + solar_escalation_rate_pct / 100, yr - 1));
+      // Ag rent escalates at 1.5% inflation
+      const agRent = Math.round(year1AgCoUseRentUsd * Math.pow(1.015, yr - 1));
+      // Solar output degrades 0.5% annually
+      const degFactor = Math.pow(1 - 0.005, yr - 1);
+      const royalty = Math.round(year1SolarRoyaltyUsd * degFactor);
+      const grossFlow = solarRent + agRent + royalty;
+      const netFlow = grossFlow - rollbackTaxPenaltyUsd;
+      const discountFactor = 1 / Math.pow(1 + discount_rate_pct / 100, yr);
+      const pvFlow = Math.round(netFlow * discountFactor);
+
+      cumulativeTotalCashFlowUsd += netFlow;
+      npvCumulativeCashFlowUsd += pvFlow;
+
+      if (yr <= 5 || yr === 10 || yr === 15 || yr === 20 || yr === 25 || yr === lease_term_years) {
+        cashFlowSchedule.push({
+          year: yr,
+          solar_base_rent_usd: solarRent,
+          ag_co_use_rent_usd: agRent,
+          solar_royalty_usd: royalty,
+          total_gross_cash_flow_usd: grossFlow,
+          net_after_tax_cash_flow_usd: netFlow,
+          pv_discounted_cash_flow_usd: pvFlow
+        });
+      }
+    }
+
+    // Co-Use Synergies & Compliance Audit
+    const agrivoltaicsSynergyAudit = [
+      {
+        metric: 'Vegetation Management O&M Savings',
+        impact: `Co-grazing eliminates mechanical mowing across ${agricultural_co_use_acres} acres`,
+        financial_benefit: `~$${Math.round(agricultural_co_use_acres * 380).toLocaleString()}/yr solar O&M savings`,
+        status: 'VERIFIED_ACTIVE'
+      },
+      {
+        metric: 'PV Microclimate Cooling Effect',
+        impact: 'Crop evapotranspiration lowers panel ambient heat by 2.2°C - 3.1°C',
+        financial_benefit: '+1.3% annual MWh yield increase',
+        status: 'THERMALLY_OPTIMIZED'
+      },
+      {
+        metric: 'Statutory Ag Assessment Status',
+        impact: `Dual-Use Co-Location: ${ag_tax_exemption_status.toUpperCase()}`,
+        financial_benefit: netPreservedAgSavingsUsd > 0 ? `$${netPreservedAgSavingsUsd.toLocaleString()}/yr tax sheltered` : 'Rollback penalty incurred',
+        status: ag_tax_exemption_status === 'full_preservation' ? 'EXEMPTION_PRESERVED' : 'PARTIAL_PENALTY'
+      },
+      {
+        metric: 'Decommissioning Surety Bond Escrow',
+        impact: `$${totalDecommissioningBondUsd.toLocaleString()} asset removal liability funded starting Yr 15`,
+        financial_benefit: `Fully indemnified decommissioning bond ($${decommissioning_bond_per_mw.toLocaleString()}/MW)`,
+        status: 'BOND_POSTED'
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'SunCrest Agricultural Solar Reserve',
+      total_acreage: total_acreage,
+      solar_footprint_acres: solar_footprint_acres,
+      agricultural_co_use_acres: agricultural_co_use_acres,
+      co_use_type: co_use_type,
+      dc_system_capacity_mw: dc_system_capacity_mw,
+      solar_base_rent_per_acre_year: solar_base_rent_per_acre_year,
+      solar_escalation_rate_pct: solar_escalation_rate_pct,
+      ag_co_use_rent_per_acre_year: ag_co_use_rent_per_acre_year,
+      solar_gross_revenue_share_pct: solar_gross_revenue_share_pct,
+      estimated_annual_generation_mwh: estimated_annual_generation_mwh,
+      ppa_power_price_per_mwh: ppa_power_price_per_mwh,
+      year1_solar_base_rent_usd: year1SolarBaseRentUsd,
+      year1_ag_co_use_rent_usd: year1AgCoUseRentUsd,
+      annual_gross_power_sales_usd: annualGrossPowerSalesUsd,
+      year1_solar_royalty_usd: year1SolarRoyaltyUsd,
+      year1_gross_landowner_income_usd: year1GrossLandownerIncomeUsd,
+      baseline_traditional_ag_income_usd: baselineTraditionalAgIncomeUsd,
+      year1_net_income_premium_usd: year1NetIncomePremiumUsd,
+      income_uplift_multiplier: incomeUpliftMultiplier,
+      ag_tax_exemption_status: ag_tax_exemption_status,
+      rollback_tax_penalty_usd: rollbackTaxPenaltyUsd,
+      net_preserved_ag_savings_usd: netPreservedAgSavingsUsd,
+      net_landowner_income_after_taxes_usd: netLandownerIncomeAfterTaxesUsd,
+      total_decommissioning_bond_usd: totalDecommissioningBondUsd,
+      annual_escrow_funding_per_year_usd: annualEscrowFundingPerYearUsd,
+      lease_term_years: lease_term_years,
+      discount_rate_pct: discount_rate_pct,
+      cumulative_total_cash_flow_usd: cumulativeTotalCashFlowUsd,
+      npv_cumulative_cash_flow_usd: npvCumulativeCashFlowUsd,
+      cash_flow_schedule: cashFlowSchedule,
+      agrivoltaics_synergy_audit: agrivoltaicsSynergyAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.831. POST Port Maritime Logistics & Foreign-Trade Zone (FTZ) Subzone Lease Modeler
+app.post('/api/leases/:id/port-ftz-logistics', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      terminal_dock_length_ft = 1200,
+      container_yard_acres = 45,
+      berth_depth_draft_ft = 48,
+      annual_teu_throughput = 240000,
+      ftz_subzone_status = 'ACTIVE_OPERATING_SUBZONE', // 'ACTIVE_OPERATING_SUBZONE' | 'PENDING_BOARD_APPROVAL' | 'GENERAL_PURPOSE_ZONE'
+      dutiable_cargo_value_usd = 420000000,
+      average_tariff_rate_pct = 6.8,
+      inverted_tariff_savings_pct = 3.2,
+      customs_mpf_weekly_entry_savings_usd = 285000,
+      wharfage_rate_per_teu_usd = 42.50,
+      dockage_daily_rate_per_ft_usd = 14.25,
+      annual_vessel_calls = 110,
+      average_vessel_stay_hours = 36,
+      rail_intermodal_split_pct = 35.0,
+      ground_lease_base_rent_acre_usd = 65000,
+      landlord_wharfage_royalty_pct = 12.5
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Terminal Ground Lease Base Rent
+    const annualTerminalBaseRentUsd = Math.round(container_yard_acres * ground_lease_base_rent_acre_usd);
+    const monthlyTerminalBaseRentUsd = Math.round(annualTerminalBaseRentUsd / 12);
+
+    // Berth & Vessel Dockage Revenue
+    const totalBerthingDays = (annual_vessel_calls * average_vessel_stay_hours) / 24;
+    const annualDockageFeesUsd = Math.round(terminal_dock_length_ft * dockage_daily_rate_per_ft_usd * totalBerthingDays);
+
+    // Cargo Wharfage & Royalty Operations
+    const annualGrossWharfageRevenueUsd = Math.round(annual_teu_throughput * wharfage_rate_per_teu_usd);
+    const landlordWharfageRoyaltyUsd = Math.round(annualGrossWharfageRevenueUsd * (landlord_wharfage_royalty_pct / 100));
+
+    // Port Authority / Master Landlord Consolidated Revenue
+    const portAuthorityDockageShareUsd = Math.round(annualDockageFeesUsd * 0.15); // 15% concession dockage share
+    const totalAnnualPortAuthorityRevenueUsd = annualTerminalBaseRentUsd + landlordWharfageRoyaltyUsd + portAuthorityDockageShareUsd;
+
+    // FTZ Subzone Duty Arbitrage & Economic Benefit (19 CFR Part 146)
+    const standardDutiableTariffUsd = Math.round(dutiable_cargo_value_usd * (average_tariff_rate_pct / 100));
+    let invertedTariffDutySavingsUsd = 0;
+    let dutyDeferralWorkingCapitalUsd = 0;
+    let netMpfWeeklySavingsUsd = 0;
+
+    if (ftz_subzone_status === 'ACTIVE_OPERATING_SUBZONE') {
+      invertedTariffDutySavingsUsd = Math.round(dutiable_cargo_value_usd * (inverted_tariff_savings_pct / 100));
+      dutyDeferralWorkingCapitalUsd = Math.round(standardDutiableTariffUsd * 0.055); // 5.5% cost of capital on inventory hold
+      netMpfWeeklySavingsUsd = customs_mpf_weekly_entry_savings_usd;
+    } else if (ftz_subzone_status === 'GENERAL_PURPOSE_ZONE') {
+      // General purpose zone captures deferral & MPF, but not inverted manufacturing tariff
+      invertedTariffDutySavingsUsd = 0;
+      dutyDeferralWorkingCapitalUsd = Math.round(standardDutiableTariffUsd * 0.055);
+      netMpfWeeklySavingsUsd = customs_mpf_weekly_entry_savings_usd;
+    }
+
+    const totalTenantFtzSupplyChainSavingsUsd = invertedTariffDutySavingsUsd + dutyDeferralWorkingCapitalUsd + netMpfWeeklySavingsUsd;
+
+    // Intermodal Rail & Dwell Efficiency
+    const railIntermodalTeu = Math.round(annual_teu_throughput * (rail_intermodal_split_pct / 100));
+    const truckGateTeu = annual_teu_throughput - railIntermodalTeu;
+
+    // Port Marine & Customs Compliance Audit
+    const maritimeComplianceAudit = [
+      {
+        regulation: '19 CFR Part 146 FTZ Subzone Bonded Perimeter',
+        metric: `Status: ${ftz_subzone_status}`,
+        benefit: totalTenantFtzSupplyChainSavingsUsd > 0 ? `$${totalTenantFtzSupplyChainSavingsUsd.toLocaleString()}/yr tariff & MPF savings` : 'Subzone pending activation',
+        status: ftz_subzone_status === 'ACTIVE_OPERATING_SUBZONE' ? 'FTZ_OPERATIONAL_ACTIVATED' : 'APPLICATION_PENDING'
+      },
+      {
+        regulation: 'Post-Panamax Deepwater Berth Clearance',
+        metric: `${berth_depth_draft_ft} ft draft (min 45 ft required)`,
+        benefit: 'Supports 14,000+ TEU container vessel calls',
+        status: berth_depth_draft_ft >= 45 ? 'DEEPWATER_COMPLIANT' : 'DREDGING_REQUIRED'
+      },
+      {
+        regulation: 'On-Dock Intermodal Rail Velocity',
+        metric: `${rail_intermodal_split_pct}% rail split (${railIntermodalTeu.toLocaleString()} TEU/yr)`,
+        benefit: 'Reduces highway drayage congestion and Scope 3 transport carbon emissions',
+        status: 'INTERMODAL_OPTIMIZED'
+      },
+      {
+        regulation: 'CBP Form 214 & Weekly Entry Filing',
+        metric: `Capped MPF Weekly Entries ($614/entry max)`,
+        benefit: `$${netMpfWeeklySavingsUsd.toLocaleString()}/yr customs broker processing savings`,
+        status: 'WEEKLY_ENTRY_APPROVED'
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Deepwater Marine Gateway Terminal',
+      terminal_dock_length_ft: terminal_dock_length_ft,
+      container_yard_acres: container_yard_acres,
+      berth_depth_draft_ft: berth_depth_draft_ft,
+      annual_teu_throughput: annual_teu_throughput,
+      ftz_subzone_status: ftz_subzone_status,
+      dutiable_cargo_value_usd: dutiable_cargo_value_usd,
+      average_tariff_rate_pct: average_tariff_rate_pct,
+      inverted_tariff_savings_pct: inverted_tariff_savings_pct,
+      annual_terminal_base_rent_usd: annualTerminalBaseRentUsd,
+      monthly_terminal_base_rent_usd: monthlyTerminalBaseRentUsd,
+      total_berthing_days: Number(totalBerthingDays.toFixed(1)),
+      annual_dockage_fees_usd: annualDockageFeesUsd,
+      annual_gross_wharfage_revenue_usd: annualGrossWharfageRevenueUsd,
+      landlord_wharfage_royalty_pct: landlord_wharfage_royalty_pct,
+      landlord_wharfage_royalty_usd: landlordWharfageRoyaltyUsd,
+      port_authority_dockage_share_usd: portAuthorityDockageShareUsd,
+      total_annual_port_authority_revenue_usd: totalAnnualPortAuthorityRevenueUsd,
+      standard_dutiable_tariff_usd: standardDutiableTariffUsd,
+      inverted_tariff_duty_savings_usd: invertedTariffDutySavingsUsd,
+      duty_deferral_working_capital_usd: dutyDeferralWorkingCapitalUsd,
+      customs_mpf_weekly_entry_savings_usd: netMpfWeeklySavingsUsd,
+      total_tenant_ftz_supply_chain_savings_usd: totalTenantFtzSupplyChainSavingsUsd,
+      rail_intermodal_split_pct: rail_intermodal_split_pct,
+      rail_intermodal_teu: railIntermodalTeu,
+      truck_gate_teu: truckGateTeu,
+      maritime_compliance_audit: maritimeComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
