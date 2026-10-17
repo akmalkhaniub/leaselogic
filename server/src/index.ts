@@ -5431,6 +5431,115 @@ app.post('/api/leases/:id/port-ftz-logistics', async (req, res) => {
   }
 });
 
+// 4.832. POST 5G Macro Cell Tower, Rooftop Telecom & Dark-Fiber Easement Modeler
+app.post('/api/leases/:id/telecom-5g-easement', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      anchor_carrier_monthly_rent_usd = 4800,
+      colocated_subtenant_carriers = 2,
+      subtenant_monthly_fee_per_carrier_usd = 3200,
+      landlord_colocation_rev_share_pct = 35.0,
+      equipment_cabinet_footprint_sqft = 240,
+      backup_generator_pad_fee_monthly_usd = 650,
+      dark_fiber_strands_leased = 24,
+      conduit_linear_feet = 1800,
+      iru_fee_per_strand_foot_monthly_usd = 0.045,
+      annual_escalation_rate_pct = 3.0,
+      buyout_multiple_x = 18.5,
+      antenna_wind_load_rating_mph = 140,
+      required_tia222_wind_mph = 125,
+      fcc_rf_exposure_pct_of_mpe = 42.0
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Colocation & Subtenant Revenue Sharing
+    const monthlyGrossColocationUsd = Math.round(colocated_subtenant_carriers * subtenant_monthly_fee_per_carrier_usd);
+    const monthlyLandlordColocationShareUsd = Math.round(monthlyGrossColocationUsd * (landlord_colocation_rev_share_pct / 100));
+
+    // Dark-Fiber Conduit IRU (Indefeasible Right of Use) Fee
+    const monthlyDarkFiberIruFeeUsd = Math.round(dark_fiber_strands_leased * conduit_linear_feet * iru_fee_per_strand_foot_monthly_usd);
+
+    // Consolidated Landlord Telecom Revenue
+    const totalMonthlyTelecomIncomeUsd =
+      anchor_carrier_monthly_rent_usd +
+      monthlyLandlordColocationShareUsd +
+      backup_generator_pad_fee_monthly_usd +
+      monthlyDarkFiberIruFeeUsd;
+
+    const annualLandlordTelecomNoiUsd = totalMonthlyTelecomIncomeUsd * 12;
+
+    // Perpetual Telecom Easement Buyout Valuation (Tower REIT Acquisition Multiple)
+    const perpetualEasementBuyoutValuationUsd = Math.round(annualLandlordTelecomNoiUsd * buyout_multiple_x);
+
+    // Structural & RF Safety Compliance
+    const isWindLoadCompliant = antenna_wind_load_rating_mph >= required_tia222_wind_mph;
+    const isRfExposureCompliant = fcc_rf_exposure_pct_of_mpe <= 100.0;
+
+    const telecomEngineeringAudit = [
+      {
+        standard: 'TIA-222-H Structural Antenna Sled Wind Load',
+        specification: `Rated ${antenna_wind_load_rating_mph} mph vs ${required_tia222_wind_mph} mph code requirement`,
+        financial_impact: `${equipment_cabinet_footprint_sqft} SF non-penetrating ballasted roof sled`,
+        status: isWindLoadCompliant ? 'TIA_222H_CERTIFIED' : 'STRUCTURAL_RETROFIT_REQ'
+      },
+      {
+        standard: 'FCC OET Bulletin 65 RF Maximum Permissible Exposure',
+        specification: `${fcc_rf_exposure_pct_of_mpe}% of Occupational MPE Limit`,
+        financial_impact: 'RF safety barriers & NOC monitoring active',
+        status: isRfExposureCompliant ? 'FCC_RF_COMPLIANT' : 'EXCLUSION_ZONE_BREACH'
+      },
+      {
+        standard: 'Multi-Carrier Colocation Revenue Share Clause',
+        specification: `${colocated_subtenant_carriers} subtenants @ ${landlord_colocation_rev_share_pct}% landlord royalty`,
+        financial_impact: `+$${(monthlyLandlordColocationShareUsd * 12).toLocaleString()}/yr colocation uplift`,
+        status: 'ACTIVE_ROYALTY_STREAM'
+      },
+      {
+        standard: 'Underground Dark-Fiber IRU Conduit Riser',
+        specification: `${dark_fiber_strands_leased} strands across ${conduit_linear_feet.toLocaleString()} LF riser/vault`,
+        financial_impact: `+$${(monthlyDarkFiberIruFeeUsd * 12).toLocaleString()}/yr fiber IRU revenue`,
+        status: 'REDUNDANT_RING_ACTIVE'
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Metropolitan 5G Rooftop & Fiber Hub',
+      anchor_carrier_monthly_rent_usd: anchor_carrier_monthly_rent_usd,
+      colocated_subtenant_carriers: colocated_subtenant_carriers,
+      subtenant_monthly_fee_per_carrier_usd: subtenant_monthly_fee_per_carrier_usd,
+      landlord_colocation_rev_share_pct: landlord_colocation_rev_share_pct,
+      monthly_gross_colocation_usd: monthlyGrossColocationUsd,
+      monthly_landlord_colocation_share_usd: monthlyLandlordColocationShareUsd,
+      equipment_cabinet_footprint_sqft: equipment_cabinet_footprint_sqft,
+      backup_generator_pad_fee_monthly_usd: backup_generator_pad_fee_monthly_usd,
+      dark_fiber_strands_leased: dark_fiber_strands_leased,
+      conduit_linear_feet: conduit_linear_feet,
+      monthly_dark_fiber_iru_fee_usd: monthlyDarkFiberIruFeeUsd,
+      total_monthly_telecom_income_usd: totalMonthlyTelecomIncomeUsd,
+      annual_landlord_telecom_noi_usd: annualLandlordTelecomNoiUsd,
+      annual_escalation_rate_pct: annual_escalation_rate_pct,
+      buyout_multiple_x: buyout_multiple_x,
+      perpetual_easement_buyout_valuation_usd: perpetualEasementBuyoutValuationUsd,
+      antenna_wind_load_rating_mph: antenna_wind_load_rating_mph,
+      required_tia222_wind_mph: required_tia222_wind_mph,
+      is_wind_load_compliant: isWindLoadCompliant,
+      fcc_rf_exposure_pct_of_mpe: fcc_rf_exposure_pct_of_mpe,
+      is_rf_exposure_compliant: isRfExposureCompliant,
+      telecom_engineering_audit: telecomEngineeringAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
