@@ -5540,6 +5540,119 @@ app.post('/api/leases/:id/telecom-5g-easement', async (req, res) => {
   }
 });
 
+// 4.833. POST Film Studio, Soundstage & Virtual Production LED Volume Lease Modeler
+app.post('/api/leases/:id/film-soundstage-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      soundstage_clear_span_sqft = 32000,
+      mill_and_production_office_sqft = 18000,
+      clear_height_to_grid_ft = 42,
+      bowstring_truss_point_load_lbs = 85000,
+      acoustic_stc_rating = 68,
+      noise_criterion_nc_rating = 15,
+      active_filming_months_per_year = 9,
+      dark_hiatus_months_per_year = 3,
+      monthly_active_stage_rent_usd = 145000,
+      hiatus_holdover_discount_pct = 40.0,
+      led_volume_daily_rental_usd = 18500,
+      led_volume_booked_days_per_year = 110,
+      landlord_equipment_royalty_pct = 15.0,
+      stage_power_480v_amps = 4800,
+      qualified_production_spend_usd = 12500000,
+      state_film_tax_credit_pct = 30.0
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Active Filming vs Dark-Stage Hiatus Holdover Rent
+    const activeFilmingRentUsd = Math.round(active_filming_months_per_year * monthly_active_stage_rent_usd);
+    const monthlyHiatusRentUsd = Math.round(monthly_active_stage_rent_usd * (1 - hiatus_holdover_discount_pct / 100));
+    const darkHiatusRentUsd = Math.round(dark_hiatus_months_per_year * monthlyHiatusRentUsd);
+    const annualBaseStageRentUsd = activeFilmingRentUsd + darkHiatusRentUsd;
+
+    // Virtual Production LED Volume & Grip/Lighting Package Royalty
+    const grossLedVolumeRevenueUsd = Math.round(led_volume_daily_rental_usd * led_volume_booked_days_per_year);
+    const landlordEquipmentRoyaltyUsd = Math.round(grossLedVolumeRevenueUsd * (landlord_equipment_royalty_pct / 100));
+
+    // Consolidated Studio Landlord Revenue
+    const totalAnnualStudioLandlordRevenueUsd = annualBaseStageRentUsd + landlordEquipmentRoyaltyUsd;
+
+    // State Film & TV Production Tax Credit Incentive
+    const tenantFilmTaxCreditUsd = Math.round(qualified_production_spend_usd * (state_film_tax_credit_pct / 100));
+
+    // Technical Soundstage Compliance Checks
+    const isAcousticCompliant = acoustic_stc_rating >= 65 && noise_criterion_nc_rating <= 18;
+    const isRiggingGridCompliant = clear_height_to_grid_ft >= 35 && bowstring_truss_point_load_lbs >= 60000;
+
+    const soundstageTechnicalAudit = [
+      {
+        parameter: 'Soundstage Acoustic Isolation & Silent HVAC',
+        specification: `STC-${acoustic_stc_rating} Double-Wall Envelope | NC-${noise_criterion_nc_rating} Low-Velocity Air`,
+        operational_impact: 'Eliminates external aircraft/traffic noise bleed during live sync dialogue',
+        status: isAcousticCompliant ? 'DOLBY_STAGE_CERTIFIED' : 'ACOUSTIC_TREATMENT_REQ'
+      },
+      {
+        parameter: 'Clear-Span Catwalk & Overhead Truss Rigging',
+        specification: `${clear_height_to_grid_ft} ft clear height | ${bowstring_truss_point_load_lbs.toLocaleString()} lbs point load`,
+        operational_impact: `Supports suspended LED volume ceiling & motorized lighting trusses (${soundstage_clear_span_sqft.toLocaleString()} SF)`,
+        status: isRiggingGridCompliant ? 'HEAVY_RIGGING_APPROVED' : 'LOAD_RESTRICTED'
+      },
+      {
+        parameter: 'Virtual Production LED Volume & GPU Brainbar Power',
+        specification: `${stage_power_480v_amps.toLocaleString()} Amps 480V 3-Phase Cam-Lok Service`,
+        operational_impact: `+$${landlordEquipmentRoyaltyUsd.toLocaleString()}/yr landlord LED/lighting package royalty`,
+        status: 'HIGH_AMP_ACTIVE'
+      },
+      {
+        parameter: 'State Film & TV Production Tax Credit Qualification',
+        specification: `${state_film_tax_credit_pct}% Transferable Tax Credit on $${(qualified_production_spend_usd / 1000000).toFixed(1)}M Spend`,
+        operational_impact: `$${tenantFilmTaxCreditUsd.toLocaleString()} production tax credit subsidizes studio lease`,
+        status: 'TAX_CREDIT_CERTIFIED'
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'SilverScreen Virtual Production Studios',
+      soundstage_clear_span_sqft: soundstage_clear_span_sqft,
+      mill_and_production_office_sqft: mill_and_production_office_sqft,
+      total_studio_campus_sqft: soundstage_clear_span_sqft + mill_and_production_office_sqft,
+      clear_height_to_grid_ft: clear_height_to_grid_ft,
+      bowstring_truss_point_load_lbs: bowstring_truss_point_load_lbs,
+      acoustic_stc_rating: acoustic_stc_rating,
+      noise_criterion_nc_rating: noise_criterion_nc_rating,
+      active_filming_months_per_year: active_filming_months_per_year,
+      dark_hiatus_months_per_year: dark_hiatus_months_per_year,
+      monthly_active_stage_rent_usd: monthly_active_stage_rent_usd,
+      monthly_hiatus_rent_usd: monthlyHiatusRentUsd,
+      active_filming_rent_usd: activeFilmingRentUsd,
+      dark_hiatus_rent_usd: darkHiatusRentUsd,
+      annual_base_stage_rent_usd: annualBaseStageRentUsd,
+      led_volume_daily_rental_usd: led_volume_daily_rental_usd,
+      led_volume_booked_days_per_year: led_volume_booked_days_per_year,
+      gross_led_volume_revenue_usd: grossLedVolumeRevenueUsd,
+      landlord_equipment_royalty_pct: landlord_equipment_royalty_pct,
+      landlord_equipment_royalty_usd: landlordEquipmentRoyaltyUsd,
+      total_annual_studio_landlord_revenue_usd: totalAnnualStudioLandlordRevenueUsd,
+      stage_power_480v_amps: stage_power_480v_amps,
+      qualified_production_spend_usd: qualified_production_spend_usd,
+      state_film_tax_credit_pct: state_film_tax_credit_pct,
+      tenant_film_tax_credit_usd: tenantFilmTaxCreditUsd,
+      is_acoustic_compliant: isAcousticCompliant,
+      is_rigging_grid_compliant: isRiggingGridCompliant,
+      soundstage_technical_audit: soundstageTechnicalAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
