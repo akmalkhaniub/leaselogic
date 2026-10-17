@@ -622,8 +622,28 @@ export default function LeaseLogicApp() {
   const [telData, setTelData] = useState<any>(null);
   const [loadingTel, setLoadingTel] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g'>('abstract');
+  // Film Studio, Soundstage & Virtual Production LED Volume state
+  const [filmStageSqft, setFilmStageSqft] = useState(32000);
+  const [filmMillSqft, setFilmMillSqft] = useState(18000);
+  const [filmClearHeightFt, setFilmClearHeightFt] = useState(42);
+  const [filmPointLoadLbs, setFilmPointLoadLbs] = useState(85000);
+  const [filmStcRating, setFilmStcRating] = useState(68);
+  const [filmNcRating, setFilmNcRating] = useState(15);
+  const [filmActiveMonths, setFilmActiveMonths] = useState(9);
+  const [filmHiatusMonths, setFilmHiatusMonths] = useState(3);
+  const [filmActiveRent, setFilmActiveRent] = useState(145000);
+  const [filmHiatusDiscountPct, setFilmHiatusDiscountPct] = useState(40.0);
+  const [filmLedDailyRate, setFilmLedDailyRate] = useState(18500);
+  const [filmLedDays, setFilmLedDays] = useState(110);
+  const [filmRoyaltyPct, setFilmRoyaltyPct] = useState(15.0);
+  const [filmStageAmps, setFilmStageAmps] = useState(4800);
+  const [filmProdSpend, setFilmProdSpend] = useState(12500000);
+  const [filmTaxCreditPct, setFilmTaxCreditPct] = useState(30.0);
+  const [filmData, setFilmData] = useState<any>(null);
+  const [loadingFilm, setLoadingFilm] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage'>('abstract');
 
 
 
@@ -2042,6 +2062,44 @@ export default function LeaseLogicApp() {
       console.error('Error running 5G telecom easement modeler:', err);
     } finally {
       setLoadingTel(false);
+    }
+  };
+
+  // Run Film Studio, Soundstage & Virtual Production LED Volume Modeler
+  const handleRunFilmSoundstage = async () => {
+    if (!selectedLease) return;
+    setLoadingFilm(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/film-soundstage-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          soundstage_clear_span_sqft: filmStageSqft,
+          mill_and_production_office_sqft: filmMillSqft,
+          clear_height_to_grid_ft: filmClearHeightFt,
+          bowstring_truss_point_load_lbs: filmPointLoadLbs,
+          acoustic_stc_rating: filmStcRating,
+          noise_criterion_nc_rating: filmNcRating,
+          active_filming_months_per_year: filmActiveMonths,
+          dark_hiatus_months_per_year: filmHiatusMonths,
+          monthly_active_stage_rent_usd: filmActiveRent,
+          hiatus_holdover_discount_pct: filmHiatusDiscountPct,
+          led_volume_daily_rental_usd: filmLedDailyRate,
+          led_volume_booked_days_per_year: filmLedDays,
+          landlord_equipment_royalty_pct: filmRoyaltyPct,
+          stage_power_480v_amps: filmStageAmps,
+          qualified_production_spend_usd: filmProdSpend,
+          state_film_tax_credit_pct: filmTaxCreditPct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFilmData(data);
+      }
+    } catch (err) {
+      console.error('Error running film soundstage modeler:', err);
+    } finally {
+      setLoadingFilm(false);
     }
   };
 
@@ -6233,6 +6291,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'telecom_5g' ? 'active' : ''}`} onClick={() => { setActiveTab('telecom_5g'); handleRunTelecom5g(); }}>
                   📡 5G & Fiber Telecom
+                </div>
+                <div className={`tab ${activeTab === 'film_soundstage' ? 'active' : ''}`} onClick={() => { setActiveTab('film_soundstage'); handleRunFilmSoundstage(); }}>
+                  🎬 Film & LED Soundstage
                 </div>
               </div>
 
@@ -14178,6 +14239,229 @@ export default function LeaseLogicApp() {
                                     borderRadius: '12px',
                                     background: item.status.includes('CERTIFIED') || item.status.includes('COMPLIANT') || item.status.includes('ACTIVE') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                                     color: item.status.includes('CERTIFIED') || item.status.includes('COMPLIANT') || item.status.includes('ACTIVE') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'film_soundstage' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🎬 Film Studio, Soundstage & Virtual Production LED Volume Lease Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Clear-span soundstage acoustics (STC-68 / NC-15), bowstring truss overhead rigging, LED volume daily royalties, dark-stage hiatus rates, and state film tax credits.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunFilmSoundstage}
+                      disabled={loadingFilm}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingFilm ? 'Analyzing Soundstage...' : '🎬 Model Studio & LED Lease'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Soundstage Area (SF)</label>
+                      <input
+                        type="number"
+                        value={filmStageSqft}
+                        onChange={(e) => setFilmStageSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Mill & Support Office (SF)</label>
+                      <input
+                        type="number"
+                        value={filmMillSqft}
+                        onChange={(e) => setFilmMillSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Clear Height to Grid (ft)</label>
+                      <input
+                        type="number"
+                        value={filmClearHeightFt}
+                        onChange={(e) => setFilmClearHeightFt(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Truss Point Load (lbs)</label>
+                      <input
+                        type="number"
+                        value={filmPointLoadLbs}
+                        onChange={(e) => setFilmPointLoadLbs(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Acoustic Isolation (STC)</label>
+                      <input
+                        type="number"
+                        value={filmStcRating}
+                        onChange={(e) => setFilmStcRating(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Active Stage Rent ($/Mo)</label>
+                      <input
+                        type="number"
+                        value={filmActiveRent}
+                        onChange={(e) => setFilmActiveRent(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Active Filming Months/Yr</label>
+                      <input
+                        type="number"
+                        value={filmActiveMonths}
+                        onChange={(e) => setFilmActiveMonths(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Dark Hiatus Months/Yr</label>
+                      <input
+                        type="number"
+                        value={filmHiatusMonths}
+                        onChange={(e) => setFilmHiatusMonths(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>LED Volume Rate ($/Day)</label>
+                      <input
+                        type="number"
+                        value={filmLedDailyRate}
+                        onChange={(e) => setFilmLedDailyRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>LED Booked Days/Yr</label>
+                      <input
+                        type="number"
+                        value={filmLedDays}
+                        onChange={(e) => setFilmLedDays(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Qualified Spend ($)</label>
+                      <input
+                        type="number"
+                        value={filmProdSpend}
+                        onChange={(e) => setFilmProdSpend(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>State Film Tax Credit (%)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={filmTaxCreditPct}
+                        onChange={(e) => setFilmTaxCreditPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingFilm && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating soundstage STC acoustics, LED volume equipment royalties, and state film tax credit incentives...
+                    </div>
+                  )}
+
+                  {!loadingFilm && filmData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Studio Landlord Revenue</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${filmData.total_annual_studio_landlord_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Stage Rent: ${filmData.annual_base_stage_rent_usd.toLocaleString()} + LED Royalty: ${filmData.landlord_equipment_royalty_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Active vs. Hiatus Rent Split</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${filmData.active_filming_rent_usd.toLocaleString()} Active
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Hiatus Holdover ({filmData.dark_hiatus_months_per_year} mos): ${filmData.dark_hiatus_rent_usd.toLocaleString()} (${filmData.monthly_hiatus_rent_usd.toLocaleString()}/mo)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>State Film Tax Credit Value</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            +${filmData.tenant_film_tax_credit_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {filmData.state_film_tax_credit_pct}% Transferable Credit on ${(filmData.qualified_production_spend_usd / 1000000).toFixed(1)}M Spend
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Acoustic & Grid Spec</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: filmData.is_acoustic_compliant && filmData.is_rigging_grid_compliant ? 'var(--success)' : 'var(--error)' }}>
+                            {filmData.is_acoustic_compliant && filmData.is_rigging_grid_compliant ? '✅ STAGE CERTIFIED' : '⚠️ RETROFIT REQ'}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            STC-{filmData.acoustic_stc_rating} | NC-{filmData.noise_criterion_nc_rating} | {filmData.clear_height_to_grid_ft} ft Grid
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Soundstage Technical & Financial Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Soundstage Acoustics, Overhead Rigging & Virtual Production Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Soundstage Parameter</th>
+                              <th style={{ padding: '8px 12px' }}>Engineering Specification</th>
+                              <th style={{ padding: '8px 12px' }}>Production / Financial Impact</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Compliance Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filmData.soundstage_technical_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.parameter}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.specification}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--primary)', fontWeight: 600 }}>{item.operational_impact}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('CERTIFIED') || item.status.includes('APPROVED') || item.status.includes('ACTIVE') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('CERTIFIED') || item.status.includes('APPROVED') || item.status.includes('ACTIVE') ? 'var(--success)' : 'var(--error)'
                                   }}>
                                     {item.status.replace(/_/g, ' ')}
                                   </span>
