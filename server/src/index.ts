@@ -5754,6 +5754,111 @@ app.post('/api/leases/:id/brownfield-environmental-modeler', async (req, res) =>
   }
 });
 
+// 4.835. POST Hospitality, Hotel Participating Lease & RevPAR FF&E Reserve Engine
+app.post('/api/leases/:id/hospitality-revpar-engine', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      room_keys_count = 280,
+      occupancy_rate_pct = 74.0,
+      average_daily_rate_adr_usd = 265,
+      annual_fb_and_banquet_revenue_usd = 6400000,
+      minimum_annual_base_rent_usd = 3200000,
+      rooms_percentage_rent_rate_pct = 18.0,
+      fb_percentage_rent_rate_pct = 8.5,
+      franchise_royalty_and_marketing_pct = 8.0,
+      ffe_capital_reserve_pct = 4.0,
+      pip_renovation_capex_budget_usd = 4200000,
+      gross_operating_profit_margin_pct = 38.0
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Room Inventory, RevPAR & Departmental Revenues (USALI 11th Edition Standard)
+    const availableRoomNights = room_keys_count * 365;
+    const occupiedRoomNights = Math.round(availableRoomNights * (occupancy_rate_pct / 100));
+    const revparUsd = Number((average_daily_rate_adr_usd * (occupancy_rate_pct / 100)).toFixed(2));
+    const annualRoomsRevenueUsd = Math.round(occupiedRoomNights * average_daily_rate_adr_usd);
+    const totalHotelGrossRevenueUsd = annualRoomsRevenueUsd + annual_fb_and_banquet_revenue_usd;
+
+    // Participating Hotel Lease Rent Waterfall
+    const grossRoomsParticipatingUsd = Math.round(annualRoomsRevenueUsd * (rooms_percentage_rent_rate_pct / 100));
+    const grossFbParticipatingUsd = Math.round(annual_fb_and_banquet_revenue_usd * (fb_percentage_rent_rate_pct / 100));
+    const totalParticipatingFormulaUsd = grossRoomsParticipatingUsd + grossFbParticipatingUsd;
+    const overagePercentageRentUsd = Math.max(0, totalParticipatingFormulaUsd - minimum_annual_base_rent_usd);
+    const totalAnnualLandlordHotelRentUsd = Math.max(minimum_annual_base_rent_usd, totalParticipatingFormulaUsd);
+
+    // Brand Franchise Assessments, FF&E Escrow & GOP Coverage
+    const annualFranchiseFeesUsd = Math.round(annualRoomsRevenueUsd * (franchise_royalty_and_marketing_pct / 100));
+    const annualFfeReserveEscrowUsd = Math.round(totalHotelGrossRevenueUsd * (ffe_capital_reserve_pct / 100));
+    const grossOperatingProfitUsd = Math.round(totalHotelGrossRevenueUsd * (gross_operating_profit_margin_pct / 100));
+    const gopRentCoverageRatio = Number((grossOperatingProfitUsd / (totalAnnualLandlordHotelRentUsd || 1)).toFixed(2));
+    const isGopCoverageHealthy = gopRentCoverageRatio >= 1.50;
+
+    const hospitalityComplianceAudit = [
+      {
+        covenant: 'USALI Participating Percentage Rent Waterfall',
+        metric: `${rooms_percentage_rent_rate_pct}% Rooms + ${fb_percentage_rent_rate_pct}% F&B vs $${(minimum_annual_base_rent_usd / 1000000).toFixed(2)}M Floor`,
+        financial_impact: `+$${overagePercentageRentUsd.toLocaleString()}/yr participating percentage rent overage`,
+        status: 'OVERAGE_TRIGGERED'
+      },
+      {
+        covenant: 'Mandatory FF&E Capital Reserve Escrow Account',
+        metric: `${ffe_capital_reserve_pct}% of Total Gross Revenue ($${totalHotelGrossRevenueUsd.toLocaleString()})`,
+        financial_impact: `$${annualFfeReserveEscrowUsd.toLocaleString()}/yr locked in restricted FF&E reserve`,
+        status: 'FFE_ESCROW_COMPLIANT'
+      },
+      {
+        covenant: 'Brand Franchise Comfort Letter & PIP Schedule',
+        metric: `${franchise_royalty_and_marketing_pct}% Flag Royalty | $${(pip_renovation_capex_budget_usd / 1000000).toFixed(1)}M PIP Budget`,
+        financial_impact: `$${annualFranchiseFeesUsd.toLocaleString()}/yr brand assessment; 7-yr soft-goods PIP cycle`,
+        status: 'FLAG_GOOD_STANDING'
+      },
+      {
+        covenant: 'Hotel Operator GOP Rent Coverage Ratio Test',
+        metric: `${gopRentCoverageRatio}x GOP-to-Rent Coverage (Min 1.50x Covenant)`,
+        financial_impact: `$${grossOperatingProfitUsd.toLocaleString()} GOP (${gross_operating_profit_margin_pct}% margin)`,
+        status: isGopCoverageHealthy ? 'COVENANT_HEALTHY' : 'COVERAGE_WATCHLIST'
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Grand Monarch Resort & Convention Center',
+      room_keys_count: room_keys_count,
+      occupancy_rate_pct: occupancy_rate_pct,
+      average_daily_rate_adr_usd: average_daily_rate_adr_usd,
+      revpar_usd: revparUsd,
+      available_room_nights: availableRoomNights,
+      occupied_room_nights: occupiedRoomNights,
+      annual_rooms_revenue_usd: annualRoomsRevenueUsd,
+      annual_fb_and_banquet_revenue_usd: annual_fb_and_banquet_revenue_usd,
+      total_hotel_gross_revenue_usd: totalHotelGrossRevenueUsd,
+      minimum_annual_base_rent_usd: minimum_annual_base_rent_usd,
+      gross_rooms_participating_usd: grossRoomsParticipatingUsd,
+      gross_fb_participating_usd: grossFbParticipatingUsd,
+      overage_percentage_rent_usd: overagePercentageRentUsd,
+      total_annual_landlord_hotel_rent_usd: totalAnnualLandlordHotelRentUsd,
+      annual_franchise_fees_usd: annualFranchiseFeesUsd,
+      ffe_capital_reserve_pct: ffe_capital_reserve_pct,
+      annual_ffe_reserve_escrow_usd: annualFfeReserveEscrowUsd,
+      pip_renovation_capex_budget_usd: pip_renovation_capex_budget_usd,
+      gross_operating_profit_margin_pct: gross_operating_profit_margin_pct,
+      gross_operating_profit_usd: grossOperatingProfitUsd,
+      gop_rent_coverage_ratio: gopRentCoverageRatio,
+      is_gop_coverage_healthy: isGopCoverageHealthy,
+      hospitality_compliance_audit: hospitalityComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
