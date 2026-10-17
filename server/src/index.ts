@@ -5653,6 +5653,107 @@ app.post('/api/leases/:id/film-soundstage-modeler', async (req, res) => {
   }
 });
 
+// 4.834. POST Brownfield Environmental Remediation, Phase II ESA & Vapor Intrusion Modeler
+app.post('/api/leases/:id/brownfield-environmental-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      contaminant_class = 'CHLORINATED_SOLVENTS_TCE_PCE', // 'CHLORINATED_SOLVENTS_TCE_PCE' | 'PFAS_FOREVER_CHEMICALS' | 'PETROLEUM_HYDROCARBONS_BTEX' | 'HEAVY_METALS_ARSENIC_LEAD'
+      contaminated_soil_tons = 4200,
+      soil_excavation_disposal_cost_ton_usd = 135,
+      groundwater_pump_treat_capital_usd = 280000,
+      building_slab_footprint_sqft = 85000,
+      sub_slab_vapor_mitigation_cost_sqft_usd = 3.50,
+      monitoring_wells_count = 12,
+      annual_well_sampling_cost_per_well_usd = 2400,
+      pll_insurance_coverage_limit_usd = 10000000,
+      pll_self_insured_retention_usd = 100000,
+      landlord_pre_existing_escrow_holdback_usd = 850000,
+      brownfield_cleanup_tax_credit_pct = 28.0,
+      remediation_downtime_months = 4,
+      monthly_contract_rent_usd = 52000
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Soil, Groundwater & Vapor Intrusion Remediation Capital Costs
+    const soilRemediationCostUsd = Math.round(contaminated_soil_tons * soil_excavation_disposal_cost_ton_usd);
+    const vaporMitigationCapexUsd = Math.round(building_slab_footprint_sqft * sub_slab_vapor_mitigation_cost_sqft_usd);
+    const totalGrossRemediationCapexUsd = soilRemediationCostUsd + groundwater_pump_treat_capital_usd + vaporMitigationCapexUsd;
+
+    // State Brownfield Cleanup Tax Credit (BCTC) & Net Remediation Cost
+    const brownfieldTaxCreditUsd = Math.round(totalGrossRemediationCapexUsd * (brownfield_cleanup_tax_credit_pct / 100));
+    const netRemediationCostUsd = totalGrossRemediationCapexUsd - brownfieldTaxCreditUsd;
+
+    // Pre-Existing Environmental Condition (PEC) Escrow Adequacy
+    const escrowSurplusOrDeficitUsd = landlord_pre_existing_escrow_holdback_usd - netRemediationCostUsd;
+    const isEscrowFullyFunded = escrowSurplusOrDeficitUsd >= 0;
+
+    // Ongoing Groundwater Monitoring & Tenant Remediation Rent Abatement
+    const annualGroundwaterMonitoringOpexUsd = Math.round(monitoring_wells_count * annual_well_sampling_cost_per_well_usd);
+    const tenantRemediationRentAbatementUsd = Math.round(remediation_downtime_months * monthly_contract_rent_usd);
+
+    const environmentalComplianceAudit = [
+      {
+        standard: 'ASTM E1527-21 Phase I/II ESA & CERCLA BFPP Defense',
+        parameter: `Contaminant Plume: ${contaminant_class.replace(/_/g, ' ')}`,
+        liability_allocation: '100% Baseline Pre-Existing Condition (PEC) Indemnified by Landlord',
+        status: 'INDEMNITY_LOCKED'
+      },
+      {
+        standard: 'EPA OSWER Sub-Slab Depressurization (SSD) Vapor Barrier',
+        parameter: `${building_slab_footprint_sqft.toLocaleString()} SF active negative-pressure venting membrane`,
+        liability_allocation: `$${vaporMitigationCapexUsd.toLocaleString()} CapEx funded via Remediation Escrow`,
+        status: 'VAPOR_SAFE_CERTIFIED'
+      },
+      {
+        standard: 'Pollution Legal Liability (PLL) Environmental Policy',
+        parameter: `$${(pll_insurance_coverage_limit_usd / 1000000).toFixed(0)}M Policy Limit | $${pll_self_insured_retention_usd.toLocaleString()} SIR Deductible`,
+        liability_allocation: 'Covers third-party bodily injury, plume migration & regulatory re-openers',
+        status: 'PLL_BOUND_ACTIVE'
+      },
+      {
+        standard: 'State Voluntary Cleanup Program (VCP) & Tax Credit',
+        parameter: `${brownfield_cleanup_tax_credit_pct}% Brownfield Tax Credit + No Further Action (NFA) Covenant`,
+        liability_allocation: `+$${brownfieldTaxCreditUsd.toLocaleString()} tax credit offset; $${annualGroundwaterMonitoringOpexUsd.toLocaleString()}/yr well monitoring`,
+        status: isEscrowFullyFunded ? 'ESCROW_FULLY_FUNDED' : 'ESCROW_SHORTFALL'
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Infill Brownfield Industrial Redevelopment Park',
+      contaminant_class: contaminant_class,
+      contaminated_soil_tons: contaminated_soil_tons,
+      soil_remediation_cost_usd: soilRemediationCostUsd,
+      groundwater_pump_treat_capital_usd: groundwater_pump_treat_capital_usd,
+      building_slab_footprint_sqft: building_slab_footprint_sqft,
+      vapor_mitigation_capex_usd: vaporMitigationCapexUsd,
+      total_gross_remediation_capex_usd: totalGrossRemediationCapexUsd,
+      brownfield_cleanup_tax_credit_pct: brownfield_cleanup_tax_credit_pct,
+      brownfield_tax_credit_usd: brownfieldTaxCreditUsd,
+      net_remediation_cost_usd: netRemediationCostUsd,
+      landlord_pre_existing_escrow_holdback_usd: landlord_pre_existing_escrow_holdback_usd,
+      escrow_surplus_or_deficit_usd: escrowSurplusOrDeficitUsd,
+      is_escrow_fully_funded: isEscrowFullyFunded,
+      monitoring_wells_count: monitoring_wells_count,
+      annual_groundwater_monitoring_opex_usd: annualGroundwaterMonitoringOpexUsd,
+      pll_insurance_coverage_limit_usd: pll_insurance_coverage_limit_usd,
+      pll_self_insured_retention_usd: pll_self_insured_retention_usd,
+      remediation_downtime_months: remediation_downtime_months,
+      tenant_remediation_rent_abatement_usd: tenantRemediationRentAbatementUsd,
+      environmental_compliance_audit: environmentalComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
