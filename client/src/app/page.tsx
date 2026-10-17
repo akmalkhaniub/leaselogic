@@ -660,8 +660,23 @@ export default function LeaseLogicApp() {
   const [bfData, setBfData] = useState<any>(null);
   const [loadingBf, setLoadingBf] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation'>('abstract');
+  // Hospitality, Hotel Participating Lease & RevPAR FF&E Reserve state
+  const [hospRoomKeys, setHospRoomKeys] = useState(280);
+  const [hospOccupancyPct, setHospOccupancyPct] = useState(74.0);
+  const [hospAdrUsd, setHospAdrUsd] = useState(265);
+  const [hospFbRevenue, setHospFbRevenue] = useState(6400000);
+  const [hospMinBaseRent, setHospMinBaseRent] = useState(3200000);
+  const [hospRoomsPctRate, setHospRoomsPctRate] = useState(18.0);
+  const [hospFbPctRate, setHospFbPctRate] = useState(8.5);
+  const [hospFranchisePct, setHospFranchisePct] = useState(8.0);
+  const [hospFfeReservePct, setHospFfeReservePct] = useState(4.0);
+  const [hospPipBudget, setHospPipBudget] = useState(4200000);
+  const [hospGopMarginPct, setHospGopMarginPct] = useState(38.0);
+  const [hospData, setHospData] = useState<any>(null);
+  const [loadingHosp, setLoadingHosp] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar'>('abstract');
 
 
 
@@ -2154,6 +2169,39 @@ export default function LeaseLogicApp() {
       console.error('Error running brownfield environmental modeler:', err);
     } finally {
       setLoadingBf(false);
+    }
+  };
+
+  // Run Hospitality, Hotel Participating Lease & RevPAR FF&E Reserve Engine
+  const handleRunHospitality = async () => {
+    if (!selectedLease) return;
+    setLoadingHosp(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/hospitality-revpar-engine`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_keys_count: hospRoomKeys,
+          occupancy_rate_pct: hospOccupancyPct,
+          average_daily_rate_adr_usd: hospAdrUsd,
+          annual_fb_and_banquet_revenue_usd: hospFbRevenue,
+          minimum_annual_base_rent_usd: hospMinBaseRent,
+          rooms_percentage_rent_rate_pct: hospRoomsPctRate,
+          fb_percentage_rent_rate_pct: hospFbPctRate,
+          franchise_royalty_and_marketing_pct: hospFranchisePct,
+          ffe_capital_reserve_pct: hospFfeReservePct,
+          pip_renovation_capex_budget_usd: hospPipBudget,
+          gross_operating_profit_margin_pct: hospGopMarginPct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHospData(data);
+      }
+    } catch (err) {
+      console.error('Error running hospitality RevPAR engine:', err);
+    } finally {
+      setLoadingHosp(false);
     }
   };
 
@@ -6351,6 +6399,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'brownfield_remediation' ? 'active' : ''}`} onClick={() => { setActiveTab('brownfield_remediation'); handleRunBrownfield(); }}>
                   ♻️ Brownfield & Vapor ESA
+                </div>
+                <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
+                  🏨 Hospitality & RevPAR
                 </div>
               </div>
 
@@ -14738,6 +14789,225 @@ export default function LeaseLogicApp() {
                                     borderRadius: '12px',
                                     background: item.status.includes('LOCKED') || item.status.includes('CERTIFIED') || item.status.includes('ACTIVE') || item.status.includes('FUNDED') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                                     color: item.status.includes('LOCKED') || item.status.includes('CERTIFIED') || item.status.includes('ACTIVE') || item.status.includes('FUNDED') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'hospitality_revpar' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🏨 Hospitality, Hotel Participating Lease & RevPAR FF&E Reserve Engine
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        USALI 11th Edition hotel participating percentage rent waterfall, ADR/Occupancy RevPAR metrics, mandatory 4% FF&E escrow reserves, and GOP coverage ratios.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunHospitality}
+                      disabled={loadingHosp}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingHosp ? 'Simulating RevPAR...' : '🏨 Model Hospitality Lease'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Hotel Room Keys</label>
+                      <input
+                        type="number"
+                        value={hospRoomKeys}
+                        onChange={(e) => setHospRoomKeys(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Occupancy Rate (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={hospOccupancyPct}
+                        onChange={(e) => setHospOccupancyPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Average Daily Rate ($ ADR)</label>
+                      <input
+                        type="number"
+                        value={hospAdrUsd}
+                        onChange={(e) => setHospAdrUsd(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>F&B / Banquet Revenue ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={hospFbRevenue}
+                        onChange={(e) => setHospFbRevenue(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Minimum Base Rent ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={hospMinBaseRent}
+                        onChange={(e) => setHospMinBaseRent(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Rooms % Rent Rate (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={hospRoomsPctRate}
+                        onChange={(e) => setHospRoomsPctRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>F&B % Rent Rate (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={hospFbPctRate}
+                        onChange={(e) => setHospFbPctRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Franchise Royalty Fee (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={hospFranchisePct}
+                        onChange={(e) => setHospFranchisePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>FF&E Reserve Escrow (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={hospFfeReservePct}
+                        onChange={(e) => setHospFfeReservePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>PIP Renovation CapEx ($)</label>
+                      <input
+                        type="number"
+                        value={hospPipBudget}
+                        onChange={(e) => setHospPipBudget(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>GOP Margin (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={hospGopMarginPct}
+                        onChange={(e) => setHospGopMarginPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingHosp && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Calculating USALI RevPAR, participating percentage rent overages, and FF&E capital reserve escrows...
+                    </div>
+                  )}
+
+                  {!loadingHosp && hospData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Landlord Hotel Rent</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${hospData.total_annual_landlord_hotel_rent_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            Base: ${hospData.minimum_annual_base_rent_usd.toLocaleString()} + Overage: ${hospData.overage_percentage_rent_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>RevPAR & Gross Revenue</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${hospData.revpar_usd} RevPAR
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Total Gross: ${hospData.total_hotel_gross_revenue_usd.toLocaleString()} ({hospData.occupied_room_nights.toLocaleString()} nights)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Mandatory FF&E Escrow</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${hospData.annual_ffe_reserve_escrow_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {hospData.ffe_capital_reserve_pct}% Reserve | PIP: ${(hospData.pip_renovation_capex_budget_usd / 1000000).toFixed(1)}M
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>GOP Rent Coverage Ratio</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: hospData.is_gop_coverage_healthy ? 'var(--success)' : 'var(--error)' }}>
+                            {hospData.gop_rent_coverage_ratio}x Coverage
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            GOP: ${hospData.gross_operating_profit_usd.toLocaleString()} ({hospData.gross_operating_profit_margin_pct}% Margin)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Hospitality USALI & Franchise Compliance Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ USALI 11th Edition Participating Rent, FF&E Escrow & Brand Comfort Letter Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Hospitality Lease Covenant</th>
+                              <th style={{ padding: '8px 12px' }}>Contractual Formula / Metric</th>
+                              <th style={{ padding: '8px 12px' }}>Annual Financial Impact</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {hospData.hospitality_compliance_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.covenant}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--primary)', fontWeight: 600 }}>{item.financial_impact}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('TRIGGERED') || item.status.includes('COMPLIANT') || item.status.includes('STANDING') || item.status.includes('HEALTHY') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('TRIGGERED') || item.status.includes('COMPLIANT') || item.status.includes('STANDING') || item.status.includes('HEALTHY') ? 'var(--success)' : 'var(--error)'
                                   }}>
                                     {item.status.replace(/_/g, ' ')}
                                   </span>
