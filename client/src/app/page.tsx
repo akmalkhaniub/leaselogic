@@ -605,8 +605,25 @@ export default function LeaseLogicApp() {
   const [portData, setPortData] = useState<any>(null);
   const [loadingPort, setLoadingPort] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics'>('abstract');
+  // 5G Macro Cell Tower, Rooftop Telecom & Dark-Fiber Easement state
+  const [telAnchorRent, setTelAnchorRent] = useState(4800);
+  const [telSubtenants, setTelSubtenants] = useState(2);
+  const [telSubtenantFee, setTelSubtenantFee] = useState(3200);
+  const [telRevSharePct, setTelRevSharePct] = useState(35.0);
+  const [telCabinetSqft, setTelCabinetSqft] = useState(240);
+  const [telGenPadFee, setTelGenPadFee] = useState(650);
+  const [telFiberStrands, setTelFiberStrands] = useState(24);
+  const [telConduitFeet, setTelConduitFeet] = useState(1800);
+  const [telIruFee, setTelIruFee] = useState(0.045);
+  const [telBuyoutMultiple, setTelBuyoutMultiple] = useState(18.5);
+  const [telWindMph, setTelWindMph] = useState(140);
+  const [telReqWindMph, setTelReqWindMph] = useState(125);
+  const [telRfExposurePct, setTelRfExposurePct] = useState(42.0);
+  const [telData, setTelData] = useState<any>(null);
+  const [loadingTel, setLoadingTel] = useState(false);
+
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g'>('abstract');
 
 
 
@@ -1990,6 +2007,41 @@ export default function LeaseLogicApp() {
       console.error('Error running port FTZ logistics modeler:', err);
     } finally {
       setLoadingPort(false);
+    }
+  };
+
+  // Run 5G Macro Cell Tower, Rooftop Telecom & Dark-Fiber Easement Modeler
+  const handleRunTelecom5g = async () => {
+    if (!selectedLease) return;
+    setLoadingTel(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/telecom-5g-easement`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anchor_carrier_monthly_rent_usd: telAnchorRent,
+          colocated_subtenant_carriers: telSubtenants,
+          subtenant_monthly_fee_per_carrier_usd: telSubtenantFee,
+          landlord_colocation_rev_share_pct: telRevSharePct,
+          equipment_cabinet_footprint_sqft: telCabinetSqft,
+          backup_generator_pad_fee_monthly_usd: telGenPadFee,
+          dark_fiber_strands_leased: telFiberStrands,
+          conduit_linear_feet: telConduitFeet,
+          iru_fee_per_strand_foot_monthly_usd: telIruFee,
+          buyout_multiple_x: telBuyoutMultiple,
+          antenna_wind_load_rating_mph: telWindMph,
+          required_tia222_wind_mph: telReqWindMph,
+          fcc_rf_exposure_pct_of_mpe: telRfExposurePct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTelData(data);
+      }
+    } catch (err) {
+      console.error('Error running 5G telecom easement modeler:', err);
+    } finally {
+      setLoadingTel(false);
     }
   };
 
@@ -6178,6 +6230,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'port_ftz_logistics' ? 'active' : ''}`} onClick={() => { setActiveTab('port_ftz_logistics'); handleRunPortFtz(); }}>
                   🚢 Port & FTZ Logistics
+                </div>
+                <div className={`tab ${activeTab === 'telecom_5g' ? 'active' : ''}`} onClick={() => { setActiveTab('telecom_5g'); handleRunTelecom5g(); }}>
+                  📡 5G & Fiber Telecom
                 </div>
               </div>
 
@@ -13908,6 +13963,223 @@ export default function LeaseLogicApp() {
                                     color: audit.status.includes('COMPLIANT') || audit.status.includes('ACTIVATED') || audit.status.includes('OPTIMIZED') || audit.status.includes('APPROVED') ? 'var(--success)' : 'var(--error)'
                                   }}>
                                     {audit.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'telecom_5g' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        📡 5G Macro Cell Tower, Rooftop Telecom & Dark-Fiber Easement Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Carrier colocation royalty sharing, underground dark-fiber IRU conduit fees, perpetual easement buyout multiples, and TIA-222-H / FCC OET 65 RF safety compliance.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunTelecom5g}
+                      disabled={loadingTel}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingTel ? 'Simulating Telecom...' : '📡 Model 5G & Fiber Easement'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Anchor Carrier Rent ($/Mo)</label>
+                      <input
+                        type="number"
+                        value={telAnchorRent}
+                        onChange={(e) => setTelAnchorRent(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Colocated Subtenants</label>
+                      <input
+                        type="number"
+                        value={telSubtenants}
+                        onChange={(e) => setTelSubtenants(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Subtenant Fee ($/Carrier/Mo)</label>
+                      <input
+                        type="number"
+                        value={telSubtenantFee}
+                        onChange={(e) => setTelSubtenantFee(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Landlord Colocation Share (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={telRevSharePct}
+                        onChange={(e) => setTelRevSharePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Dark-Fiber Strands Leased</label>
+                      <input
+                        type="number"
+                        value={telFiberStrands}
+                        onChange={(e) => setTelFiberStrands(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Conduit Riser Length (LF)</label>
+                      <input
+                        type="number"
+                        value={telConduitFeet}
+                        onChange={(e) => setTelConduitFeet(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>IRU Fee ($/Strand/LF/Mo)</label>
+                      <input
+                        type="number"
+                        step="0.005"
+                        value={telIruFee}
+                        onChange={(e) => setTelIruFee(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Generator Pad Fee ($/Mo)</label>
+                      <input
+                        type="number"
+                        value={telGenPadFee}
+                        onChange={(e) => setTelGenPadFee(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Easement Buyout Multiple (x)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={telBuyoutMultiple}
+                        onChange={(e) => setTelBuyoutMultiple(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Antenna Wind Rating (mph)</label>
+                      <input
+                        type="number"
+                        value={telWindMph}
+                        onChange={(e) => setTelWindMph(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>FCC RF Exposure (% of MPE)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={telRfExposurePct}
+                        onChange={(e) => setTelRfExposurePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {loadingTel && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      Evaluating 5G carrier colocation royalties, dark-fiber IRU fees, and TIA-222-H structural wind loads...
+                    </div>
+                  )}
+
+                  {!loadingTel && telData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Consolidated Telecom Income</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${telData.total_monthly_telecom_income_usd.toLocaleString()}/mo
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Annual NOI: ${telData.annual_landlord_telecom_noi_usd.toLocaleString()}/yr
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Colocation & Fiber Uplift</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            +${(telData.monthly_landlord_colocation_share_usd + telData.monthly_dark_fiber_iru_fee_usd).toLocaleString()}/mo
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Colocation: ${telData.monthly_landlord_colocation_share_usd.toLocaleString()} + Fiber IRU: ${telData.monthly_dark_fiber_iru_fee_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Perpetual Easement Buyout</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${telData.perpetual_easement_buyout_valuation_usd.toLocaleString()}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Tower REIT Valuation @ {telData.buyout_multiple_x}x Annual NOI
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>FCC RF & TIA-222-H Safety</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: telData.is_wind_load_compliant && telData.is_rf_exposure_compliant ? 'var(--success)' : 'var(--error)' }}>
+                            {telData.is_wind_load_compliant && telData.is_rf_exposure_compliant ? '✅ CERTIFIED SAFE' : '⚠️ COMPLIANCE BREACH'}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Wind: {telData.antenna_wind_load_rating_mph} mph | RF: {telData.fcc_rf_exposure_pct_of_mpe}% MPE
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Telecom Engineering & Regulatory Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ TIA-222-H Structural & FCC OET Bulletin 65 RF Compliance Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Telecom Engineering Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Technical Specification</th>
+                              <th style={{ padding: '8px 12px' }}>Financial / Structural Impact</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {telData.telecom_engineering_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.specification}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--primary)', fontWeight: 600 }}>{item.financial_impact}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('CERTIFIED') || item.status.includes('COMPLIANT') || item.status.includes('ACTIVE') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('CERTIFIED') || item.status.includes('COMPLIANT') || item.status.includes('ACTIVE') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
                                   </span>
                                 </td>
                               </tr>
