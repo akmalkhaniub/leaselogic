@@ -693,9 +693,28 @@ export default function LeaseLogicApp() {
   const [ptDailyDemurrage, setPtDailyDemurrage] = useState(75.0);
   const [ptData, setPtData] = useState<any>(null);
   const [loadingPt, setLoadingPt] = useState(false);
+  // Controlled Environment Agriculture (CEA) & Vertical Farm state
+  const [ceaCanopySqft, setCeaCanopySqft] = useState(65000);
+  const [ceaShellRentSqft, setCeaShellRentSqft] = useState(28.50);
+  const [ceaPpfdIntensity, setCeaPpfdIntensity] = useState(850);
+  const [ceaPowerMva, setCeaPowerMva] = useState(4.5);
+  const [ceaPhotoperiodHours, setCeaPhotoperiodHours] = useState(18.0);
+  const [ceaTariffKwh, setCeaTariffKwh] = useState(0.085);
+  const [ceaCurtailmentCredit, setCeaCurtailmentCredit] = useState(45000);
+  const [ceaWaterRecoveryPct, setCeaWaterRecoveryPct] = useState(92.0);
+  const [ceaWaterRateKgal, setCeaWaterRateKgal] = useState(6.20);
+  const [ceaCropYieldLbs, setCeaCropYieldLbs] = useState(1850000);
+  const [ceaWholesalePriceLb, setCeaWholesalePriceLb] = useState(3.40);
+  const [ceaPctRentRate, setCeaPctRentRate] = useState(3.5);
+  const [ceaBreakpointRevenue, setCeaBreakpointRevenue] = useState(5000000);
+  const [ceaTiCapex, setCeaTiCapex] = useState(3200000);
+  const [ceaTiInterestPct, setCeaTiInterestPct] = useState(7.5);
+  const [ceaTiTermYears, setCeaTiTermYears] = useState(10);
+  const [ceaData, setCeaData] = useState<any>(null);
+  const [loadingCea, setLoadingCea] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm'>('abstract');
 
 
 
@@ -2259,6 +2278,44 @@ export default function LeaseLogicApp() {
       console.error('Error running port terminal modeler:', err);
     } finally {
       setLoadingPt(false);
+    }
+  };
+
+  // Run Controlled Environment Agriculture (CEA) & Vertical Farm Modeler
+  const handleRunCeaFarm = async () => {
+    if (!selectedLease) return;
+    setLoadingCea(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/cea-vertical-farm-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          facility_canopy_area_sqft: ceaCanopySqft,
+          base_shell_rent_sqft_year_usd: ceaShellRentSqft,
+          led_ppfd_intensity_umol: ceaPpfdIntensity,
+          facility_connected_power_mva: ceaPowerMva,
+          daily_light_integral_hours: ceaPhotoperiodHours,
+          electric_tariff_per_kwh_usd: ceaTariffKwh,
+          utility_curtailment_credit_usd: ceaCurtailmentCredit,
+          transpiration_water_recovery_rate_pct: ceaWaterRecoveryPct,
+          municipal_water_rate_per_kgal_usd: ceaWaterRateKgal,
+          annual_crop_yield_lbs: ceaCropYieldLbs,
+          wholesale_price_per_lb_usd: ceaWholesalePriceLb,
+          crop_revenue_percentage_rent_rate_pct: ceaPctRentRate,
+          natural_breakpoint_revenue_usd: ceaBreakpointRevenue,
+          specialized_ti_racking_capex_usd: ceaTiCapex,
+          ti_amortization_interest_rate_pct: ceaTiInterestPct,
+          ti_amortization_term_years: ceaTiTermYears
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCeaData(data);
+      }
+    } catch (err) {
+      console.error('Error running CEA vertical farm modeler:', err);
+    } finally {
+      setLoadingCea(false);
     }
   };
 
@@ -6459,6 +6516,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'port_terminal' ? 'active' : ''}`} onClick={() => { setActiveTab('port_terminal'); handleRunPortTerminal(); }}>
                   ⚓ Port & Container Terminal
+                </div>
+                <div className={`tab ${activeTab === 'cea_farm' ? 'active' : ''}`} onClick={() => { setActiveTab('cea_farm'); handleRunCeaFarm(); }}>
+                  🌱 CEA & Vertical Farm
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -15276,6 +15336,230 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {ptData.port_compliance_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{item.finding}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('PASS') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('PASS') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'cea_farm' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🌱 Controlled Environment Agriculture (CEA) & Vertical Farm Lease Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Base industrial shell rent + wholesale crop-yield participating overage waterfall, specialized multi-tier racking TI amortization, and PPFD/closed-loop water auditing.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunCeaFarm}
+                      disabled={loadingCea}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingCea ? 'Modeling CEA Yield...' : '🌱 Model Vertical Farm Lease'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Canopy Footprint (SqFt)</label>
+                      <input
+                        type="number"
+                        value={ceaCanopySqft}
+                        onChange={(e) => setCeaCanopySqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Base Shell Rent ($/SF/Yr)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ceaShellRentSqft}
+                        onChange={(e) => setCeaShellRentSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>PPFD Intensity (umol/m2/s)</label>
+                      <input
+                        type="number"
+                        value={ceaPpfdIntensity}
+                        onChange={(e) => setCeaPpfdIntensity(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Connected Power (MVA)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ceaPowerMva}
+                        onChange={(e) => setCeaPowerMva(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Photoperiod (Hours/Day)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ceaPhotoperiodHours}
+                        onChange={(e) => setCeaPhotoperiodHours(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Power Tariff ($/kWh)</label>
+                      <input
+                        type="number"
+                        step="0.005"
+                        value={ceaTariffKwh}
+                        onChange={(e) => setCeaTariffKwh(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Curtailment Payment ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={ceaCurtailmentCredit}
+                        onChange={(e) => setCeaCurtailmentCredit(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Water Recovery (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ceaWaterRecoveryPct}
+                        onChange={(e) => setCeaWaterRecoveryPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual Crop Harvest (Lbs)</label>
+                      <input
+                        type="number"
+                        value={ceaCropYieldLbs}
+                        onChange={(e) => setCeaCropYieldLbs(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Wholesale Price ($/Lb)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={ceaWholesalePriceLb}
+                        onChange={(e) => setCeaWholesalePriceLb(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Crop % Rent Rate (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ceaPctRentRate}
+                        onChange={(e) => setCeaPctRentRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Specialized TI CapEx ($)</label>
+                      <input
+                        type="number"
+                        value={ceaTiCapex}
+                        onChange={(e) => setCeaTiCapex(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {ceaData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Metric Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Landlord Farm Revenue</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${ceaData.total_annual_landlord_farm_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            Base: ${ceaData.annual_base_shell_rent_usd.toLocaleString()} | Overage: ${ceaData.crop_revenue_overage_rent_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Gross Crop Wholesale Value</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${ceaData.total_gross_crop_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {ceaData.annual_crop_yield_lbs.toLocaleString()} lbs @ ${ceaData.wholesale_price_per_lb_usd}/lb
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Amortized TI Racking Payment</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${ceaData.annual_ti_amortization_payment_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            CapEx: $${(ceaData.specialized_ti_racking_capex_usd / 1000000).toFixed(1)}M amortized over 10 yrs
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Rent Burden & Power Utility</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: ceaData.is_farm_rent_burden_healthy ? 'var(--success)' : 'var(--error)' }}>
+                            {ceaData.landlord_rent_to_crop_revenue_pct}% Revenue
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Power: ${ceaData.annual_electricity_cost_usd.toLocaleString()}/yr | Net Water: {ceaData.annual_fresh_water_intake_kgal.toLocaleString()} kGal
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* CEA Facility Compliance & AgTech Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ CEA Vertical Farm Infrastructure, ESG Water Conservation & AgTech Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>CEA Facility Metric</th>
+                              <th style={{ padding: '8px 12px' }}>Operational Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Agricultural Engineering Finding</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ceaData.cea_compliance_audit.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
