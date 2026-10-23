@@ -6204,6 +6204,128 @@ app.post('/api/leases/:id/self-storage-modeler', async (req, res) => {
   }
 });
 
+// 4.768. POST Private Aviation FBO, Executive Hangar & SAF Fuel-Flowage Modeler
+app.post('/api/leases/:id/aviation-fbo-hangar-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      hangar_bay_area_sqft = 45000,
+      hangar_base_rent_sqft_year_usd = 24.50,
+      ramp_apron_area_sqft = 95000,
+      apron_ground_rent_sqft_year_usd = 2.80,
+      annual_jet_a_gallons = 1850000,
+      jet_a_fuel_flowage_fee_per_gal_usd = 0.16,
+      annual_saf_gallons = 420000,
+      saf_fuel_flowage_fee_per_gal_usd = 0.12,
+      saf_state_blenders_tax_credit_per_gal_usd = 1.25,
+      annual_aircraft_movements = 6800,
+      average_transient_ramp_fee_usd = 280.0,
+      ramp_fee_waiver_fuel_minimum_gallons = 200,
+      transient_fee_waiver_pct = 60.0,
+      gpu_and_ground_services_annual_usd = 145000,
+      concession_mag_annual_usd = 1200000,
+      concession_percentage_rent_rate_pct = 3.0,
+      nfpa_409_foam_suppression_reserve_usd = 110000,
+      hangar_door_clear_height_feet = 28,
+      apron_pcn_bearing_rating = 65
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Aviation Lease & Concession Calculations
+    const annualBaseHangarRentUsd = Math.round(hangar_bay_area_sqft * hangar_base_rent_sqft_year_usd);
+    const annualApronGroundRentUsd = Math.round(ramp_apron_area_sqft * apron_ground_rent_sqft_year_usd);
+    const totalFixedAirportLeaseRentUsd = annualBaseHangarRentUsd + annualApronGroundRentUsd;
+
+    // Fuel Flowage Concession Fees
+    const annualJetAFlowageFeeUsd = Math.round(annual_jet_a_gallons * jet_a_fuel_flowage_fee_per_gal_usd);
+    const annualSafFlowageFeeUsd = Math.round(annual_saf_gallons * saf_fuel_flowage_fee_per_gal_usd);
+    const totalFuelFlowageRevenueUsd = annualJetAFlowageFeeUsd + annualSafFlowageFeeUsd;
+    const annualSafBlendersTaxCreditValueUsd = Math.round(annual_saf_gallons * saf_state_blenders_tax_credit_per_gal_usd);
+
+    // Transient Ramp & Ground Handling Line Service
+    const transientPayingMovements = Math.round(annual_aircraft_movements * 0.40 * (1 - (transient_fee_waiver_pct / 100)));
+    const annualTransientRampRevenueUsd = Math.round(transientPayingMovements * average_transient_ramp_fee_usd);
+    const totalAncillaryNonFuelRevenueUsd = annualTransientRampRevenueUsd + gpu_and_ground_services_annual_usd;
+    const overageConcessionPercentageRentUsd = Math.round(totalAncillaryNonFuelRevenueUsd * (concession_percentage_rent_rate_pct / 100));
+
+    // Total Airport Authority Landlord Concession Revenue
+    const totalAnnualAirportRevenueUsd = totalFixedAirportLeaseRentUsd + totalFuelFlowageRevenueUsd + overageConcessionPercentageRentUsd;
+    const netAirportConcessionIncomeUsd = totalAnnualAirportRevenueUsd - nfpa_409_foam_suppression_reserve_usd;
+
+    const concessionMagCoverageRatio = parseFloat((totalAnnualAirportRevenueUsd / (concession_mag_annual_usd || 1)).toFixed(2));
+    const totalFuelGallons = annual_jet_a_gallons + annual_saf_gallons;
+    const safPenetrationPct = parseFloat(((annual_saf_gallons / (totalFuelGallons || 1)) * 100).toFixed(1));
+
+    // Airport Authority Valuation
+    const fboCapRatePct = 6.25;
+    const airportConcessionValuationUsd = Math.round(netAirportConcessionIncomeUsd / (fboCapRatePct / 100));
+
+    // Aviation Engineering & Regulatory Audit
+    const aviationComplianceAudit = [
+      {
+        metric: 'Hangar Door Clear Height',
+        status: hangar_door_clear_height_feet >= 27 ? 'PASS_ULR_HEAVY_JET_COMPLIANT' : 'WARN_TAIL_CLEARANCE_RESTRICTED',
+        standard: '>= 27.0 ft Clear Height',
+        finding: `${hangar_door_clear_height_feet} ft bi-fold clear height accommodates Gulfstream G700 / Global 7500 tail fins.`
+      },
+      {
+        metric: 'Apron Pavement Classification Number (PCN)',
+        status: apron_pcn_bearing_rating >= 60 ? 'PASS_HEAVY_RAMP_CERTIFIED' : 'WARN_RUTTING_RISK',
+        standard: '>= PCN 60 / Flexible / High Tire Pressure',
+        finding: `PCN ${apron_pcn_bearing_rating} ramp supports up to 105,000 lbs MTOW twin-engine corporate aircraft without asphalt deformation.`
+      },
+      {
+        metric: 'NFPA 409 Group I Hangar Fire Suppression',
+        status: nfpa_409_foam_suppression_reserve_usd >= 100000 ? 'PASS_ZERO_PFAS_CONVERSION_FUNDED' : 'WARN_RESERVE_DEFICIENT',
+        standard: '>= $100,000/yr High-Expansion F3 Reserve',
+        finding: `$${nfpa_409_foam_suppression_reserve_usd.toLocaleString()}/yr allocated for fluorine-free foam (F3) replacement and test containment.`
+      },
+      {
+        metric: 'FAA Part 139 SAF Blend Penetration',
+        status: safPenetrationPct >= 15.0 ? 'PASS_NET_ZERO_2030_LEADER' : 'WARN_LOW_SAF_UPTAKE',
+        standard: '>= 15.0% Sustainable Aviation Fuel Volume',
+        finding: `${safPenetrationPct}% SAF volume (${annual_saf_gallons.toLocaleString()} gal) generates $${annualSafBlendersTaxCreditValueUsd.toLocaleString()}/yr in blenders credits.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Executive Airport FBO Hangar Concession',
+      hangar_bay_area_sqft: hangar_bay_area_sqft,
+      ramp_apron_area_sqft: ramp_apron_area_sqft,
+      annual_base_hangar_rent_usd: annualBaseHangarRentUsd,
+      annual_apron_ground_rent_usd: annualApronGroundRentUsd,
+      total_fixed_airport_lease_rent_usd: totalFixedAirportLeaseRentUsd,
+      annual_jet_a_gallons: annual_jet_a_gallons,
+      annual_saf_gallons: annual_saf_gallons,
+      annual_jet_a_flowage_fee_usd: annualJetAFlowageFeeUsd,
+      annual_saf_flowage_fee_usd: annualSafFlowageFeeUsd,
+      total_fuel_flowage_revenue_usd: totalFuelFlowageRevenueUsd,
+      annual_saf_blenders_tax_credit_value_usd: annualSafBlendersTaxCreditValueUsd,
+      saf_penetration_pct: safPenetrationPct,
+      annual_transient_ramp_revenue_usd: annualTransientRampRevenueUsd,
+      total_ancillary_non_fuel_revenue_usd: totalAncillaryNonFuelRevenueUsd,
+      overage_concession_percentage_rent_usd: overageConcessionPercentageRentUsd,
+      total_annual_airport_revenue_usd: totalAnnualAirportRevenueUsd,
+      nfpa_409_foam_suppression_reserve_usd: nfpa_409_foam_suppression_reserve_usd,
+      net_airport_concession_income_usd: netAirportConcessionIncomeUsd,
+      concession_mag_annual_usd: concession_mag_annual_usd,
+      concession_mag_coverage_ratio: concessionMagCoverageRatio,
+      fbo_cap_rate_pct: fboCapRatePct,
+      airport_concession_valuation_usd: airportConcessionValuationUsd,
+      aviation_compliance_audit: aviationComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
