@@ -5859,6 +5859,122 @@ app.post('/api/leases/:id/hospitality-revpar-engine', async (req, res) => {
   }
 });
 
+// 4.765. POST Maritime Port Terminal, Container Berth & TEU Throughput Modeler
+app.post('/api/leases/:id/port-terminal-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      terminal_area_acres = 85,
+      ground_rent_per_acre_year_usd = 72000,
+      berth_linear_feet = 2200,
+      berth_dockage_rate_per_foot_usd = 180,
+      annual_teu_throughput = 420000,
+      wharfage_rate_per_teu_usd = 18.50,
+      minimum_annual_guarantee_teu = 300000,
+      sts_gantry_cranes_count = 4,
+      crane_maintenance_reserve_per_crane_year_usd = 95000,
+      cold_ironing_shore_power_mva = 16.0,
+      channel_depth_draft_feet = 52,
+      channel_dredging_escrow_contribution_usd = 350000,
+      on_dock_rail_intermodal_pct = 32,
+      rail_lift_fee_per_teu_usd = 8.50,
+      average_container_dwell_days = 4.8,
+      daily_demurrage_fee_per_teu_usd = 75.0
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core financial calculations
+    const annualBaseGroundRentUsd = Math.round(terminal_area_acres * ground_rent_per_acre_year_usd);
+    const annualBerthDockageRentUsd = Math.round(berth_linear_feet * berth_dockage_rate_per_foot_usd);
+    const minimumAnnualWharfageGuaranteeUsd = Math.round(minimum_annual_guarantee_teu * wharfage_rate_per_teu_usd);
+    const grossActualWharfageRevenueUsd = Math.round(annual_teu_throughput * wharfage_rate_per_teu_usd);
+    const overageWharfageRentUsd = Math.max(0, Math.round((annual_teu_throughput - minimum_annual_guarantee_teu) * wharfage_rate_per_teu_usd));
+    const effectiveWharfageRentUsd = Math.max(minimumAnnualWharfageGuaranteeUsd, grossActualWharfageRevenueUsd);
+
+    const intermodalRailLiftRevenueUsd = Math.round(annual_teu_throughput * (on_dock_rail_intermodal_pct / 100) * rail_lift_fee_per_teu_usd);
+    const excessDwellDays = Math.max(0, average_container_dwell_days - 4.0);
+    const demurrageDwellShareUsd = Math.round(annual_teu_throughput * 0.12 * excessDwellDays * daily_demurrage_fee_per_teu_usd);
+
+    const totalAnnualLandlordPortRevenueUsd = annualBaseGroundRentUsd + annualBerthDockageRentUsd + effectiveWharfageRentUsd + intermodalRailLiftRevenueUsd + demurrageDwellShareUsd;
+
+    // Infrastructure & Capital reserves
+    const annualStsCraneReserveUsd = Math.round(sts_gantry_cranes_count * crane_maintenance_reserve_per_crane_year_usd);
+    const coldIroningKwhTariffRevenueUsd = Math.round(cold_ironing_shore_power_mva * 1000 * 0.15 * 24 * 365 * 0.18);
+    const totalTerminalOperatingOpexAndReservesUsd = annualStsCraneReserveUsd + channel_dredging_escrow_contribution_usd;
+    const netOperatingPortIncomeUsd = totalAnnualLandlordPortRevenueUsd - totalTerminalOperatingOpexAndReservesUsd;
+
+    const magThroughputCoverageRatio = parseFloat((annual_teu_throughput / (minimum_annual_guarantee_teu || 1)).toFixed(2));
+    const isChannelDraftUlcvCompliant = channel_depth_draft_feet >= 50;
+
+    // Concession Valuation (Cap Rate & Port Authority Multiple)
+    const terminalCapitalizationRatePct = 5.75;
+    const terminalAssetValuationUsd = Math.round(netOperatingPortIncomeUsd / (terminalCapitalizationRatePct / 100));
+
+    // Marine Terminal Operations Audit
+    const portComplianceAudit = [
+      {
+        metric: 'USACE Navigation Draft Depth',
+        status: isChannelDraftUlcvCompliant ? 'PASS_ULCV_NEOPANAMAX_READY' : 'WARN_DRAFT_RESTRICTED',
+        standard: '>= 50 ft MLLW (Mean Lower Low Water)',
+        finding: `${channel_depth_draft_feet} ft draft depth accommodates fully-laden 24,000 TEU Ultra-Large Container Vessels.`
+      },
+      {
+        metric: 'IMO 2030 / CARB Shore-to-Ship Cold Ironing',
+        status: cold_ironing_shore_power_mva >= 12.0 ? 'PASS_ZERO_EMISSION_BERTH' : 'WARN_SUB_OPTIMAL_VOLTAGE',
+        standard: '>= 12.0 MVA High-Voltage Shore Power',
+        finding: `${cold_ironing_shore_power_mva} MVA grid interconnection enables diesel auxiliary engine shutdown at berth.`
+      },
+      {
+        metric: 'MAG Throughput Performance',
+        status: magThroughputCoverageRatio >= 1.2 ? 'PASS_HIGH_THROUGHPUT_SURPLUS' : magThroughputCoverageRatio >= 1.0 ? 'PASS_BREAKEVEN' : 'FAIL_MAG_SHORTFALL',
+        standard: '>= 1.20x Minimum Guarantee Coverage',
+        finding: `${annual_teu_throughput.toLocaleString()} TEUs handled vs ${minimum_annual_guarantee_teu.toLocaleString()} MAG (${magThroughputCoverageRatio}x coverage).`
+      },
+      {
+        metric: 'Intermodal On-Dock Rail Divergence',
+        status: on_dock_rail_intermodal_pct >= 25 ? 'PASS_CLEAN_CORRIDOR_COMPLIANT' : 'WARN_TRUCK_CONGESTION_RISK',
+        standard: '>= 25% Class-I Rail Divergence',
+        finding: `${on_dock_rail_intermodal_pct}% intermodal volume reduces regional highway drayage and gate congestion.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Marine Cargo Terminal',
+      terminal_area_acres: terminal_area_acres,
+      berth_linear_feet: berth_linear_feet,
+      channel_depth_draft_feet: channel_depth_draft_feet,
+      annual_teu_throughput: annual_teu_throughput,
+      minimum_annual_guarantee_teu: minimum_annual_guarantee_teu,
+      mag_throughput_coverage_ratio: magThroughputCoverageRatio,
+      annual_base_ground_rent_usd: annualBaseGroundRentUsd,
+      annual_berth_dockage_rent_usd: annualBerthDockageRentUsd,
+      minimum_annual_wharfage_guarantee_usd: minimumAnnualWharfageGuaranteeUsd,
+      overage_wharfage_rent_usd: overageWharfageRentUsd,
+      effective_wharfage_rent_usd: effectiveWharfageRentUsd,
+      intermodal_rail_lift_revenue_usd: intermodalRailLiftRevenueUsd,
+      demurrage_dwell_share_usd: demurrageDwellShareUsd,
+      total_annual_landlord_port_revenue_usd: totalAnnualLandlordPortRevenueUsd,
+      annual_sts_crane_reserve_usd: annualStsCraneReserveUsd,
+      channel_dredging_escrow_contribution_usd: channel_dredging_escrow_contribution_usd,
+      cold_ironing_kwh_tariff_revenue_usd: coldIroningKwhTariffRevenueUsd,
+      net_operating_port_income_usd: netOperatingPortIncomeUsd,
+      terminal_capitalization_rate_pct: terminalCapitalizationRatePct,
+      terminal_asset_valuation_usd: terminalAssetValuationUsd,
+      is_channel_draft_ulcv_compliant: isChannelDraftUlcvCompliant,
+      port_compliance_audit: portComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
