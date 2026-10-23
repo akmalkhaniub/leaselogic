@@ -674,9 +674,28 @@ export default function LeaseLogicApp() {
   const [hospGopMarginPct, setHospGopMarginPct] = useState(38.0);
   const [hospData, setHospData] = useState<any>(null);
   const [loadingHosp, setLoadingHosp] = useState(false);
+  // Maritime Port Terminal, Container Berth & TEU Throughput state
+  const [ptTerminalAcres, setPtTerminalAcres] = useState(85);
+  const [ptGroundRentAcre, setPtGroundRentAcre] = useState(72000);
+  const [ptBerthFeet, setPtBerthFeet] = useState(2200);
+  const [ptDockageRate, setPtDockageRate] = useState(180);
+  const [ptAnnualTeu, setPtAnnualTeu] = useState(420000);
+  const [ptWharfageTeu, setPtWharfageTeu] = useState(18.50);
+  const [ptMagTeu, setPtMagTeu] = useState(300000);
+  const [ptStsCranes, setPtStsCranes] = useState(4);
+  const [ptCraneReserve, setPtCraneReserve] = useState(95000);
+  const [ptColdIroningMva, setPtColdIroningMva] = useState(16.0);
+  const [ptChannelDraftFeet, setPtChannelDraftFeet] = useState(52);
+  const [ptDredgingContribution, setPtDredgingContribution] = useState(350000);
+  const [ptOnDockRailPct, setPtOnDockRailPct] = useState(32);
+  const [ptRailLiftFee, setPtRailLiftFee] = useState(8.50);
+  const [ptDwellDays, setPtDwellDays] = useState(4.8);
+  const [ptDailyDemurrage, setPtDailyDemurrage] = useState(75.0);
+  const [ptData, setPtData] = useState<any>(null);
+  const [loadingPt, setLoadingPt] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal'>('abstract');
 
 
 
@@ -2202,6 +2221,44 @@ export default function LeaseLogicApp() {
       console.error('Error running hospitality RevPAR engine:', err);
     } finally {
       setLoadingHosp(false);
+    }
+  };
+
+  // Run Maritime Port Terminal, Container Berth & TEU Throughput Modeler
+  const handleRunPortTerminal = async () => {
+    if (!selectedLease) return;
+    setLoadingPt(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/port-terminal-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          terminal_area_acres: ptTerminalAcres,
+          ground_rent_per_acre_year_usd: ptGroundRentAcre,
+          berth_linear_feet: ptBerthFeet,
+          berth_dockage_rate_per_foot_usd: ptDockageRate,
+          annual_teu_throughput: ptAnnualTeu,
+          wharfage_rate_per_teu_usd: ptWharfageTeu,
+          minimum_annual_guarantee_teu: ptMagTeu,
+          sts_gantry_cranes_count: ptStsCranes,
+          crane_maintenance_reserve_per_crane_year_usd: ptCraneReserve,
+          cold_ironing_shore_power_mva: ptColdIroningMva,
+          channel_depth_draft_feet: ptChannelDraftFeet,
+          channel_dredging_escrow_contribution_usd: ptDredgingContribution,
+          on_dock_rail_intermodal_pct: ptOnDockRailPct,
+          rail_lift_fee_per_teu_usd: ptRailLiftFee,
+          average_container_dwell_days: ptDwellDays,
+          daily_demurrage_fee_per_teu_usd: ptDailyDemurrage
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPtData(data);
+      }
+    } catch (err) {
+      console.error('Error running port terminal modeler:', err);
+    } finally {
+      setLoadingPt(false);
     }
   };
 
@@ -6399,6 +6456,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'brownfield_remediation' ? 'active' : ''}`} onClick={() => { setActiveTab('brownfield_remediation'); handleRunBrownfield(); }}>
                   ♻️ Brownfield & Vapor ESA
+                </div>
+                <div className={`tab ${activeTab === 'port_terminal' ? 'active' : ''}`} onClick={() => { setActiveTab('port_terminal'); handleRunPortTerminal(); }}>
+                  ⚓ Port & Container Terminal
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -13926,11 +13986,11 @@ export default function LeaseLogicApp() {
                     </div>
                     <button
                       onClick={handleRunPortFtz}
-                      disabled={loadingPort}
+                      disabled={loadingPt}
                       className="btn btn-primary"
                       style={{ padding: '8px 16px', fontSize: '0.85rem' }}
                     >
-                      {loadingPort ? 'Analyzing Terminal...' : '🚢 Model Port & FTZ Logistics'}
+                      {loadingPt ? 'Analyzing Terminal...' : '🚢 Model Port & FTZ Logistics'}
                     </button>
                   </div>
 
@@ -14027,8 +14087,8 @@ export default function LeaseLogicApp() {
                       <input
                         type="number"
                         step="0.5"
-                        value={portWharfageTeu}
-                        onChange={(e) => setPortWharfageTeu(Number(e.target.value))}
+                        value={ptWharfageTeu}
+                        onChange={(e) => setPtWharfageTeu(Number(e.target.value))}
                         style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
                       />
                     </div>
@@ -14054,50 +14114,50 @@ export default function LeaseLogicApp() {
                     </div>
                   </div>
 
-                  {loadingPort && (
+                  {loadingPt && (
                     <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                       Analyzing deepwater draft, 19 CFR Part 146 duty arbitrage, and terminal wharfage revenues...
                     </div>
                   )}
 
-                  {!loadingPort && portData && (
+                  {!loadingPt && ptData && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                       {/* Metric Cards */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
                         <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Port Authority Revenue</span>
                           <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
-                            ${portData.total_annual_port_authority_revenue_usd.toLocaleString()}/yr
+                            ${ptData.total_annual_port_authority_revenue_usd.toLocaleString()}/yr
                           </h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            Base Rent: ${portData.annual_terminal_base_rent_usd.toLocaleString()} + Wharfage Royalty: ${portData.landlord_wharfage_royalty_usd.toLocaleString()}
+                            Base Rent: ${ptData.annual_terminal_base_rent_usd.toLocaleString()} + Wharfage Royalty: ${ptData.landlord_wharfage_royalty_usd.toLocaleString()}
                           </span>
                         </div>
                         <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant FTZ Supply Chain Savings</span>
                           <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
-                            ${portData.total_tenant_ftz_supply_chain_savings_usd.toLocaleString()}/yr
+                            ${ptData.total_tenant_ftz_supply_chain_savings_usd.toLocaleString()}/yr
                           </h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            Duty Inversion: ${portData.inverted_tariff_duty_savings_usd.toLocaleString()} + MPF Cap: ${portData.customs_mpf_weekly_entry_savings_usd.toLocaleString()}
+                            Duty Inversion: ${ptData.inverted_tariff_duty_savings_usd.toLocaleString()} + MPF Cap: ${ptData.customs_mpf_weekly_entry_savings_usd.toLocaleString()}
                           </span>
                         </div>
                         <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Container Vessel Berthing</span>
                           <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
-                            {portData.total_berthing_days} Days / yr
+                            {ptData.total_berthing_days} Days / yr
                           </h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            Dockage Concession: ${portData.annual_dockage_fees_usd.toLocaleString()} (${portData.port_authority_dockage_share_usd.toLocaleString()} Landlord Share)
+                            Dockage Concession: ${ptData.annual_dockage_fees_usd.toLocaleString()} (${ptData.port_authority_dockage_share_usd.toLocaleString()} Landlord Share)
                           </span>
                         </div>
                         <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Intermodal Rail Throughput</span>
                           <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
-                            {portData.rail_intermodal_teu.toLocaleString()} TEU
+                            {ptData.rail_intermodal_teu.toLocaleString()} TEU
                           </h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {portData.rail_intermodal_split_pct}% Rail vs {portData.truck_gate_teu.toLocaleString()} Gate Drayage
+                            {ptData.rail_intermodal_split_pct}% Rail vs {ptData.truck_gate_teu.toLocaleString()} Gate Drayage
                           </span>
                         </div>
                       </div>
@@ -14117,7 +14177,7 @@ export default function LeaseLogicApp() {
                             </tr>
                           </thead>
                           <tbody>
-                            {portData.maritime_compliance_audit.map((audit: any, idx: number) => (
+                            {ptData.maritime_compliance_audit.map((audit: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '10px 12px', fontWeight: 600 }}>{audit.regulation}</td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{audit.metric}</td>
@@ -15008,6 +15068,226 @@ export default function LeaseLogicApp() {
                                     borderRadius: '12px',
                                     background: item.status.includes('TRIGGERED') || item.status.includes('COMPLIANT') || item.status.includes('STANDING') || item.status.includes('HEALTHY') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                                     color: item.status.includes('TRIGGERED') || item.status.includes('COMPLIANT') || item.status.includes('STANDING') || item.status.includes('HEALTHY') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'port_terminal' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        ⚓ Maritime Port Terminal, Container Berth & TEU Throughput Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Minimum Annual Guarantee (MAG) vs TEU wharfage revenue waterfall, Ship-to-Shore (STS) gantry crane reserves, CARB/IMO cold-ironing shore power, and ULCV navigation draft auditing.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunPortTerminal}
+                      disabled={loadingPt}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingPt ? 'Underwriting Terminal...' : '⚓ Run Port Terminal Modeler'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Concession Area (Acres)</label>
+                      <input
+                        type="number"
+                        value={ptTerminalAcres}
+                        onChange={(e) => setPtTerminalAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ground Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={ptGroundRentAcre}
+                        onChange={(e) => setPtGroundRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Quay Berth (Linear Feet)</label>
+                      <input
+                        type="number"
+                        value={ptBerthFeet}
+                        onChange={(e) => setPtBerthFeet(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Dockage Rate ($/Lin.Ft)</label>
+                      <input
+                        type="number"
+                        value={ptDockageRate}
+                        onChange={(e) => setPtDockageRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual TEU Throughput</label>
+                      <input
+                        type="number"
+                        value={ptAnnualTeu}
+                        onChange={(e) => setPtAnnualTeu(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Wharfage Tariff ($/TEU)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ptWharfageTeu}
+                        onChange={(e) => setPtWharfageTeu(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>MAG Baseline (TEUs)</label>
+                      <input
+                        type="number"
+                        value={ptMagTeu}
+                        onChange={(e) => setPtMagTeu(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>STS Gantry Cranes</label>
+                      <input
+                        type="number"
+                        value={ptStsCranes}
+                        onChange={(e) => setPtStsCranes(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Shore Power (MVA)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ptColdIroningMva}
+                        onChange={(e) => setPtColdIroningMva(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Channel Draft (Feet MLLW)</label>
+                      <input
+                        type="number"
+                        value={ptChannelDraftFeet}
+                        onChange={(e) => setPtChannelDraftFeet(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>On-Dock Rail Intermodal (%)</label>
+                      <input
+                        type="number"
+                        value={ptOnDockRailPct}
+                        onChange={(e) => setPtOnDockRailPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Avg Dwell Days (Free: 4.0d)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={ptDwellDays}
+                        onChange={(e) => setPtDwellDays(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {ptData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Metric Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Port Concession Revenue</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${ptData.total_annual_landlord_port_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            Ground: ${ptData.annual_base_ground_rent_usd.toLocaleString()} | Wharfage: ${ptData.effective_wharfage_rent_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>TEU Throughput & MAG Coverage</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            {ptData.annual_teu_throughput.toLocaleString()} TEUs
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {ptData.mag_throughput_coverage_ratio}x MAG Coverage (+${ptData.overage_wharfage_rent_usd.toLocaleString()} overage)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Intermodal & Demurrage Fees</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${(ptData.intermodal_rail_lift_revenue_usd + ptData.demurrage_dwell_share_usd).toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Rail: ${ptData.intermodal_rail_lift_revenue_usd.toLocaleString()} | Demurrage: ${ptData.demurrage_dwell_share_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Operating Port Income & Value</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${ptData.net_operating_port_income_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Valuation: ${(ptData.terminal_asset_valuation_usd / 1000000).toFixed(1)}M (@ {ptData.terminal_capitalization_rate_pct}% Cap Rate)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Port Terminal Operations & Navigation Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Maritime Concession Compliance, USACE Channel Navigation & Cold-Ironing Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Marine Terminal Metric</th>
+                              <th style={{ padding: '8px 12px' }}>Operational Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Concession Analysis & Audit Finding</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ptData.port_compliance_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{item.finding}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('PASS') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('PASS') ? 'var(--success)' : 'var(--error)'
                                   }}>
                                     {item.status.replace(/_/g, ' ')}
                                   </span>
