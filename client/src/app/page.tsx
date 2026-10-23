@@ -732,9 +732,30 @@ export default function LeaseLogicApp() {
   const [ssFloorLoadPsf, setSsFloorLoadPsf] = useState(125);
   const [ssData, setSsData] = useState<any>(null);
   const [loadingSs, setLoadingSs] = useState(false);
+  // Private Aviation FBO, Executive Hangar & SAF Fuel-Flowage state
+  const [fboHangarSqft, setFboHangarSqft] = useState(45000);
+  const [fboHangarRentSqft, setFboHangarRentSqft] = useState(24.50);
+  const [fboApronSqft, setFboApronSqft] = useState(95000);
+  const [fboApronRentSqft, setFboApronRentSqft] = useState(2.80);
+  const [fboJetAGallons, setFboJetAGallons] = useState(1850000);
+  const [fboJetAFeeGal, setFboJetAFeeGal] = useState(0.16);
+  const [fboSafGallons, setFboSafGallons] = useState(420000);
+  const [fboSafFeeGal, setFboSafFeeGal] = useState(0.12);
+  const [fboSafCreditGal, setFboSafCreditGal] = useState(1.25);
+  const [fboMovements, setFboMovements] = useState(6800);
+  const [fboTransientFee, setFboTransientFee] = useState(280.0);
+  const [fboWaiverPct, setFboWaiverPct] = useState(60.0);
+  const [fboGpuRevenue, setFboGpuRevenue] = useState(145000);
+  const [fboMagAnnual, setFboMagAnnual] = useState(1200000);
+  const [fboPctRentRate, setFboPctRentRate] = useState(3.0);
+  const [fboFoamReserve, setFboFoamReserve] = useState(110000);
+  const [fboDoorClearFeet, setFboDoorClearFeet] = useState(28);
+  const [fboPcnRating, setFboPcnRating] = useState(65);
+  const [fboData, setFboData] = useState<any>(null);
+  const [loadingFbo, setLoadingFbo] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo'>('abstract');
 
 
 
@@ -2375,6 +2396,46 @@ export default function LeaseLogicApp() {
       console.error('Error running self-storage modeler:', err);
     } finally {
       setLoadingSs(false);
+    }
+  };
+
+  // Run Private Aviation FBO, Executive Hangar & SAF Fuel-Flowage Modeler
+  const handleRunAviationFbo = async () => {
+    if (!selectedLease) return;
+    setLoadingFbo(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/aviation-fbo-hangar-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hangar_bay_area_sqft: fboHangarSqft,
+          hangar_base_rent_sqft_year_usd: fboHangarRentSqft,
+          ramp_apron_area_sqft: fboApronSqft,
+          apron_ground_rent_sqft_year_usd: fboApronRentSqft,
+          annual_jet_a_gallons: fboJetAGallons,
+          jet_a_fuel_flowage_fee_per_gal_usd: fboJetAFeeGal,
+          annual_saf_gallons: fboSafGallons,
+          saf_fuel_flowage_fee_per_gal_usd: fboSafFeeGal,
+          saf_state_blenders_tax_credit_per_gal_usd: fboSafCreditGal,
+          annual_aircraft_movements: fboMovements,
+          average_transient_ramp_fee_usd: fboTransientFee,
+          transient_fee_waiver_pct: fboWaiverPct,
+          gpu_and_ground_services_annual_usd: fboGpuRevenue,
+          concession_mag_annual_usd: fboMagAnnual,
+          concession_percentage_rent_rate_pct: fboPctRentRate,
+          nfpa_409_foam_suppression_reserve_usd: fboFoamReserve,
+          hangar_door_clear_height_feet: fboDoorClearFeet,
+          apron_pcn_bearing_rating: fboPcnRating
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFboData(data);
+      }
+    } catch (err) {
+      console.error('Error running aviation FBO modeler:', err);
+    } finally {
+      setLoadingFbo(false);
     }
   };
 
@@ -6581,6 +6642,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'self_storage' ? 'active' : ''}`} onClick={() => { setActiveTab('self_storage'); handleRunSelfStorage(); }}>
                   📦 Self-Storage & Vault
+                </div>
+                <div className={`tab ${activeTab === 'aviation_fbo' ? 'active' : ''}`} onClick={() => { setActiveTab('aviation_fbo'); handleRunAviationFbo(); }}>
+                  ✈️ FBO & Aviation Hangar
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -15848,6 +15912,227 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {ssData.storage_compliance_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{item.finding}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('PASS') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('PASS') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'aviation_fbo' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        ✈️ Private Aviation FBO, Executive Hangar & SAF Fuel-Flowage Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Airport Authority hangar bay + ramp ground leases, Jet-A & SAF fuel flowage royalties, NFPA 409 foam suppression reserves, and PCN bearing capacity auditing.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunAviationFbo}
+                      disabled={loadingFbo}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingFbo ? 'Underwriting FBO...' : '✈️ Model FBO Hangar Concession'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Hangar Footprint (SqFt)</label>
+                      <input
+                        type="number"
+                        value={fboHangarSqft}
+                        onChange={(e) => setFboHangarSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Hangar Rent ($/SF/Yr)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={fboHangarRentSqft}
+                        onChange={(e) => setFboHangarRentSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ramp Apron Area (SqFt)</label>
+                      <input
+                        type="number"
+                        value={fboApronSqft}
+                        onChange={(e) => setFboApronSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Apron Ground Rent ($/SF)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={fboApronRentSqft}
+                        onChange={(e) => setFboApronRentSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Jet-A Dispensed (Gal/Yr)</label>
+                      <input
+                        type="number"
+                        value={fboJetAGallons}
+                        onChange={(e) => setFboJetAGallons(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Jet-A Flowage Fee ($/Gal)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={fboJetAFeeGal}
+                        onChange={(e) => setFboJetAFeeGal(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>SAF Dispensed (Gal/Yr)</label>
+                      <input
+                        type="number"
+                        value={fboSafGallons}
+                        onChange={(e) => setFboSafGallons(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>SAF Flowage Fee ($/Gal)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={fboSafFeeGal}
+                        onChange={(e) => setFboSafFeeGal(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual Flight Movements</label>
+                      <input
+                        type="number"
+                        value={fboMovements}
+                        onChange={(e) => setFboMovements(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Transient Ramp Fee ($)</label>
+                      <input
+                        type="number"
+                        value={fboTransientFee}
+                        onChange={(e) => setFboTransientFee(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Hangar Clear Height (Ft)</label>
+                      <input
+                        type="number"
+                        value={fboDoorClearFeet}
+                        onChange={(e) => setFboDoorClearFeet(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Apron PCN Rating</label>
+                      <input
+                        type="number"
+                        value={fboPcnRating}
+                        onChange={(e) => setFboPcnRating(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {fboData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Metric Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Airport Landlord Revenue</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${fboData.total_annual_airport_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            Hangar/Ramp Rent: ${fboData.total_fixed_airport_lease_rent_usd.toLocaleString()} | Flowage: ${fboData.total_fuel_flowage_revenue_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Concession MAG Coverage</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            {fboData.concession_mag_coverage_ratio}x MAG
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Baseline MAG: ${fboData.concession_mag_annual_usd.toLocaleString()} | Net: ${fboData.net_airport_concession_income_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>SAF Penetration & Tax Credit</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            {fboData.saf_penetration_pct}% SAF Volume
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            +${fboData.annual_saf_blenders_tax_credit_value_usd.toLocaleString()}/yr Clean Fuel Tax Credits
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Airport Concession Valuation</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${(fboData.airport_concession_valuation_usd / 1000000).toFixed(1)}M
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Cap Rate: {fboData.fbo_cap_rate_pct}% | NFPA 409 Reserve: -${fboData.nfpa_409_foam_suppression_reserve_usd.toLocaleString()}/yr
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Aviation Regulatory & Engineering Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Private Aviation Hangar Engineering, NFPA 409 Fire Protection & FAA SAF Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Aeronautical Metric</th>
+                              <th style={{ padding: '8px 12px' }}>FAA / NFPA Standard</th>
+                              <th style={{ padding: '8px 12px' }}>FBO Concession Finding</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {fboData.aviation_compliance_audit.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
