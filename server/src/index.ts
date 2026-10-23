@@ -5975,6 +5975,116 @@ app.post('/api/leases/:id/port-terminal-modeler', async (req, res) => {
   }
 });
 
+// 4.766. POST Controlled Environment Agriculture (CEA) & Vertical Farm Lease Modeler
+app.post('/api/leases/:id/cea-vertical-farm-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      facility_canopy_area_sqft = 65000,
+      base_shell_rent_sqft_year_usd = 28.50,
+      led_ppfd_intensity_umol = 850,
+      facility_connected_power_mva = 4.5,
+      daily_light_integral_hours = 18.0,
+      electric_tariff_per_kwh_usd = 0.085,
+      utility_curtailment_credit_usd = 45000,
+      transpiration_water_recovery_rate_pct = 92.0,
+      municipal_water_rate_per_kgal_usd = 6.20,
+      annual_crop_yield_lbs = 1850000,
+      wholesale_price_per_lb_usd = 3.40,
+      crop_revenue_percentage_rent_rate_pct = 3.5,
+      natural_breakpoint_revenue_usd = 5000000,
+      specialized_ti_racking_capex_usd = 3200000,
+      ti_amortization_interest_rate_pct = 7.5,
+      ti_amortization_term_years = 10
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core financial calculations
+    const annualBaseShellRentUsd = Math.round(facility_canopy_area_sqft * base_shell_rent_sqft_year_usd);
+    const totalGrossCropRevenueUsd = Math.round(annual_crop_yield_lbs * wholesale_price_per_lb_usd);
+    const cropRevenueOverageRentUsd = Math.max(0, Math.round((totalGrossCropRevenueUsd - natural_breakpoint_revenue_usd) * (crop_revenue_percentage_rent_rate_pct / 100)));
+
+    // Specialized Tenant Improvement (TI) amortization schedule
+    const monthlyRate = (ti_amortization_interest_rate_pct / 100) / 12;
+    const totalPayments = ti_amortization_term_years * 12;
+    const monthlyTiPayment = specialized_ti_racking_capex_usd * (monthlyRate * Math.pow(1 + monthlyRate, totalPayments)) / (Math.pow(1 + monthlyRate, totalPayments) - 1);
+    const annualTiAmortizationPaymentUsd = Math.round(monthlyTiPayment * 12);
+
+    const totalAnnualLandlordFarmRevenueUsd = annualBaseShellRentUsd + cropRevenueOverageRentUsd + annualTiAmortizationPaymentUsd;
+
+    // Environmental & utility operations
+    const annualElectricityCostUsd = Math.round(
+      (facility_connected_power_mva * 1000 * 0.72 * daily_light_integral_hours * 365 * electric_tariff_per_kwh_usd) - utility_curtailment_credit_usd
+    );
+    const annualFreshWaterIntakeKgal = Math.round(
+      (annual_crop_yield_lbs * 0.40 * (100 - transpiration_water_recovery_rate_pct) / 100) / 1000
+    );
+    const annualWaterCostUsd = Math.round(annualFreshWaterIntakeKgal * municipal_water_rate_per_kgal_usd);
+
+    const landlordRentToCropRevenuePct = parseFloat(((totalAnnualLandlordFarmRevenueUsd / (totalGrossCropRevenueUsd || 1)) * 100).toFixed(1));
+    const isFarmRentBurdenHealthy = landlordRentToCropRevenuePct <= 22.0;
+
+    // Farm Concession & AgTech Facility Audit
+    const ceaComplianceAudit = [
+      {
+        metric: 'LED Photosynthetic PPFD Uniformity',
+        status: led_ppfd_intensity_umol >= 800 ? 'PASS_HIGH_YIELD_OPTIMAL' : 'WARN_LOW_PHOTOSYNTHESIS',
+        standard: '>= 800 umol/m2/s Photoperiod Target',
+        finding: `${led_ppfd_intensity_umol} umol/m2/s PPFD supports multi-tier commercial leafy greens and strawberry cultivars.`
+      },
+      {
+        metric: 'Closed-Loop Transpiration Water Recovery',
+        status: transpiration_water_recovery_rate_pct >= 90.0 ? 'PASS_CIRCULAR_ESG_CERTIFIED' : 'WARN_HIGH_DISCHARGE_LOSS',
+        standard: '>= 90% HVAC Condensate Recycling',
+        finding: `${transpiration_water_recovery_rate_pct}% condensed plant transpiration recycled into reverse-osmosis fertigation loops.`
+      },
+      {
+        metric: 'High-Amperage Grid Interconnection',
+        status: facility_connected_power_mva >= 4.0 ? 'PASS_DUAL_FEED_REDUNDANT' : 'WARN_FEEDER_CAPACITY_CONSTRAINED',
+        standard: '>= 4.0 MVA Dedicated Substation',
+        finding: `${facility_connected_power_mva} MVA service supports simultaneously energized multi-layer LED arrays and chillers.`
+      },
+      {
+        metric: 'Farm Occupancy Rent Burden',
+        status: isFarmRentBurdenHealthy ? 'PASS_HEALTHY_EBITDA_COVERAGE' : 'WARN_HIGH_RENT_BURDEN',
+        standard: '<= 22.0% of Gross Crop Wholesale Value',
+        finding: `Total landlord rent represents ${landlordRentToCropRevenuePct}% of crop wholesale sales ($${totalGrossCropRevenueUsd.toLocaleString()}).`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'CEA Vertical Farming Facility',
+      facility_canopy_area_sqft: facility_canopy_area_sqft,
+      annual_crop_yield_lbs: annual_crop_yield_lbs,
+      wholesale_price_per_lb_usd: wholesale_price_per_lb_usd,
+      total_gross_crop_revenue_usd: totalGrossCropRevenueUsd,
+      natural_breakpoint_revenue_usd: natural_breakpoint_revenue_usd,
+      annual_base_shell_rent_usd: annualBaseShellRentUsd,
+      crop_revenue_percentage_rent_rate_pct: crop_revenue_percentage_rent_rate_pct,
+      crop_revenue_overage_rent_usd: cropRevenueOverageRentUsd,
+      specialized_ti_racking_capex_usd: specialized_ti_racking_capex_usd,
+      annual_ti_amortization_payment_usd: annualTiAmortizationPaymentUsd,
+      total_annual_landlord_farm_revenue_usd: totalAnnualLandlordFarmRevenueUsd,
+      annual_electricity_cost_usd: annualElectricityCostUsd,
+      utility_curtailment_credit_usd: utility_curtailment_credit_usd,
+      annual_fresh_water_intake_kgal: annualFreshWaterIntakeKgal,
+      annual_water_cost_usd: annualWaterCostUsd,
+      landlord_rent_to_crop_revenue_pct: landlordRentToCropRevenuePct,
+      is_farm_rent_burden_healthy: isFarmRentBurdenHealthy,
+      cea_compliance_audit: ceaComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
