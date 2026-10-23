@@ -712,9 +712,29 @@ export default function LeaseLogicApp() {
   const [ceaTiTermYears, setCeaTiTermYears] = useState(10);
   const [ceaData, setCeaData] = useState<any>(null);
   const [loadingCea, setLoadingCea] = useState(false);
+  // Institutional Self-Storage & Climate-Controlled Vault state
+  const [ssNrsf, setSsNrsf] = useState(88000);
+  const [ssTotalUnits, setSsTotalUnits] = useState(720);
+  const [ssOccupancyPct, setSsOccupancyPct] = useState(91.5);
+  const [ssStreetRateSqft, setSsStreetRateSqft] = useState(1.85);
+  const [ssEcriPct, setSsEcriPct] = useState(9.5);
+  const [ssEcriEligiblePct, setSsEcriEligiblePct] = useState(65.0);
+  const [ssConcessionMonths, setSsConcessionMonths] = useState(0.5);
+  const [ssTurnoverRatePct, setSsTurnoverRatePct] = useState(38.0);
+  const [ssClimateUnitsPct, setSsClimateUnitsPct] = useState(70.0);
+  const [ssClimatePremiumPct, setSsClimatePremiumPct] = useState(18.0);
+  const [ssInsurancePenetrationPct, setSsInsurancePenetrationPct] = useState(72.0);
+  const [ssMonthlyInsuranceFee, setSsMonthlyInsuranceFee] = useState(14.00);
+  const [ssInsuranceRevSharePct, setSsInsuranceRevSharePct] = useState(65.0);
+  const [ssRetailSalesAnnual, setSsRetailSalesAnnual] = useState(36000);
+  const [ssManagementFeePct, setSsManagementFeePct] = useState(5.5);
+  const [ssDirectOpexSqft, setSsDirectOpexSqft] = useState(4.25);
+  const [ssFloorLoadPsf, setSsFloorLoadPsf] = useState(125);
+  const [ssData, setSsData] = useState<any>(null);
+  const [loadingSs, setLoadingSs] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage'>('abstract');
 
 
 
@@ -2316,6 +2336,45 @@ export default function LeaseLogicApp() {
       console.error('Error running CEA vertical farm modeler:', err);
     } finally {
       setLoadingCea(false);
+    }
+  };
+
+  // Run Institutional Self-Storage & Climate-Controlled Vault Modeler
+  const handleRunSelfStorage = async () => {
+    if (!selectedLease) return;
+    setLoadingSs(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/self-storage-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          net_rentable_sqft: ssNrsf,
+          total_units_count: ssTotalUnits,
+          physical_occupancy_pct: ssOccupancyPct,
+          average_street_rate_sqft_month_usd: ssStreetRateSqft,
+          existing_customer_rate_increase_pct: ssEcriPct,
+          ecri_eligible_tenants_pct: ssEcriEligiblePct,
+          move_in_concession_months_free: ssConcessionMonths,
+          annual_tenant_turnover_rate_pct: ssTurnoverRatePct,
+          climate_controlled_units_pct: ssClimateUnitsPct,
+          climate_control_premium_pct: ssClimatePremiumPct,
+          tenant_protection_insurance_penetration_pct: ssInsurancePenetrationPct,
+          monthly_tenant_protection_fee_usd: ssMonthlyInsuranceFee,
+          landlord_insurance_revenue_share_pct: ssInsuranceRevSharePct,
+          ancillary_retail_sales_annual_usd: ssRetailSalesAnnual,
+          third_party_management_fee_pct: ssManagementFeePct,
+          facility_operating_expenses_sqft_year_usd: ssDirectOpexSqft,
+          structural_floor_load_rating_psf: ssFloorLoadPsf
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSsData(data);
+      }
+    } catch (err) {
+      console.error('Error running self-storage modeler:', err);
+    } finally {
+      setLoadingSs(false);
     }
   };
 
@@ -6519,6 +6578,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'cea_farm' ? 'active' : ''}`} onClick={() => { setActiveTab('cea_farm'); handleRunCeaFarm(); }}>
                   🌱 CEA & Vertical Farm
+                </div>
+                <div className={`tab ${activeTab === 'self_storage' ? 'active' : ''}`} onClick={() => { setActiveTab('self_storage'); handleRunSelfStorage(); }}>
+                  📦 Self-Storage & Vault
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -15560,6 +15622,232 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {ceaData.cea_compliance_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{item.finding}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('PASS') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('PASS') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'self_storage' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        📦 Institutional Self-Storage & Climate-Controlled Vault Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Unit-mix street rates vs programmatic 9-month ECRI bumps, captive tenant protection insurance revenue-share, third-party REIT management fees, and IBC 125 PSF floor load verification.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunSelfStorage}
+                      disabled={loadingSs}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingSs ? 'Underwriting Storage...' : '📦 Model Self-Storage Asset'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Net Rentable Area (NRSF)</label>
+                      <input
+                        type="number"
+                        value={ssNrsf}
+                        onChange={(e) => setSsNrsf(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Total Units Inventory</label>
+                      <input
+                        type="number"
+                        value={ssTotalUnits}
+                        onChange={(e) => setSsTotalUnits(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Physical Occupancy (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ssOccupancyPct}
+                        onChange={(e) => setSsOccupancyPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Street Rate ($/SF/Mo)</label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        value={ssStreetRateSqft}
+                        onChange={(e) => setSsStreetRateSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>ECRI Increase Bump (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ssEcriPct}
+                        onChange={(e) => setSsEcriPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>ECRI Eligible Pool (%)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={ssEcriEligiblePct}
+                        onChange={(e) => setSsEcriEligiblePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Climate Control Units (%)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={ssClimateUnitsPct}
+                        onChange={(e) => setSsClimateUnitsPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Tenant Protection Penetration (%)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={ssInsurancePenetrationPct}
+                        onChange={(e) => setSsInsurancePenetrationPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Protection Plan Fee ($/Mo)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={ssMonthlyInsuranceFee}
+                        onChange={(e) => setSsMonthlyInsuranceFee(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>REIT Mgmt Fee (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={ssManagementFeePct}
+                        onChange={(e) => setSsManagementFeePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Facility OpEx ($/SF/Yr)</label>
+                      <input
+                        type="number"
+                        step="0.25"
+                        value={ssDirectOpexSqft}
+                        onChange={(e) => setSsDirectOpexSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Floor Load Rating (PSF)</label>
+                      <input
+                        type="number"
+                        value={ssFloorLoadPsf}
+                        onChange={(e) => setSsFloorLoadPsf(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {ssData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Metric Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Effective Gross Income (EGI)</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${ssData.total_effective_gross_income_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            Net Rent: ${ssData.annual_net_rental_revenue_usd.toLocaleString()} | GPR: ${ssData.annual_gross_potential_rent_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Operating Income & Value</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${ssData.net_operating_income_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Valuation: ${(ssData.facility_asset_valuation_usd / 1000000).toFixed(1)}M (@ {ssData.self_storage_cap_rate_pct}% Cap Rate)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tenant Protection Program</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${ssData.annual_tenant_protection_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Pure profit share + ${ssData.ancillary_retail_sales_annual_usd.toLocaleString()}/yr retail
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>RevPAF & OpEx Efficiency</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${ssData.revpaf_usd} RevPAF
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            OpEx: {ssData.opex_ratio_pct}% of EGI (Mgmt Fee: ${ssData.annual_management_fee_usd.toLocaleString()})
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Self-Storage Facility & Structural Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Self-Storage Physical Occupancy, ECRI Elasticity & Structural Floor-Load Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Self-Storage Metric</th>
+                              <th style={{ padding: '8px 12px' }}>REIT / IBC Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Operational Finding</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ssData.storage_compliance_audit.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
