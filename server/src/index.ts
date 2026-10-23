@@ -6085,6 +6085,125 @@ app.post('/api/leases/:id/cea-vertical-farm-modeler', async (req, res) => {
   }
 });
 
+// 4.767. POST Institutional Self-Storage & Climate-Controlled Vault Modeler
+app.post('/api/leases/:id/self-storage-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      net_rentable_sqft = 88000,
+      total_units_count = 720,
+      physical_occupancy_pct = 91.5,
+      average_street_rate_sqft_month_usd = 1.85,
+      existing_customer_rate_increase_pct = 9.5,
+      ecri_eligible_tenants_pct = 65.0,
+      move_in_concession_months_free = 0.5,
+      annual_tenant_turnover_rate_pct = 38.0,
+      climate_controlled_units_pct = 70.0,
+      climate_control_premium_pct = 18.0,
+      tenant_protection_insurance_penetration_pct = 72.0,
+      monthly_tenant_protection_fee_usd = 14.00,
+      landlord_insurance_revenue_share_pct = 65.0,
+      ancillary_retail_sales_annual_usd = 36000,
+      third_party_management_fee_pct = 5.5,
+      facility_operating_expenses_sqft_year_usd = 4.25,
+      structural_floor_load_rating_psf = 125
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Self-Storage Revenue Modeling
+    const effectiveStreetRateSqftMonthUsd = average_street_rate_sqft_month_usd * (1 + (climate_controlled_units_pct / 100) * (climate_control_premium_pct / 100));
+    const grossPotentialRentMonthlyUsd = net_rentable_sqft * effectiveStreetRateSqftMonthUsd;
+    const monthlyEcriUpliftUsd = grossPotentialRentMonthlyUsd * (ecri_eligible_tenants_pct / 100) * (existing_customer_rate_increase_pct / 100);
+    const annualGrossPotentialRentUsd = Math.round((grossPotentialRentMonthlyUsd + monthlyEcriUpliftUsd) * 12);
+
+    const annualPhysicalVacancyLossUsd = Math.round(annualGrossPotentialRentUsd * ((100 - physical_occupancy_pct) / 100));
+    const avgUnitSqft = net_rentable_sqft / (total_units_count || 1);
+    const annualConcessionLossUsd = Math.round(
+      (annual_tenant_turnover_rate_pct / 100) * total_units_count * (effectiveStreetRateSqftMonthUsd * avgUnitSqft * move_in_concession_months_free)
+    );
+    const annualNetRentalRevenueUsd = annualGrossPotentialRentUsd - annualPhysicalVacancyLossUsd - annualConcessionLossUsd;
+
+    // Ancillary Revenue: Tenant Protection Plan & Retail
+    const occupiedUnits = total_units_count * (physical_occupancy_pct / 100);
+    const annualTenantProtectionRevenueUsd = Math.round(
+      occupiedUnits * (tenant_protection_insurance_penetration_pct / 100) * monthly_tenant_protection_fee_usd * (landlord_insurance_revenue_share_pct / 100) * 12
+    );
+    const totalEffectiveGrossIncomeUsd = annualNetRentalRevenueUsd + annualTenantProtectionRevenueUsd + ancillary_retail_sales_annual_usd;
+
+    // Operating Expenses & REIT Management Fee
+    const annualManagementFeeUsd = Math.round(totalEffectiveGrossIncomeUsd * (third_party_management_fee_pct / 100));
+    const annualDirectFacilityOpexUsd = Math.round(net_rentable_sqft * facility_operating_expenses_sqft_year_usd);
+    const totalAnnualOperatingExpensesUsd = annualManagementFeeUsd + annualDirectFacilityOpexUsd;
+
+    const netOperatingIncomeUsd = totalEffectiveGrossIncomeUsd - totalAnnualOperatingExpensesUsd;
+    const selfStorageCapRatePct = 6.0;
+    const facilityAssetValuationUsd = Math.round(netOperatingIncomeUsd / (selfStorageCapRatePct / 100));
+    const revpafUsd = parseFloat((totalEffectiveGrossIncomeUsd / (net_rentable_sqft || 1)).toFixed(2));
+    const opexRatioPct = parseFloat(((totalAnnualOperatingExpensesUsd / (totalEffectiveGrossIncomeUsd || 1)) * 100).toFixed(1));
+
+    // Self-Storage Facility & Structural Audit
+    const storageComplianceAudit = [
+      {
+        metric: 'Structural Floor Load Capacity',
+        status: structural_floor_load_rating_psf >= 125 ? 'PASS_IBC_STORAGE_COMPLIANT' : 'WARN_STRUCTURAL_DEFICIT',
+        standard: '>= 125 PSF Live Load (IBC Chapter 16)',
+        finding: `${structural_floor_load_rating_psf} PSF rating supports multi-story mezzanine unit partitioning and pallet jacks.`
+      },
+      {
+        metric: 'Stabilized Physical Occupancy',
+        status: physical_occupancy_pct >= 90.0 ? 'PASS_STABILIZED_CLASS_A' : 'WARN_LEASE_UP_REQUIRED',
+        standard: '>= 90.0% Stabilized Target',
+        finding: `${physical_occupancy_pct}% physical occupancy with ${Math.round(occupiedUnits)} occupied units across ${total_units_count} total units.`
+      },
+      {
+        metric: 'Tenant Protection Plan Penetration',
+        status: tenant_protection_insurance_penetration_pct >= 70.0 ? 'PASS_MAX_ANCILLARY_CAPTURE' : 'WARN_BELOW_REIT_BENCHMARK',
+        standard: '>= 70.0% Tenant Enrollment',
+        finding: `${tenant_protection_insurance_penetration_pct}% enrollment generates $${annualTenantProtectionRevenueUsd.toLocaleString()}/yr pure landlord profit.`
+      },
+      {
+        metric: 'ECRI Rate Expansion Elasticity',
+        status: existing_customer_rate_increase_pct <= 12.0 ? 'PASS_OPTIMAL_ELASTICITY' : 'WARN_CHURN_RISK',
+        standard: '8.0% - 12.0% Programmatic Bump',
+        finding: `+${existing_customer_rate_increase_pct}% 9-month programmatic ECRI captures $${Math.round(monthlyEcriUpliftUsd * 12).toLocaleString()}/yr without spiking churn.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Class-A Self-Storage Facility',
+      net_rentable_sqft: net_rentable_sqft,
+      total_units_count: total_units_count,
+      physical_occupancy_pct: physical_occupancy_pct,
+      effective_street_rate_sqft_month_usd: parseFloat(effectiveStreetRateSqftMonthUsd.toFixed(2)),
+      annual_gross_potential_rent_usd: annualGrossPotentialRentUsd,
+      annual_physical_vacancy_loss_usd: annualPhysicalVacancyLossUsd,
+      annual_concession_loss_usd: annualConcessionLossUsd,
+      annual_net_rental_revenue_usd: annualNetRentalRevenueUsd,
+      annual_tenant_protection_revenue_usd: annualTenantProtectionRevenueUsd,
+      ancillary_retail_sales_annual_usd: ancillary_retail_sales_annual_usd,
+      total_effective_gross_income_usd: totalEffectiveGrossIncomeUsd,
+      annual_management_fee_usd: annualManagementFeeUsd,
+      annual_direct_facility_opex_usd: annualDirectFacilityOpexUsd,
+      total_annual_operating_expenses_usd: totalAnnualOperatingExpensesUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      self_storage_cap_rate_pct: selfStorageCapRatePct,
+      facility_asset_valuation_usd: facilityAssetValuationUsd,
+      revpaf_usd: revpafUsd,
+      opex_ratio_pct: opexRatioPct,
+      storage_compliance_audit: storageComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
