@@ -806,9 +806,28 @@ export default function LeaseLogicApp() {
   const [parkConnectedPowerKva, setParkConnectedPowerKva] = useState(3200);
   const [parkData, setParkData] = useState<any>(null);
   const [loadingPark, setLoadingPark] = useState(false);
+  // High-Speed Rail (HSR) Station Concourse & Intermodal Air-Rights state
+  const [hsrConcourseSqft, setHsrConcourseSqft] = useState(32000);
+  const [hsrConcourseRentSqft, setHsrConcourseRentSqft] = useState(140.00);
+  const [hsrAirRightsGfa, setHsrAirRightsGfa] = useState(380000);
+  const [hsrAirRightsRentSqft, setHsrAirRightsRentSqft] = useState(18.50);
+  const [hsrPassengersVolume, setHsrPassengersVolume] = useState(12500000);
+  const [hsrDwellMinutes, setHsrDwellMinutes] = useState(24);
+  const [hsrConversionPct, setHsrConversionPct] = useState(14.0);
+  const [hsrAvgTransaction, setHsrAvgTransaction] = useState(16.50);
+  const [hsrOveragePct, setHsrOveragePct] = useState(8.5);
+  const [hsrBreakpoint, setHsrBreakpoint] = useState(22000000);
+  const [hsrBaysCount, setHsrBaysCount] = useState(40);
+  const [hsrBayFee, setHsrBayFee] = useState(3600);
+  const [hsrFraEscrow, setHsrFraEscrow] = useState(145000);
+  const [hsrTrussTons, setHsrTrussTons] = useState(4500);
+  const [hsrVibrationVdb, setHsrVibrationVdb] = useState(68);
+  const [hsrTifCredit, setHsrTifCredit] = useState(380000);
+  const [hsrData, setHsrData] = useState<any>(null);
+  const [loadingHsr, setLoadingHsr] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station'>('abstract');
 
 
 
@@ -2599,6 +2618,44 @@ export default function LeaseLogicApp() {
       console.error('Error running theme park attraction modeler:', err);
     } finally {
       setLoadingPark(false);
+    }
+  };
+
+  // Run High-Speed Rail (HSR) Station Concourse & Intermodal Air-Rights Modeler
+  const handleRunHsrStation = async () => {
+    if (!selectedLease) return;
+    setLoadingHsr(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/hsr-air-rights-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          concourse_retail_area_sqft: hsrConcourseSqft,
+          concourse_base_rent_sqft_year_usd: hsrConcourseRentSqft,
+          air_rights_tower_gfa_sqft: hsrAirRightsGfa,
+          air_rights_ground_rent_sqft_year_usd: hsrAirRightsRentSqft,
+          annual_train_passengers_volume: hsrPassengersVolume,
+          average_passenger_dwell_time_minutes: hsrDwellMinutes,
+          passenger_retail_conversion_pct: hsrConversionPct,
+          average_concourse_transaction_usd: hsrAvgTransaction,
+          concourse_overage_percentage_rent_rate_pct: hsrOveragePct,
+          concourse_natural_breakpoint_usd: hsrBreakpoint,
+          micro_mobility_ev_charging_bays_count: hsrBaysCount,
+          micro_mobility_fee_per_bay_year_usd: hsrBayFee,
+          fra_vibration_mitigation_escrow_annual_usd: hsrFraEscrow,
+          structural_transfer_truss_bearing_capacity_tons: hsrTrussTons,
+          track_vibration_velocity_vdb: hsrVibrationVdb,
+          municipal_tif_district_abatement_credit_usd: hsrTifCredit
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHsrData(data);
+      }
+    } catch (err) {
+      console.error('Error running HSR air-rights modeler:', err);
+    } finally {
+      setLoadingHsr(false);
     }
   };
 
@@ -6817,6 +6874,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'theme_park' ? 'active' : ''}`} onClick={() => { setActiveTab('theme_park'); handleRunThemePark(); }}>
                   🎢 Theme Park & Attractions
+                </div>
+                <div className={`tab ${activeTab === 'hsr_station' ? 'active' : ''}`} onClick={() => { setActiveTab('hsr_station'); handleRunHsrStation(); }}>
+                  🚆 HSR Station & Air-Rights
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -16967,6 +17027,226 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {parkData.theme_park_compliance_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{item.finding}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('PASS') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('PASS') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'hsr_station' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🚆 High-Speed Rail (HSR) Station Concourse & Intermodal Air-Rights Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Over-track 99-year air-rights ground leases, high-density concourse retail turnover percentage rent, FRA ground-borne vibration acoustics, and municipal TIF credits.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunHsrStation}
+                      disabled={loadingHsr}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingHsr ? 'Underwriting TOD...' : '🚆 Model HSR Station Lease'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Concourse Area (SqFt)</label>
+                      <input
+                        type="number"
+                        value={hsrConcourseSqft}
+                        onChange={(e) => setHsrConcourseSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Concourse Rent ($/SF)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={hsrConcourseRentSqft}
+                        onChange={(e) => setHsrConcourseRentSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Air-Rights Tower GFA (SF)</label>
+                      <input
+                        type="number"
+                        value={hsrAirRightsGfa}
+                        onChange={(e) => setHsrAirRightsGfa(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Air-Rights Rent ($/SF)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={hsrAirRightsRentSqft}
+                        onChange={(e) => setHsrAirRightsRentSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual Train Commuters</label>
+                      <input
+                        type="number"
+                        value={hsrPassengersVolume}
+                        onChange={(e) => setHsrPassengersVolume(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Avg Dwell Time (Min)</label>
+                      <input
+                        type="number"
+                        value={hsrDwellMinutes}
+                        onChange={(e) => setHsrDwellMinutes(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Retail Conversion (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={hsrConversionPct}
+                        onChange={(e) => setHsrConversionPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Concourse Breakpoint ($)</label>
+                      <input
+                        type="number"
+                        value={hsrBreakpoint}
+                        onChange={(e) => setHsrBreakpoint(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Micro-Mobility Bays</label>
+                      <input
+                        type="number"
+                        value={hsrBaysCount}
+                        onChange={(e) => setHsrBaysCount(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Transfer Truss (Tons)</label>
+                      <input
+                        type="number"
+                        value={hsrTrussTons}
+                        onChange={(e) => setHsrTrussTons(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Track Vibration (VdB)</label>
+                      <input
+                        type="number"
+                        value={hsrVibrationVdb}
+                        onChange={(e) => setHsrVibrationVdb(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>TIF Abatement Credit ($)</label>
+                      <input
+                        type="number"
+                        value={hsrTifCredit}
+                        onChange={(e) => setHsrTifCredit(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {hsrData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Metric Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Station Landlord Revenue</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${hsrData.total_annual_landlord_transit_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            Air-Rights: ${hsrData.annual_air_rights_ground_rent_usd.toLocaleString()} | Concourse: ${hsrData.annual_base_concourse_rent_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Concourse Retail Productivity</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${hsrData.concourse_sales_psf_usd}/SF Sales
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Gross Sales: ${hsrData.annual_concourse_retail_sales_gross_usd.toLocaleString()} (+ ${hsrData.overage_concourse_percentage_rent_usd.toLocaleString()} overage)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>TIF Abatements & Micro-Mobility</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            +${(hsrData.municipal_tif_district_abatement_credit_usd + hsrData.annual_micro_mobility_revenue_usd).toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            TIF Credit: +${hsrData.municipal_tif_district_abatement_credit_usd.toLocaleString()} | Mobility: ${hsrData.annual_micro_mobility_revenue_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Operating Income & Valuation</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${hsrData.net_operating_income_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Valuation: ${(hsrData.station_asset_valuation_usd / 1000000).toFixed(1)}M (@ {hsrData.tod_cap_rate_pct}% TOD Cap Rate)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* HSR Station Operations & FRA Rail Corridor Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ High-Speed Rail Intermodal Station, FRA Vibration & Transfer Truss Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>TOD Station Metric</th>
+                              <th style={{ padding: '8px 12px' }}>FRA / Structural Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Transit Corridor Finding</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {hsrData.hsr_compliance_audit.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
