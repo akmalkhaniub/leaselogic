@@ -858,9 +858,27 @@ export default function LeaseLogicApp() {
   const [desalCapRatePct, setDesalCapRatePct] = useState(5.75);
   const [desalData, setDesalData] = useState<any>(null);
   const [loadingDesal, setLoadingDesal] = useState(false);
+// Mega-Sports Arena, Modern Stadium District & Seat-License Concession state
+  const [stadiumSeats, setStadiumSeats] = useState(68000);
+  const [stadiumSuites, setStadiumSuites] = useState(140);
+  const [stadiumSuiteRate, setStadiumSuiteRate] = useState(225000);
+  const [stadiumSuiteSharePct, setStadiumSuiteSharePct] = useState(20.0);
+  const [stadiumPslBondDebt, setStadiumPslBondDebt] = useState(12500000);
+  const [stadiumAttendees, setStadiumAttendees] = useState(1450000);
+  const [stadiumAvgTicket, setStadiumAvgTicket] = useState(110.0);
+  const [stadiumTicketBreakpoint, setStadiumTicketBreakpoint] = useState(120000000);
+  const [stadiumTicketOveragePct, setStadiumTicketOveragePct] = useState(5.0);
+  const [stadiumPerCapitaSpend, setStadiumPerCapitaSpend] = useState(42.0);
+  const [stadiumConcessionRentPct, setStadiumConcessionRentPct] = useState(15.0);
+  const [stadiumNamingRights, setStadiumNamingRights] = useState(18000000);
+  const [stadiumNamingRightsSharePct, setStadiumNamingRightsSharePct] = useState(12.5);
+  const [stadiumCapitalRepairPct, setStadiumCapitalRepairPct] = useState(4.0);
+  const [stadiumCapRatePct, setStadiumCapRatePct] = useState(6.75);
+  const [stadiumData, setStadiumData] = useState<any>(null);
+  const [loadingStadium, setLoadingStadium] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena'>('abstract');
 
 
 
@@ -2761,6 +2779,44 @@ export default function LeaseLogicApp() {
       setLoadingDesal(false);
     }
   };
+  // Run Mega-Sports Arena, Modern Stadium District & Seat-License Concession Modeler
+  const handleRunStadiumArena = async () => {
+    if (!selectedLease) return;
+    setLoadingStadium(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/stadium-arena-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stadium_seats_capacity: stadiumSeats,
+          luxury_club_suites_count: stadiumSuites,
+          annual_suite_lease_rate_usd: stadiumSuiteRate,
+          suite_lease_landlord_rev_share_pct: stadiumSuiteSharePct,
+          psl_municipal_bond_debt_annual_usd: stadiumPslBondDebt,
+          annual_turnstile_attendees_count: stadiumAttendees,
+          avg_ticket_price_usd: stadiumAvgTicket,
+          ticket_breakpoint_revenue_usd: stadiumTicketBreakpoint,
+          ticket_overage_pct: stadiumTicketOveragePct,
+          in_stadium_merch_fb_spend_per_head_usd: stadiumPerCapitaSpend,
+          concession_percentage_rent_pct: stadiumConcessionRentPct,
+          naming_rights_annual_usd: stadiumNamingRights,
+          naming_rights_landlord_share_pct: stadiumNamingRightsSharePct,
+          capital_repair_replacement_reserve_pct: stadiumCapitalRepairPct,
+          stadium_cap_rate_pct: stadiumCapRatePct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStadiumData(data);
+      }
+    } catch (err) {
+      console.error('Error running Stadium Arena modeler:', err);
+    } finally {
+      setLoadingStadium(false);
+    }
+  };
+
+
 
 
 
@@ -6988,6 +7044,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'desalination_swro' ? 'active' : ''}`} onClick={() => { setActiveTab('desalination_swro'); handleRunDesalination(); }}>
                   🌊 Desalination SWRO
+                </div>
+                <div className={`tab ${activeTab === 'stadium_arena' ? 'active' : ''}`} onClick={() => { setActiveTab('stadium_arena'); handleRunStadiumArena(); }}>
+                  🏟️ Stadium & Arena District
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -15621,6 +15680,264 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {desalData.swro_compliance_audit?.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                                <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    background: item.status.startsWith('PASS') ? '#dcfce7' : '#fef3c7',
+                                    color: item.status.startsWith('PASS') ? '#15803d' : '#b45309'
+                                  }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px', color: 'var(--foreground)' }}>{item.finding}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                            ) : activeTab === 'stadium_arena' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🏟️ Mega-Sports Arena, Modern Stadium District & Seat-License Concession Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Underwrite luxury club suite revenue shares, PSL municipal bond debt service coverage (DSCR), ticketing breakpoint percentage rents, master F&B concession royalties, and naming rights.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunStadiumArena}
+                      disabled={loadingStadium}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingStadium ? 'Underwriting Stadium...' : '🏟️ Model Stadium District'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Seating Capacity</label>
+                      <input
+                        type="number"
+                        value={stadiumSeats}
+                        onChange={(e) => setStadiumSeats(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Luxury Club Suites</label>
+                      <input
+                        type="number"
+                        value={stadiumSuites}
+                        onChange={(e) => setStadiumSuites(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Suite Annual Lease ($)</label>
+                      <input
+                        type="number"
+                        value={stadiumSuiteRate}
+                        onChange={(e) => setStadiumSuiteRate(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Suite Rev Share (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={stadiumSuiteSharePct}
+                        onChange={(e) => setStadiumSuiteSharePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Turnstile Attendees / Yr</label>
+                      <input
+                        type="number"
+                        value={stadiumAttendees}
+                        onChange={(e) => setStadiumAttendees(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Avg Ticket Price ($)</label>
+                      <input
+                        type="number"
+                        value={stadiumAvgTicket}
+                        onChange={(e) => setStadiumAvgTicket(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ticket Breakpoint ($)</label>
+                      <input
+                        type="number"
+                        value={stadiumTicketBreakpoint}
+                        onChange={(e) => setStadiumTicketBreakpoint(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ticket Overage (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={stadiumTicketOveragePct}
+                        onChange={(e) => setStadiumTicketOveragePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>F&B / Merch Spend / Head ($)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={stadiumPerCapitaSpend}
+                        onChange={(e) => setStadiumPerCapitaSpend(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Concession Rent (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={stadiumConcessionRentPct}
+                        onChange={(e) => setStadiumConcessionRentPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Naming Rights ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={stadiumNamingRights}
+                        onChange={(e) => setStadiumNamingRights(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>PSL Bond Annual Debt ($)</label>
+                      <input
+                        type="number"
+                        value={stadiumPslBondDebt}
+                        onChange={(e) => setStadiumPslBondDebt(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {stadiumData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Highlights */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '8px', border: '1px solid #10b981' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>Landlord Net Operating Income</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#065f46', marginTop: '4px' }}>
+                            ${stadiumData.net_operating_income_usd?.toLocaleString()} / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#059669' }}>After ${stadiumData.capital_repair_reserve_usd?.toLocaleString()} capital escrow</span>
+                        </div>
+
+                        <div style={{ background: '#eff6ff', padding: '16px', borderRadius: '8px', border: '1px solid #3b82f6' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: 600 }}>Stadium District Valuation</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>
+                            ${(stadiumData.stadium_district_valuation_usd / 1e6)?.toFixed(2)}M
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>Cap Rate @ {stadiumData.stadium_cap_rate_pct}%</span>
+                        </div>
+
+                        <div style={{ background: '#fdf4ff', padding: '16px', borderRadius: '8px', border: '1px solid #c084fc' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#7e22ce', fontWeight: 600 }}>PSL Bond DSCR Coverage</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6b21a8', marginTop: '4px' }}>
+                            {stadiumData.psl_debt_service_coverage_ratio}x DSCR
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#9333ea' }}>Covenant Min: 1.30x</span>
+                        </div>
+
+                        <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #f59e0b' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Total District Gross Revenue</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#92400e', marginTop: '4px' }}>
+                            ${(stadiumData.total_landlord_gross_revenue_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#d97706' }}>Suites, tickets, F&B & naming</span>
+                        </div>
+                      </div>
+
+                      {/* Revenue Streams Card */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          📊 Multi-Source Concession & Rights Breakdown
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Luxury Suite Landlord Participation</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#1d4ed8' }}>
+                              ${stadiumData.landlord_suite_rev_share_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stadiumData.luxury_club_suites_count} skyboxes @ {stadiumSuiteSharePct}% share</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Ticketing Breakpoint Percentage Rent</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#047857' }}>
+                              ${stadiumData.landlord_ticket_percentage_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stadiumTicketOveragePct}% on ${(stadiumData.ticket_overage_amount_usd / 1e6)?.toFixed(1)}M overage</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>In-Stadium F&B / Merch Concession Rent</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#b45309' }}>
+                              ${stadiumData.landlord_concessions_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stadiumConcessionRentPct}% of ${(stadiumData.annual_gross_concessions_usd / 1e6)?.toFixed(1)}M spend</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Naming Rights & Title Sponsorship Share</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#7e22ce' }}>
+                              ${stadiumData.landlord_naming_rights_rev_share_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stadiumNamingRightsSharePct}% of ${(stadiumData.naming_rights_annual_usd / 1e6)?.toFixed(1)}M annual contract</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sports Authority Covenants Table */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          🛡️ Municipal Sports Authority Bond Covenants & Franchise Tenancy Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 10px' }}>Covenant / Standard</th>
+                              <th style={{ padding: '8px 10px' }}>Status</th>
+                              <th style={{ padding: '8px 10px' }}>Benchmark Standard</th>
+                              <th style={{ padding: '8px 10px' }}>Analytical Finding</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {stadiumData.stadium_compliance_audit?.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
                                 <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px' }}>
