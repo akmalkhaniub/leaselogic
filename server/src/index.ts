@@ -6326,6 +6326,121 @@ app.post('/api/leases/:id/aviation-fbo-hangar-modeler', async (req, res) => {
   }
 });
 
+// 4.769. POST Hyperscale AI Data Center, 100MW+ Substation & Liquid Cooling SLA Modeler
+app.post('/api/leases/:id/hyperscale-ai-datacenter', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      substation_capacity_mw = 120,
+      committed_critical_it_kw = 96000,
+      power_reservation_rate_per_kw_month_usd = 145,
+      pue_sla_target = 1.15,
+      actual_pue_measured = 1.12,
+      liquid_cooling_cdu_rack_density_kw = 65,
+      total_ai_gpu_racks_count = 1400,
+      electric_utility_rate_per_kwh_usd = 0.078,
+      transmission_interconnection_deposit_usd = 12500000,
+      backup_generator_runtime_hours_capacity = 72,
+      annual_generator_fuel_maintenance_reserve_usd = 480000,
+      floor_loading_capacity_psf = 380,
+      sla_penalty_rebate_per_001_pue_exceedance_usd = 25000
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Power & Capacity Revenue Calculations
+    const monthlyBaseCapacityRevenueUsd = Math.round(committed_critical_it_kw * power_reservation_rate_per_kw_month_usd);
+    const annualBaseCapacityRevenueUsd = monthlyBaseCapacityRevenueUsd * 12;
+
+    // Power Consumption & Pass-Through
+    const itUtilizationRate = 0.88;
+    const annualItMwhConsumed = (committed_critical_it_kw * 8760 * itUtilizationRate) / 1000;
+    const totalFacilityMwhConsumed = annualItMwhConsumed * actual_pue_measured;
+    const annualPowerPassThroughCostUsd = Math.round(totalFacilityMwhConsumed * 1000 * electric_utility_rate_per_kwh_usd);
+
+    // Liquid Cooling PUE SLA Liquidated Damages vs Energy Savings
+    let annualPuePenaltyRebateUsd = 0;
+    let annualEnergyEfficiencySavingsUsd = 0;
+    const isPueSlaCompliant = actual_pue_measured <= pue_sla_target;
+
+    if (!isPueSlaCompliant) {
+      const exceedanceSteps = Math.round((actual_pue_measured - pue_sla_target) / 0.01);
+      annualPuePenaltyRebateUsd = exceedanceSteps * sla_penalty_rebate_per_001_pue_exceedance_usd * 12;
+    } else {
+      annualEnergyEfficiencySavingsUsd = Math.round((pue_sla_target - actual_pue_measured) * annualItMwhConsumed * 1000 * electric_utility_rate_per_kwh_usd);
+    }
+
+    const netAnnualLandlordCapacityRevenueUsd = annualBaseCapacityRevenueUsd - annualPuePenaltyRebateUsd;
+    const netOperatingIncomeUsd = netAnnualLandlordCapacityRevenueUsd - annual_generator_fuel_maintenance_reserve_usd;
+
+    const datacenterCapRatePct = 5.25;
+    const facilityAssetValuationUsd = Math.round(netOperatingIncomeUsd / (datacenterCapRatePct / 100));
+    const powerSubstationUtilizationPct = parseFloat(((committed_critical_it_kw / (substation_capacity_mw * 1000)) * 100).toFixed(1));
+
+    // Hyperscale AI Campus Compliance & Infrastructure Audit
+    const datacenterComplianceAudit = [
+      {
+        metric: 'Liquid Cooling PUE SLA Guarantee',
+        status: isPueSlaCompliant ? 'PASS_HIGH_EFFICIENCY_MET' : 'FAIL_SLA_PENALTY_TRIGGERED',
+        standard: `<= ${pue_sla_target} Annualized PUE Target`,
+        finding: `Measured PUE of ${actual_pue_measured} generates $${annualEnergyEfficiencySavingsUsd.toLocaleString()}/yr in tenant power savings with 0 SLA penalties.`
+      },
+      {
+        metric: 'High-Density Direct-to-Chip (DLC) CDU',
+        status: liquid_cooling_cdu_rack_density_kw >= 50 ? 'PASS_AI_SUPERCLUSTER_READY' : 'WARN_LOW_RACK_DENSITY',
+        standard: '>= 50 kW/rack High-Density Standard',
+        finding: `${liquid_cooling_cdu_rack_density_kw} kW/rack Direct-to-Chip cooling accommodates modern NVLink GPU clusters without thermal throttling.`
+      },
+      {
+        metric: 'Substation Transmission Grid Headroom',
+        status: powerSubstationUtilizationPct <= 90.0 ? 'PASS_REDUNDANT_GRID_BUFFER' : 'WARN_SUBSTATION_NEAR_CAPACITY',
+        standard: '<= 90.0% Continuous Duty Load',
+        finding: `${powerSubstationUtilizationPct}% grid utilization (${committed_critical_it_kw.toLocaleString()} kW of ${substation_capacity_mw} MW substation capacity).`
+      },
+      {
+        metric: 'Heavy Floor Slab Loading Capacity',
+        status: floor_loading_capacity_psf >= 350 ? 'PASS_HEAVY_GPU_MANIFOLD_CERTIFIED' : 'WARN_STRUCTURAL_WEIGHT_LIMIT',
+        standard: '>= 350 PSF Uniform Live Load',
+        finding: `${floor_loading_capacity_psf} PSF floor load supports multi-tier liquid manifolds, coolant reservoirs, and high-density GPU racks.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Hyperscale AI Data Center Campus',
+      substation_capacity_mw: substation_capacity_mw,
+      committed_critical_it_kw: committed_critical_it_kw,
+      power_reservation_rate_per_kw_month_usd: power_reservation_rate_per_kw_month_usd,
+      monthly_base_capacity_revenue_usd: monthlyBaseCapacityRevenueUsd,
+      annual_base_capacity_revenue_usd: annualBaseCapacityRevenueUsd,
+      pue_sla_target: pue_sla_target,
+      actual_pue_measured: actual_pue_measured,
+      is_pue_sla_compliant: isPueSlaCompliant,
+      annual_pue_penalty_rebate_usd: annualPuePenaltyRebateUsd,
+      annual_energy_efficiency_savings_usd: annualEnergyEfficiencySavingsUsd,
+      liquid_cooling_cdu_rack_density_kw: liquid_cooling_cdu_rack_density_kw,
+      total_ai_gpu_racks_count: total_ai_gpu_racks_count,
+      annual_power_pass_through_cost_usd: annualPowerPassThroughCostUsd,
+      transmission_interconnection_deposit_usd: transmission_interconnection_deposit_usd,
+      backup_generator_runtime_hours_capacity: backup_generator_runtime_hours_capacity,
+      annual_generator_fuel_maintenance_reserve_usd: annual_generator_fuel_maintenance_reserve_usd,
+      net_annual_landlord_capacity_revenue_usd: netAnnualLandlordCapacityRevenueUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      datacenter_cap_rate_pct: datacenterCapRatePct,
+      facility_asset_valuation_usd: facilityAssetValuationUsd,
+      power_substation_utilization_pct: powerSubstationUtilizationPct,
+      datacenter_compliance_audit: datacenterComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
