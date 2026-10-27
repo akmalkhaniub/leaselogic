@@ -6441,6 +6441,106 @@ app.post('/api/leases/:id/hyperscale-ai-datacenter', async (req, res) => {
   }
 });
 
+// 4.770. POST Radiopharmaceutical Cyclotron & Nuclear Medicine Cleanroom Modeler
+app.post('/api/leases/:id/radiopharmacy-cyclotron-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      cleanroom_area_sqft = 18500,
+      cleanroom_base_rent_sqft_year_usd = 85.00,
+      cyclotron_bunker_footprint_sqft = 4200,
+      bunker_rent_sqft_year_usd = 125.00,
+      lead_shielded_hot_cells_count = 8,
+      hot_cell_rental_surcharge_per_unit_year_usd = 42000,
+      floor_slab_structural_loading_psf = 480,
+      air_changes_per_hour_ach = 45,
+      hepa_carbon_exhaust_filtration_annual_usd = 95000,
+      nrc_decommissioning_surety_bond_usd = 4500000,
+      landlord_pec_environmental_escrow_usd = 1200000,
+      annual_isotope_doses_produced = 85000,
+      dose_royalty_surcharge_per_unit_usd = 4.50,
+      emergency_rapid_dispatch_dock_premium_usd = 36000,
+      cyclotron_annual_power_mva = 2.2,
+      power_rate_per_kwh_usd = 0.082
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Rental & Specialized Facility Income
+    const annualBaseCleanroomRentUsd = Math.round(cleanroom_area_sqft * cleanroom_base_rent_sqft_year_usd);
+    const annualBunkerRentUsd = Math.round(cyclotron_bunker_footprint_sqft * bunker_rent_sqft_year_usd);
+    const annualHotCellSurchargeUsd = Math.round(lead_shielded_hot_cells_count * hot_cell_rental_surcharge_per_unit_year_usd);
+    const annualDoseRoyaltyRevenueUsd = Math.round(annual_isotope_doses_produced * dose_royalty_surcharge_per_unit_usd);
+
+    const totalAnnualLandlordRentUsd = annualBaseCleanroomRentUsd + annualBunkerRentUsd + annualHotCellSurchargeUsd + annualDoseRoyaltyRevenueUsd + emergency_rapid_dispatch_dock_premium_usd;
+    const netOperatingIncomeUsd = totalAnnualLandlordRentUsd - hepa_carbon_exhaust_filtration_annual_usd;
+
+    // Power utility costs for high-energy cyclotron bombardment
+    const annualCyclotronPowerCostUsd = Math.round(cyclotron_annual_power_mva * 1000 * 0.45 * 8760 * power_rate_per_kwh_usd);
+
+    const radiopharmacyCapRatePct = 6.50;
+    const facilityAssetValuationUsd = Math.round(netOperatingIncomeUsd / (radiopharmacyCapRatePct / 100));
+
+    // Nuclear Regulatory Commission (NRC) & FDA cGMP Cleanroom Audit
+    const radiopharmacyComplianceAudit = [
+      {
+        metric: 'Structural Floor Slab Bearing Capacity',
+        status: floor_slab_structural_loading_psf >= 450 ? 'PASS_HEAVY_HOTCELL_SHIELDED' : 'WARN_SLAB_WEIGHT_DEFICIT',
+        standard: '>= 450 PSF Live Load Rating',
+        finding: `${floor_slab_structural_loading_psf} PSF reinforced slab supports 25-ton cyclotron vault magnets and modular lead caves.`
+      },
+      {
+        metric: 'ISO 7 / Grade B Cleanroom Airflow Cascade',
+        status: air_changes_per_hour_ach >= 30 ? 'PASS_CGMP_CASCADE_COMPLIANT' : 'FAIL_SUB_OPTIMAL_ACH',
+        standard: '>= 30 ACH (Air Changes Per Hour)',
+        finding: `${air_changes_per_hour_ach} ACH continuous negative-pressure cascade prevents radioisotope aerosol back-draft.`
+      },
+      {
+        metric: 'NRC Part 30 Decommissioning Financial Surety',
+        status: nrc_decommissioning_surety_bond_usd >= 3500000 ? 'PASS_FULLY_BONDED_ESCROW' : 'WARN_BOND_AMOUNT_DEFICIT',
+        standard: '>= $3,500,000 Decommissioning Bond',
+        finding: `$${nrc_decommissioning_surety_bond_usd.toLocaleString()} surety bond guarantees safe radio-activation cyclotron bunker dismantling.`
+      },
+      {
+        metric: 'Short Half-Life Logistics & Rapid Dispatch',
+        status: emergency_rapid_dispatch_dock_premium_usd > 0 ? 'PASS_EXPEDITED_COURIER_EGRESS' : 'WARN_DISPATCH_RESTRICTED',
+        standard: 'Dedicated Lead-Cask Direct Dock Airlock',
+        finding: `Dedicated expedited courier airlock ensures F-18 (110-min half-life) radiotracers dispatch to regional oncology centers without delay.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Nuclear Medicine Radiopharmacy Lab',
+      cleanroom_area_sqft: cleanroom_area_sqft,
+      cyclotron_bunker_footprint_sqft: cyclotron_bunker_footprint_sqft,
+      annual_base_cleanroom_rent_usd: annualBaseCleanroomRentUsd,
+      annual_bunker_rent_usd: annualBunkerRentUsd,
+      lead_shielded_hot_cells_count: lead_shielded_hot_cells_count,
+      annual_hot_cell_surcharge_usd: annualHotCellSurchargeUsd,
+      annual_isotope_doses_produced: annual_isotope_doses_produced,
+      annual_dose_royalty_revenue_usd: annualDoseRoyaltyRevenueUsd,
+      emergency_rapid_dispatch_dock_premium_usd: emergency_rapid_dispatch_dock_premium_usd,
+      total_annual_landlord_rent_usd: totalAnnualLandlordRentUsd,
+      hepa_carbon_exhaust_filtration_annual_usd: hepa_carbon_exhaust_filtration_annual_usd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      annual_cyclotron_power_cost_usd: annualCyclotronPowerCostUsd,
+      radiopharmacy_cap_rate_pct: radiopharmacyCapRatePct,
+      facility_asset_valuation_usd: facilityAssetValuationUsd,
+      nrc_decommissioning_surety_bond_usd: nrc_decommissioning_surety_bond_usd,
+      landlord_pec_environmental_escrow_usd: landlord_pec_environmental_escrow_usd,
+      radiopharmacy_compliance_audit: radiopharmacyComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
