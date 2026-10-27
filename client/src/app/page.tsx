@@ -841,9 +841,26 @@ export default function LeaseLogicApp() {
   const [bessDecommissioningEscrow, setBessDecommissioningEscrow] = useState(85000);
   const [bessData, setBessData] = useState<any>(null);
   const [loadingBess, setLoadingBess] = useState(false);
+// Desalination Plant, Coastal Seawater Reverse Osmosis (SWRO) & Water Tolling state
+  const [desalCapacityMgd, setDesalCapacityMgd] = useState(30);
+  const [desalPurchaseRateKgal, setDesalPurchaseRateKgal] = useState(6.85);
+  const [desalTakeOrPayMgd, setDesalTakeOrPayMgd] = useState(24);
+  const [desalActualDeliveryMgd, setDesalActualDeliveryMgd] = useState(28.5);
+  const [desalEasementAcres, setDesalEasementAcres] = useState(14);
+  const [desalGroundRentAcre, setDesalGroundRentAcre] = useState(38000);
+  const [desalOverageRevSharePct, setDesalOverageRevSharePct] = useState(8.5);
+  const [desalMembraneReserve, setDesalMembraneReserve] = useState(520000);
+  const [desalErdEfficiencyPct, setDesalErdEfficiencyPct] = useState(96.0);
+  const [desalPowerConsumptionKwh, setDesalPowerConsumptionKwh] = useState(3.2);
+  const [desalBrineSalinityPsu, setDesalBrineSalinityPsu] = useState(64);
+  const [desalAmbientSalinityPsu, setDesalAmbientSalinityPsu] = useState(34);
+  const [desalMonitoringReserve, setDesalMonitoringReserve] = useState(110000);
+  const [desalCapRatePct, setDesalCapRatePct] = useState(5.75);
+  const [desalData, setDesalData] = useState<any>(null);
+  const [loadingDesal, setLoadingDesal] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro'>('abstract');
 
 
 
@@ -2709,6 +2726,43 @@ export default function LeaseLogicApp() {
       setLoadingBess(false);
     }
   };
+  // Run Desalination Plant, Coastal Seawater Reverse Osmosis (SWRO) & Water Tolling Modeler
+  const handleRunDesalination = async () => {
+    if (!selectedLease) return;
+    setLoadingDesal(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/desalination-swro-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plant_capacity_mgd: desalCapacityMgd,
+          water_purchase_rate_per_kgal_usd: desalPurchaseRateKgal,
+          minimum_take_or_pay_mgd: desalTakeOrPayMgd,
+          actual_delivery_mgd: desalActualDeliveryMgd,
+          land_intake_easement_acres: desalEasementAcres,
+          easement_ground_rent_per_acre_year_usd: desalGroundRentAcre,
+          water_agency_overage_rev_share_pct: desalOverageRevSharePct,
+          ro_membrane_replacement_reserve_annual_usd: desalMembraneReserve,
+          energy_recovery_erd_efficiency_pct: desalErdEfficiencyPct,
+          power_consumption_kwh_per_m3: desalPowerConsumptionKwh,
+          brine_salinity_psu: desalBrineSalinityPsu,
+          ambient_ocean_salinity_psu: desalAmbientSalinityPsu,
+          coastal_commission_monitoring_reserve_usd: desalMonitoringReserve,
+          desal_cap_rate_pct: desalCapRatePct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDesalData(data);
+      }
+    } catch (err) {
+      console.error('Error running Desalination SWRO modeler:', err);
+    } finally {
+      setLoadingDesal(false);
+    }
+  };
+
+
 
 
 
@@ -6931,6 +6985,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'grid_bess' ? 'active' : ''}`} onClick={() => { setActiveTab('grid_bess'); handleRunGridBess(); }}>
                   ⚡ Grid-Scale BESS Storage
+                </div>
+                <div className={`tab ${activeTab === 'desalination_swro' ? 'active' : ''}`} onClick={() => { setActiveTab('desalination_swro'); handleRunDesalination(); }}>
+                  🌊 Desalination SWRO
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -15333,6 +15390,263 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
+                            ) : activeTab === 'desalination_swro' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🌊 Desalination Plant, Coastal Seawater Reverse Osmosis (SWRO) & Water Tolling Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Underwrite municipal take-or-pay water purchase agreements ($/kgal), coastal intake easement ground leases, isobaric energy recovery devices (PX ERD), and multi-port duckbill brine diffuser environmental reserves.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunDesalination}
+                      disabled={loadingDesal}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingDesal ? 'Underwriting SWRO...' : '🌊 Model Desalination Plant'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Plant Capacity (MGD)</label>
+                      <input
+                        type="number"
+                        value={desalCapacityMgd}
+                        onChange={(e) => setDesalCapacityMgd(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Take-or-Pay Muni Volume (MGD)</label>
+                      <input
+                        type="number"
+                        value={desalTakeOrPayMgd}
+                        onChange={(e) => setDesalTakeOrPayMgd(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Actual Delivery (MGD)</label>
+                      <input
+                        type="number"
+                        value={desalActualDeliveryMgd}
+                        onChange={(e) => setDesalActualDeliveryMgd(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Water Rate ($/1,000 Gal)</label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        value={desalPurchaseRateKgal}
+                        onChange={(e) => setDesalPurchaseRateKgal(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Easement Footprint (Acres)</label>
+                      <input
+                        type="number"
+                        value={desalEasementAcres}
+                        onChange={(e) => setDesalEasementAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Easement Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={desalGroundRentAcre}
+                        onChange={(e) => setDesalGroundRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Overage Rev Share (%)</label>
+                      <input
+                        type="number"
+                        value={desalOverageRevSharePct}
+                        onChange={(e) => setDesalOverageRevSharePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>RO Membrane Reserve ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={desalMembraneReserve}
+                        onChange={(e) => setDesalMembraneReserve(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>ERD Efficiency (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={desalErdEfficiencyPct}
+                        onChange={(e) => setDesalErdEfficiencyPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Power Draw (kWh/m³)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={desalPowerConsumptionKwh}
+                        onChange={(e) => setDesalPowerConsumptionKwh(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Reject Brine Salinity (PSU)</label>
+                      <input
+                        type="number"
+                        value={desalBrineSalinityPsu}
+                        onChange={(e) => setDesalBrineSalinityPsu(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Marine Monitoring ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={desalMonitoringReserve}
+                        onChange={(e) => setDesalMonitoringReserve(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {desalData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Highlights */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '8px', border: '1px solid #10b981' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>Landlord Net Operating Income</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#065f46', marginTop: '4px' }}>
+                            ${desalData.net_landlord_operating_income_usd?.toLocaleString()} / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#059669' }}>After $110k marine escrow</span>
+                        </div>
+
+                        <div style={{ background: '#eff6ff', padding: '16px', borderRadius: '8px', border: '1px solid #3b82f6' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: 600 }}>SWRO Concession Valuation</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>
+                            ${(desalData.desal_asset_valuation_usd / 1e6)?.toFixed(2)}M
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>Cap Rate @ {desalData.desal_cap_rate_pct}%</span>
+                        </div>
+
+                        <div style={{ background: '#fdf4ff', padding: '16px', borderRadius: '8px', border: '1px solid #c084fc' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#7e22ce', fontWeight: 600 }}>Annual Take-or-Pay Offtake</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6b21a8', marginTop: '4px' }}>
+                            ${(desalData.annual_take_or_pay_revenue_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#9333ea' }}>{desalData.take_or_pay_coverage_ratio_pct}% capacity contract</span>
+                        </div>
+
+                        <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #f59e0b' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Total Facility Gross Water Rev</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#92400e', marginTop: '4px' }}>
+                            ${(desalData.total_facility_gross_revenue_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#d97706' }}>Take-or-pay + overage</span>
+                        </div>
+                      </div>
+
+                      {/* Revenue & Reserve Breakdown Card */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          📊 Financial Water Offtake & Capital Escrow Summary
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Annual Base Easement Ground Rent</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px' }}>
+                              ${desalData.annual_base_easement_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{desalData.land_intake_easement_acres} acres @ ${desalGroundRentAcre.toLocaleString()}/acre</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Landlord Overage Revenue Share</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#047857' }}>
+                              ${desalData.landlord_overage_rev_share_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{desalOverageRevSharePct}% share on excess production</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>RO High-Pressure Membrane Reserve</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#b45309' }}>
+                              ${desalData.ro_membrane_replacement_reserve_annual_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>3-year polyamide spiral-wound sinking fund</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Specific Power & ERD Efficiency</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#1d4ed8' }}>
+                              {desalData.power_consumption_kwh_per_m3} kWh/m³ | {desalData.energy_recovery_erd_efficiency_pct}% ERD
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Isobaric pressure exchanger performance</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Coastal Commission & EPA Audit Table */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          🛡️ Coastal Commission & EPA Clean Water Act 316(b) Compliance Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 10px' }}>Compliance Dimension</th>
+                              <th style={{ padding: '8px 10px' }}>Status</th>
+                              <th style={{ padding: '8px 10px' }}>Regulatory Standard</th>
+                              <th style={{ padding: '8px 10px' }}>Engineering Finding</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {desalData.swro_compliance_audit?.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                                <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    background: item.status.startsWith('PASS') ? '#dcfce7' : '#fef3c7',
+                                    color: item.status.startsWith('PASS') ? '#15803d' : '#b45309'
+                                  }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px', color: 'var(--foreground)' }}>{item.finding}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               ) : activeTab === 'hospitality_revpar' ? (
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
                   {/* Header */}
