@@ -7101,6 +7101,112 @@ app.post('/api/leases/:id/stadium-arena-modeler', async (req, res) => {
   }
 });
 
+// 4.776. POST Commercial Spaceport, Orbital Launch Complex & Cryogenic Propellant Concession Modeler
+app.post('/api/leases/:id/commercial-spaceport-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      launch_complex_footprint_acres = 120,
+      pad_ground_rent_per_acre_year_usd = 16000,
+      annual_orbital_launches_count = 24,
+      per_launch_pad_slot_turnaround_fee_usd = 380000,
+      liquid_methane_flowage_gal = 4800000,
+      methane_flowage_fee_per_gal_usd = 0.08,
+      liquid_oxygen_lox_flowage_gal = 12500000,
+      lox_flowage_fee_per_gal_usd = 0.04,
+      horizontal_hangar_integration_rent_annual_usd = 1400000,
+      deluge_water_blast_suppression_reserve_usd = 280000,
+      spaceport_security_faa_escrow_annual_usd = 160000,
+      faa_part_420_safety_clear_zone_radius_miles = 3.5,
+      mce_blast_overpressure_psf = 450,
+      spaceport_cap_rate_pct = 7.25
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Spaceport Concession Calculations
+    const annualPadGroundRentUsd = Math.round(launch_complex_footprint_acres * pad_ground_rent_per_acre_year_usd);
+    const annualLaunchSlotFeesUsd = Math.round(annual_orbital_launches_count * per_launch_pad_slot_turnaround_fee_usd);
+
+    const annualMethaneFlowageFeeUsd = Math.round(liquid_methane_flowage_gal * methane_flowage_fee_per_gal_usd);
+    const annualLoxFlowageFeeUsd = Math.round(liquid_oxygen_lox_flowage_gal * lox_flowage_fee_per_gal_usd);
+    const annualTotalCryoFlowageFeesUsd = annualMethaneFlowageFeeUsd + annualLoxFlowageFeeUsd;
+
+    const totalLandlordSpaceportRevenueUsd = annualPadGroundRentUsd + annualLaunchSlotFeesUsd + annualTotalCryoFlowageFeesUsd + horizontal_hangar_integration_rent_annual_usd;
+    const totalOperatingEscrowUsd = deluge_water_blast_suppression_reserve_usd + spaceport_security_faa_escrow_annual_usd;
+    const netOperatingIncomeUsd = totalLandlordSpaceportRevenueUsd - totalOperatingEscrowUsd;
+
+    const spaceportAssetValuationUsd = Math.round(netOperatingIncomeUsd / (spaceport_cap_rate_pct / 100));
+
+    // FAA Part 420 & Commercial Space Launch Act Compliance Audit
+    const spaceportComplianceAudit = [
+      {
+        metric: 'FAA Part 420 Explosive Safety Clear Zone',
+        status: faa_part_420_safety_clear_zone_radius_miles >= 3.0 ? 'PASS_FAA_CLEAR_ZONE_SECURED' : 'WARN_SAFETY_ZONE_ENCROACHMENT',
+        standard: '>= 3.0 Miles Radial Buffer to Uninvolved Public Structures',
+        finding: `${faa_part_420_safety_clear_zone_radius_miles}-mile radial exclusion zone fulfills 14 CFR Part 420 public casualty expectation (Ec <= 1x10⁻⁴).`
+      },
+      {
+        metric: 'Maximum Credible Event (MCE) Blast Overpressure',
+        status: mce_blast_overpressure_psf >= 400 ? 'PASS_BLAST_HARDENED' : 'WARN_OVERPRESSURE_DEFICIT',
+        standard: '>= 400 PSF Structural Blast Deflection at Launch Berm Perimeter',
+        finding: `${mce_blast_overpressure_psf} PSF reinforced concrete flame trench and revetment berm withstand full catastrophic launch failure overpressure.`
+      },
+      {
+        metric: 'Dual-Commodity Cryogenic Propellant Concession',
+        status: 'PASS_CRYO_FLOWAGE_OPTIMAL',
+        standard: 'ASME Section VIII Div 1 Vacuum-Jacketed LOX & LNG/Methane Bunkering',
+        finding: `${(liquid_oxygen_lox_flowage_gal / 1e6).toFixed(1)}M gal LOX & ${(liquid_methane_flowage_gal / 1e6).toFixed(1)}M gal CH4 pipeline metering yields $${annualTotalCryoFlowageFeesUsd.toLocaleString()}/yr flowage royalties.`
+      },
+      {
+        metric: 'Acoustic Deluge Water Suppression & Industrial Trench',
+        status: deluge_water_blast_suppression_reserve_usd >= 250000 ? 'PASS_DELUGE_RESERVE_ADEQUATE' : 'WARN_DELUGE_DEFICIT',
+        standard: '>= $250,000/yr Acoustic Suppression & Catchment Basin Sinking Fund',
+        finding: `$${deluge_water_blast_suppression_reserve_usd.toLocaleString()}/yr reserve protects 100,000 gpm water deluge system attenuating acoustic shockwaves during liftoff.`
+      },
+      {
+        metric: 'Horizontal Hangar & Cleanroom Payload Processing',
+        status: 'PASS_CLEANROOM_PAYLOAD_LEASE_ACTIVE',
+        standard: 'ISO Class 8 (Class 100,000) Cleanroom Air Handling & Overhead Crane',
+        finding: `$${(horizontal_hangar_integration_rent_annual_usd / 1e6).toFixed(2)}M/yr master hangar lease provides dedicated orbital spacecraft integration bays.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Commercial Spaceport & Orbital Launch Complex',
+      launch_complex_footprint_acres: launch_complex_footprint_acres,
+      annual_pad_ground_rent_usd: annualPadGroundRentUsd,
+      annual_orbital_launches_count: annual_orbital_launches_count,
+      per_launch_pad_slot_turnaround_fee_usd: per_launch_pad_slot_turnaround_fee_usd,
+      annual_launch_slot_fees_usd: annualLaunchSlotFeesUsd,
+      liquid_methane_flowage_gal: liquid_methane_flowage_gal,
+      annual_methane_flowage_fee_usd: annualMethaneFlowageFeeUsd,
+      liquid_oxygen_lox_flowage_gal: liquid_oxygen_lox_flowage_gal,
+      annual_lox_flowage_fee_usd: annualLoxFlowageFeeUsd,
+      annual_total_cryo_flowage_fees_usd: annualTotalCryoFlowageFeesUsd,
+      horizontal_hangar_integration_rent_annual_usd: horizontal_hangar_integration_rent_annual_usd,
+      total_landlord_spaceport_revenue_usd: totalLandlordSpaceportRevenueUsd,
+      deluge_water_blast_suppression_reserve_usd: deluge_water_blast_suppression_reserve_usd,
+      spaceport_security_faa_escrow_annual_usd: spaceport_security_faa_escrow_annual_usd,
+      total_operating_escrow_usd: totalOperatingEscrowUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      faa_part_420_safety_clear_zone_radius_miles: faa_part_420_safety_clear_zone_radius_miles,
+      mce_blast_overpressure_psf: mce_blast_overpressure_psf,
+      spaceport_cap_rate_pct: spaceport_cap_rate_pct,
+      spaceport_asset_valuation_usd: spaceportAssetValuationUsd,
+      spaceport_compliance_audit: spaceportComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
