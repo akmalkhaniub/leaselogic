@@ -753,9 +753,25 @@ export default function LeaseLogicApp() {
   const [fboPcnRating, setFboPcnRating] = useState(65);
   const [fboData, setFboData] = useState<any>(null);
   const [loadingFbo, setLoadingFbo] = useState(false);
+  // Hyperscale AI Data Center, 100MW+ Substation & Liquid Cooling state
+  const [aiSubstationMw, setAiSubstationMw] = useState(120);
+  const [aiCriticalItKw, setAiCriticalItKw] = useState(96000);
+  const [aiReservationRateKw, setAiReservationRateKw] = useState(145);
+  const [aiPueTarget, setAiPueTarget] = useState(1.15);
+  const [aiPueMeasured, setAiPueMeasured] = useState(1.12);
+  const [aiRackDensityKw, setAiRackDensityKw] = useState(65);
+  const [aiGpuRacksCount, setAiGpuRacksCount] = useState(1400);
+  const [aiUtilityRateKwh, setAiUtilityRateKwh] = useState(0.078);
+  const [aiInterconnectionDeposit, setAiInterconnectionDeposit] = useState(12500000);
+  const [aiGeneratorRuntimeHours, setAiGeneratorRuntimeHours] = useState(72);
+  const [aiGeneratorReserve, setAiGeneratorReserve] = useState(480000);
+  const [aiFloorLoadPsf, setAiFloorLoadPsf] = useState(380);
+  const [aiSlaPenaltyPer001, setAiSlaPenaltyPer001] = useState(25000);
+  const [aiData, setAiData] = useState<any>(null);
+  const [loadingAi, setLoadingAi] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai'>('abstract');
 
 
 
@@ -2436,6 +2452,41 @@ export default function LeaseLogicApp() {
       console.error('Error running aviation FBO modeler:', err);
     } finally {
       setLoadingFbo(false);
+    }
+  };
+
+  // Run Hyperscale AI Data Center, 100MW+ Substation & Liquid Cooling SLA Modeler
+  const handleRunHyperscaleAi = async () => {
+    if (!selectedLease) return;
+    setLoadingAi(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/hyperscale-ai-datacenter`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          substation_capacity_mw: aiSubstationMw,
+          committed_critical_it_kw: aiCriticalItKw,
+          power_reservation_rate_per_kw_month_usd: aiReservationRateKw,
+          pue_sla_target: aiPueTarget,
+          actual_pue_measured: aiPueMeasured,
+          liquid_cooling_cdu_rack_density_kw: aiRackDensityKw,
+          total_ai_gpu_racks_count: aiGpuRacksCount,
+          electric_utility_rate_per_kwh_usd: aiUtilityRateKwh,
+          transmission_interconnection_deposit_usd: aiInterconnectionDeposit,
+          backup_generator_runtime_hours_capacity: aiGeneratorRuntimeHours,
+          annual_generator_fuel_maintenance_reserve_usd: aiGeneratorReserve,
+          floor_loading_capacity_psf: aiFloorLoadPsf,
+          sla_penalty_rebate_per_001_pue_exceedance_usd: aiSlaPenaltyPer001
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiData(data);
+      }
+    } catch (err) {
+      console.error('Error running hyperscale AI datacenter modeler:', err);
+    } finally {
+      setLoadingAi(false);
     }
   };
 
@@ -6645,6 +6696,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'aviation_fbo' ? 'active' : ''}`} onClick={() => { setActiveTab('aviation_fbo'); handleRunAviationFbo(); }}>
                   ✈️ FBO & Aviation Hangar
+                </div>
+                <div className={`tab ${activeTab === 'hyperscale_ai' ? 'active' : ''}`} onClick={() => { setActiveTab('hyperscale_ai'); handleRunHyperscaleAi(); }}>
+                  ⚡ Hyperscale AI Data Center
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -16133,6 +16187,226 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {fboData.aviation_compliance_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{item.finding}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('PASS') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('PASS') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'hyperscale_ai' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        ⚡ Hyperscale AI Data Center, 100MW+ Substation & Liquid Cooling SLA Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Take-or-pay critical IT capacity reservation ($/kW/mo), Direct-to-Chip liquid cooling CDU PUE SLA liquidated damages, and 120MW substation queue underwriting.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunHyperscaleAi}
+                      disabled={loadingAi}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingAi ? 'Underwriting AI Campus...' : '⚡ Model AI Data Center'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Substation Grid (MW)</label>
+                      <input
+                        type="number"
+                        value={aiSubstationMw}
+                        onChange={(e) => setAiSubstationMw(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Critical IT Load (kW)</label>
+                      <input
+                        type="number"
+                        value={aiCriticalItKw}
+                        onChange={(e) => setAiCriticalItKw(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Capacity Rate ($/kW/Mo)</label>
+                      <input
+                        type="number"
+                        value={aiReservationRateKw}
+                        onChange={(e) => setAiReservationRateKw(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>PUE SLA Target</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={aiPueTarget}
+                        onChange={(e) => setAiPueTarget(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Measured PUE (Actual)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={aiPueMeasured}
+                        onChange={(e) => setAiPueMeasured(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Rack Density (kW/Rack)</label>
+                      <input
+                        type="number"
+                        value={aiRackDensityKw}
+                        onChange={(e) => setAiRackDensityKw(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Total GPU Racks Count</label>
+                      <input
+                        type="number"
+                        value={aiGpuRacksCount}
+                        onChange={(e) => setAiGpuRacksCount(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Power Tariff ($/kWh)</label>
+                      <input
+                        type="number"
+                        step="0.002"
+                        value={aiUtilityRateKwh}
+                        onChange={(e) => setAiUtilityRateKwh(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Interconnection Deposit ($)</label>
+                      <input
+                        type="number"
+                        value={aiInterconnectionDeposit}
+                        onChange={(e) => setAiInterconnectionDeposit(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Backup Gen Runtime (Hrs)</label>
+                      <input
+                        type="number"
+                        value={aiGeneratorRuntimeHours}
+                        onChange={(e) => setAiGeneratorRuntimeHours(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Slab Floor Load (PSF)</label>
+                      <input
+                        type="number"
+                        value={aiFloorLoadPsf}
+                        onChange={(e) => setAiFloorLoadPsf(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Gen Fuel Reserve ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={aiGeneratorReserve}
+                        onChange={(e) => setAiGeneratorReserve(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {aiData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Metric Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Annual Capacity Revenue</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${aiData.annual_base_capacity_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            ${aiData.monthly_base_capacity_revenue_usd.toLocaleString()}/mo (${aiData.power_reservation_rate_per_kw_month_usd}/kW/mo committed)
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Liquid Cooling PUE SLA Status</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: aiData.is_pue_sla_compliant ? 'var(--success)' : 'var(--error)' }}>
+                            {aiData.actual_pue_measured} PUE {aiData.is_pue_sla_compliant ? '(SLA Passed)' : '(SLA Breached)'}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {aiData.is_pue_sla_compliant ? `+$${aiData.annual_energy_efficiency_savings_usd.toLocaleString()}/yr Efficiency Savings` : `-$${aiData.annual_pue_penalty_rebate_usd.toLocaleString()}/yr SLA Penalty Rebate`}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Substation & Power Pass-Through</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            {aiData.power_substation_utilization_pct}% Grid Load
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Pass-Through: ${aiData.annual_power_pass_through_cost_usd.toLocaleString()}/yr | Deposit: ${(aiData.transmission_interconnection_deposit_usd / 1000000).toFixed(1)}M
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Operating Income & Valuation</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${aiData.net_operating_income_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Valuation: ${(aiData.facility_asset_valuation_usd / 1000000).toFixed(1)}M (@ {aiData.datacenter_cap_rate_pct}% Cap Rate)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* AI Data Center Engineering & SLA Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Hyperscale AI Campus Infrastructure, Liquid Cooling PUE & Substation Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>AI Facility Metric</th>
+                              <th style={{ padding: '8px 12px' }}>SLA / Engineering Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Mission-Critical Audit Finding</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {aiData.datacenter_compliance_audit.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
