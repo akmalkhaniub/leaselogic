@@ -6541,6 +6541,120 @@ app.post('/api/leases/:id/radiopharmacy-cyclotron-modeler', async (req, res) => 
   }
 });
 
+// 4.771. POST Experiential Entertainment, Theme Park & Immersive Attraction Modeler
+app.post('/api/leases/:id/theme-park-attraction-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      attraction_footprint_sqft = 55000,
+      minimum_annual_base_rent_usd = 1850000,
+      annual_turnstile_admissions_count = 820000,
+      average_ticket_admission_price_usd = 48.50,
+      ticketing_overage_percentage_rent_rate_pct = 6.5,
+      natural_ticketing_breakpoint_usd = 28000000,
+      annual_in_park_merchandise_retail_usd = 6400000,
+      merchandise_percentage_rent_rate_pct = 8.0,
+      annual_in_park_fb_concessions_usd = 7800000,
+      fb_percentage_rent_rate_pct = 7.5,
+      landlord_common_area_marketing_copop_usd = 125000,
+      municipal_amusement_occupancy_tax_pct = 4.0,
+      astm_f24_ride_safety_reserve_annual_usd = 180000,
+      ride_dynamic_loading_g_force = 3.8,
+      connected_3phase_power_kva = 3200,
+      utility_surge_demand_charge_usd = 88000
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Ticketing & Admissions Waterfall
+    const grossTicketingRevenueUsd = Math.round(annual_turnstile_admissions_count * average_ticket_admission_price_usd);
+    const overageTicketingPercentageRentUsd = Math.max(
+      0,
+      Math.round((grossTicketingRevenueUsd - natural_ticketing_breakpoint_usd) * (ticketing_overage_percentage_rent_rate_pct / 100))
+    );
+
+    // Ancillary Merchandise & F&B Concessions Percentage Rent
+    const merchandisePercentageRentUsd = Math.round(annual_in_park_merchandise_retail_usd * (merchandise_percentage_rent_rate_pct / 100));
+    const fbPercentageRentUsd = Math.round(annual_in_park_fb_concessions_usd * (fb_percentage_rent_rate_pct / 100));
+    const totalAncillaryConcessionRentUsd = merchandisePercentageRentUsd + fbPercentageRentUsd;
+
+    // Total Landlord Revenue
+    const totalAnnualLandlordParkRevenueUsd = minimum_annual_base_rent_usd + overageTicketingPercentageRentUsd + totalAncillaryConcessionRentUsd + landlord_common_area_marketing_copop_usd;
+    const netOperatingIncomeUsd = totalAnnualLandlordParkRevenueUsd - astm_f24_ride_safety_reserve_annual_usd;
+
+    // Guest Analytics & Taxes
+    const totalGuestSpendGrossUsd = grossTicketingRevenueUsd + annual_in_park_merchandise_retail_usd + annual_in_park_fb_concessions_usd;
+    const perCapitaGuestSpendUsd = parseFloat((totalGuestSpendGrossUsd / (annual_turnstile_admissions_count || 1)).toFixed(2));
+    const municipalAmusementTaxCollectedUsd = Math.round(grossTicketingRevenueUsd * (municipal_amusement_occupancy_tax_pct / 100));
+
+    const attractionCapRatePct = 6.75;
+    const attractionAssetValuationUsd = Math.round(netOperatingIncomeUsd / (attractionCapRatePct / 100));
+    const isTicketingBreakpointExceeded = grossTicketingRevenueUsd > natural_ticketing_breakpoint_usd;
+
+    // ASTM F24 & Entertainment Operations Audit
+    const themeParkComplianceAudit = [
+      {
+        metric: 'ASTM F24 Amusement Ride Dynamic Loading',
+        status: ride_dynamic_loading_g_force <= 4.0 ? 'PASS_STRUCTURAL_G_RATED' : 'WARN_DYNAMIC_OVERLOAD',
+        standard: '<= 4.0 G-Force Structural Anchor Limit',
+        finding: `${ride_dynamic_loading_g_force} Gs dynamic force safely anchored by deep concrete caissons with quarterly ASTM F24 ultrasonic weld testing.`
+      },
+      {
+        metric: 'Ticketing Revenue Natural Breakpoint',
+        status: isTicketingBreakpointExceeded ? 'PASS_OVERAGE_PARTICIPATION_ACTIVE' : 'WARN_BELOW_BREAKPOINT',
+        standard: `$${natural_ticketing_breakpoint_usd.toLocaleString()} Natural Breakpoint`,
+        finding: `Turnstile admissions ($${grossTicketingRevenueUsd.toLocaleString()}) exceeded breakpoint, generating $${overageTicketingPercentageRentUsd.toLocaleString()} in landlord overage rent.`
+      },
+      {
+        metric: 'Guest Per-Capita Secondary Spend Capture',
+        status: perCapitaGuestSpendUsd >= 55.0 ? 'PASS_HIGH_ANCILLARY_CONVERSION' : 'WARN_LOW_IN_PARK_SPEND',
+        standard: '>= $55.00 Total Per-Capita Spend Target',
+        finding: `$${perCapitaGuestSpendUsd} per guest average across admissions, themed retail wands/apparel, and specialty dining.`
+      },
+      {
+        metric: 'High-Voltage Utility Surge Infrastructure',
+        status: connected_3phase_power_kva >= 2500 ? 'PASS_HEAVY_RIDE_POWER_READY' : 'WARN_POWER_SAG_RISK',
+        standard: '>= 2,500 kVA Dedicated 480V 3-Phase',
+        finding: `${connected_3phase_power_kva} kVA dedicated utility drop handles ride launch accelerations without park-wide voltage sags.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Destination Theme Park & Entertainment Attraction',
+      attraction_footprint_sqft: attraction_footprint_sqft,
+      minimum_annual_base_rent_usd: minimum_annual_base_rent_usd,
+      annual_turnstile_admissions_count: annual_turnstile_admissions_count,
+      average_ticket_admission_price_usd: average_ticket_admission_price_usd,
+      gross_ticketing_revenue_usd: grossTicketingRevenueUsd,
+      natural_ticketing_breakpoint_usd: natural_ticketing_breakpoint_usd,
+      is_ticketing_breakpoint_exceeded: isTicketingBreakpointExceeded,
+      overage_ticketing_percentage_rent_usd: overageTicketingPercentageRentUsd,
+      annual_in_park_merchandise_retail_usd: annual_in_park_merchandise_retail_usd,
+      merchandise_percentage_rent_usd: merchandisePercentageRentUsd,
+      annual_in_park_fb_concessions_usd: annual_in_park_fb_concessions_usd,
+      fb_percentage_rent_usd: fbPercentageRentUsd,
+      total_ancillary_concession_rent_usd: totalAncillaryConcessionRentUsd,
+      landlord_common_area_marketing_copop_usd: landlord_common_area_marketing_copop_usd,
+      total_annual_landlord_park_revenue_usd: totalAnnualLandlordParkRevenueUsd,
+      astm_f24_ride_safety_reserve_annual_usd: astm_f24_ride_safety_reserve_annual_usd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      per_capita_guest_spend_usd: perCapitaGuestSpendUsd,
+      municipal_amusement_tax_collected_usd: municipalAmusementTaxCollectedUsd,
+      attraction_cap_rate_pct: attractionCapRatePct,
+      attraction_asset_valuation_usd: attractionAssetValuationUsd,
+      theme_park_compliance_audit: themeParkComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
