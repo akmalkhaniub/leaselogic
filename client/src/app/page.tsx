@@ -769,9 +769,28 @@ export default function LeaseLogicApp() {
   const [aiSlaPenaltyPer001, setAiSlaPenaltyPer001] = useState(25000);
   const [aiData, setAiData] = useState<any>(null);
   const [loadingAi, setLoadingAi] = useState(false);
+  // Radiopharmaceutical Cyclotron & Nuclear Medicine Cleanroom state
+  const [radioCleanroomSqft, setRadioCleanroomSqft] = useState(18500);
+  const [radioCleanroomRentSqft, setRadioCleanroomRentSqft] = useState(85.00);
+  const [radioBunkerSqft, setRadioBunkerSqft] = useState(4200);
+  const [radioBunkerRentSqft, setRadioBunkerRentSqft] = useState(125.00);
+  const [radioHotCellsCount, setRadioHotCellsCount] = useState(8);
+  const [radioHotCellFee, setRadioHotCellFee] = useState(42000);
+  const [radioFloorLoadPsf, setRadioFloorLoadPsf] = useState(480);
+  const [radioAirChangesAch, setRadioAirChangesAch] = useState(45);
+  const [radioHepaFiltration, setRadioHepaFiltration] = useState(95000);
+  const [radioNrcBond, setRadioNrcBond] = useState(4500000);
+  const [radioPecEscrow, setRadioPecEscrow] = useState(1200000);
+  const [radioAnnualDoses, setRadioAnnualDoses] = useState(85000);
+  const [radioDoseRoyalty, setRadioDoseRoyalty] = useState(4.50);
+  const [radioDispatchDockPremium, setRadioDispatchDockPremium] = useState(36000);
+  const [radioPowerMva, setRadioPowerMva] = useState(2.2);
+  const [radioPowerRateKwh, setRadioPowerRateKwh] = useState(0.082);
+  const [radioData, setRadioData] = useState<any>(null);
+  const [loadingRadio, setLoadingRadio] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy'>('abstract');
 
 
 
@@ -2487,6 +2506,44 @@ export default function LeaseLogicApp() {
       console.error('Error running hyperscale AI datacenter modeler:', err);
     } finally {
       setLoadingAi(false);
+    }
+  };
+
+  // Run Radiopharmaceutical Cyclotron & Nuclear Medicine Cleanroom Modeler
+  const handleRunRadiopharmacy = async () => {
+    if (!selectedLease) return;
+    setLoadingRadio(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/radiopharmacy-cyclotron-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cleanroom_area_sqft: radioCleanroomSqft,
+          cleanroom_base_rent_sqft_year_usd: radioCleanroomRentSqft,
+          cyclotron_bunker_footprint_sqft: radioBunkerSqft,
+          bunker_rent_sqft_year_usd: radioBunkerRentSqft,
+          lead_shielded_hot_cells_count: radioHotCellsCount,
+          hot_cell_rental_surcharge_per_unit_year_usd: radioHotCellFee,
+          floor_slab_structural_loading_psf: radioFloorLoadPsf,
+          air_changes_per_hour_ach: radioAirChangesAch,
+          hepa_carbon_exhaust_filtration_annual_usd: radioHepaFiltration,
+          nrc_decommissioning_surety_bond_usd: radioNrcBond,
+          landlord_pec_environmental_escrow_usd: radioPecEscrow,
+          annual_isotope_doses_produced: radioAnnualDoses,
+          dose_royalty_surcharge_per_unit_usd: radioDoseRoyalty,
+          emergency_rapid_dispatch_dock_premium_usd: radioDispatchDockPremium,
+          cyclotron_annual_power_mva: radioPowerMva,
+          power_rate_per_kwh_usd: radioPowerRateKwh
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRadioData(data);
+      }
+    } catch (err) {
+      console.error('Error running radiopharmacy cyclotron modeler:', err);
+    } finally {
+      setLoadingRadio(false);
     }
   };
 
@@ -6699,6 +6756,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'hyperscale_ai' ? 'active' : ''}`} onClick={() => { setActiveTab('hyperscale_ai'); handleRunHyperscaleAi(); }}>
                   ⚡ Hyperscale AI Data Center
+                </div>
+                <div className={`tab ${activeTab === 'radiopharmacy' ? 'active' : ''}`} onClick={() => { setActiveTab('radiopharmacy'); handleRunRadiopharmacy(); }}>
+                  🧪 Radiopharmacy & Cyclotron
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -16407,6 +16467,226 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {aiData.datacenter_compliance_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{item.finding}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('PASS') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('PASS') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'radiopharmacy' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🧪 Radiopharmaceutical Cyclotron & Nuclear Medicine Cleanroom Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Heavy concrete cyclotron bunker rents, lead hot-cell surcharges, NRC Part 30 decommissioning bonds, and rapid dispatch half-life courier airlocks.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunRadiopharmacy}
+                      disabled={loadingRadio}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingRadio ? 'Underwriting Lab...' : '🧪 Model Radiopharmacy Lease'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Cleanroom Area (SqFt)</label>
+                      <input
+                        type="number"
+                        value={radioCleanroomSqft}
+                        onChange={(e) => setRadioCleanroomSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Cleanroom Rent ($/SF/Yr)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={radioCleanroomRentSqft}
+                        onChange={(e) => setRadioCleanroomRentSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Cyclotron Bunker (SqFt)</label>
+                      <input
+                        type="number"
+                        value={radioBunkerSqft}
+                        onChange={(e) => setRadioBunkerSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Bunker Rent ($/SF/Yr)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={radioBunkerRentSqft}
+                        onChange={(e) => setRadioBunkerRentSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Lead Hot Cells Count</label>
+                      <input
+                        type="number"
+                        value={radioHotCellsCount}
+                        onChange={(e) => setRadioHotCellsCount(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Hot Cell Fee ($/Cell/Yr)</label>
+                      <input
+                        type="number"
+                        value={radioHotCellFee}
+                        onChange={(e) => setRadioHotCellFee(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Slab Bearing (PSF)</label>
+                      <input
+                        type="number"
+                        value={radioFloorLoadPsf}
+                        onChange={(e) => setRadioFloorLoadPsf(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Air Changes (ACH)</label>
+                      <input
+                        type="number"
+                        value={radioAirChangesAch}
+                        onChange={(e) => setRadioAirChangesAch(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual Isotope Doses</label>
+                      <input
+                        type="number"
+                        value={radioAnnualDoses}
+                        onChange={(e) => setRadioAnnualDoses(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Dose Royalty ($/Unit)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={radioDoseRoyalty}
+                        onChange={(e) => setRadioDoseRoyalty(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>NRC Surety Bond ($)</label>
+                      <input
+                        type="number"
+                        value={radioNrcBond}
+                        onChange={(e) => setRadioNrcBond(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>HEPA Filter Reserve ($)</label>
+                      <input
+                        type="number"
+                        value={radioHepaFiltration}
+                        onChange={(e) => setRadioHepaFiltration(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {radioData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Metric Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Annual Landlord Rent</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${radioData.total_annual_landlord_rent_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            Cleanroom: ${radioData.annual_base_cleanroom_rent_usd.toLocaleString()} | Bunker: ${radioData.annual_bunker_rent_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Hot Cells & Dose Royalties</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${(radioData.annual_hot_cell_surcharge_usd + radioData.annual_dose_royalty_revenue_usd).toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Cells: ${radioData.annual_hot_cell_surcharge_usd.toLocaleString()} ({radioData.lead_shielded_hot_cells_count} units) | Doses: ${radioData.annual_dose_royalty_revenue_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>NRC Decommissioning Security</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${(radioData.nrc_decommissioning_surety_bond_usd / 1000000).toFixed(1)}M Bond
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            PEC Escrow: ${(radioData.landlord_pec_environmental_escrow_usd / 1000000).toFixed(1)}M | Filter: -${radioData.hepa_carbon_exhaust_filtration_annual_usd.toLocaleString()}/yr
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Operating Income & Valuation</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${radioData.net_operating_income_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Valuation: ${(radioData.facility_asset_valuation_usd / 1000000).toFixed(1)}M (@ {radioData.radiopharmacy_cap_rate_pct}% Cap Rate)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Radiopharmacy Nuclear & cGMP Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Nuclear Medicine Cleanroom, NRC Radiation Shielding & Half-Life Logistics Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Nuclear Facility Metric</th>
+                              <th style={{ padding: '8px 12px' }}>NRC / cGMP Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Radiological Audit Finding</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {radioData.radiopharmacy_compliance_audit.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
