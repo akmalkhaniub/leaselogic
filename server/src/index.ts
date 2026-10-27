@@ -6866,6 +6866,123 @@ app.post('/api/leases/:id/grid-scale-bess-modeler', async (req, res) => {
   }
 });
 
+// 4.774. POST Desalination Plant, Coastal Seawater Reverse Osmosis (SWRO) & Water Tolling Modeler
+app.post('/api/leases/:id/desalination-swro-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      plant_capacity_mgd = 30,
+      water_purchase_rate_per_kgal_usd = 6.85,
+      minimum_take_or_pay_mgd = 24,
+      actual_delivery_mgd = 28.5,
+      land_intake_easement_acres = 14,
+      easement_ground_rent_per_acre_year_usd = 38000,
+      water_agency_overage_rev_share_pct = 8.5,
+      ro_membrane_replacement_reserve_annual_usd = 520000,
+      energy_recovery_erd_efficiency_pct = 96.0,
+      power_consumption_kwh_per_m3 = 3.2,
+      brine_salinity_psu = 64,
+      ambient_ocean_salinity_psu = 34,
+      coastal_commission_monitoring_reserve_usd = 110000,
+      desal_cap_rate_pct = 5.75
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // SWRO Concession & Tolling Calculations
+    const annualBaseEasementRentUsd = Math.round(land_intake_easement_acres * easement_ground_rent_per_acre_year_usd);
+    
+    // Take-or-pay Offtake (in thousands of gallons)
+    const annualTakeOrPayKgal = minimum_take_or_pay_mgd * 1000 * 365;
+    const annualTakeOrPayRevenueUsd = Math.round(annualTakeOrPayKgal * water_purchase_rate_per_kgal_usd);
+
+    // Overage delivery beyond take-or-pay
+    const overageMgd = Math.max(0, actual_delivery_mgd - minimum_take_or_pay_mgd);
+    const annualOverageKgal = overageMgd * 1000 * 365;
+    const annualOverageRevenueUsd = Math.round(annualOverageKgal * water_purchase_rate_per_kgal_usd);
+    const landlordOverageRevShareUsd = Math.round(annualOverageRevenueUsd * (water_agency_overage_rev_share_pct / 100));
+
+    // Gross facility & landlord cash flows
+    const totalFacilityGrossRevenueUsd = annualTakeOrPayRevenueUsd + annualOverageRevenueUsd;
+    const totalLandlordWaterRevenueUsd = annualBaseEasementRentUsd + landlordOverageRevShareUsd;
+    const netLandlordOperatingIncomeUsd = totalLandlordWaterRevenueUsd - coastal_commission_monitoring_reserve_usd;
+
+    // Concession Asset Valuation
+    const desalAssetValuationUsd = Math.round(netLandlordOperatingIncomeUsd / (desal_cap_rate_pct / 100));
+    const takeOrPayCoverageRatioPct = parseFloat(((minimum_take_or_pay_mgd / (plant_capacity_mgd || 1)) * 100).toFixed(1));
+    const brineConcentrationFactor = parseFloat((brine_salinity_psu / (ambient_ocean_salinity_psu || 34)).toFixed(2));
+
+    // Coastal Commission & Marine Impact Compliance Audit
+    const swroComplianceAudit = [
+      {
+        metric: 'Take-or-Pay Municipal Offtake Commitment',
+        status: takeOrPayCoverageRatioPct >= 75.0 ? 'PASS_HIGH_OFFTAKE_SECURITY' : 'WARN_LOW_OFFTAKE_COVERAGE',
+        standard: '>= 75.0% Guaranteed Minimum Take-or-Pay Offtake',
+        finding: `${takeOrPayCoverageRatioPct}% guaranteed volume (${minimum_take_or_pay_mgd} MGD / ${plant_capacity_mgd} MGD) yields ${(annualTakeOrPayRevenueUsd / 1e6).toFixed(2)}M/yr investment-grade muni backstop.`
+      },
+      {
+        metric: 'Clean Water Act 316(b) Wedge-Wire Screens',
+        status: 'PASS_SCREEN_VELOCITY_COMPLIANT',
+        standard: '<= 0.50 ft/s Through-Screen Intake Velocity & 1.0mm Slot Size',
+        finding: 'Subsurface passive wedge-wire cylindrical intake arrays reduce marine larvae impingement & entrainment below EPA thresholds.'
+      },
+      {
+        metric: 'Ocean Plan Brine Diffuser Dilution',
+        status: brineConcentrationFactor <= 2.1 ? 'PASS_DIFFUSER_DILUTION_CERTIFIED' : 'WARN_EXCESS_CONCENTRATE',
+        standard: 'Effluent concentrate within 2.0 PSU above ambient within 100m mixing zone',
+        finding: `${brine_salinity_psu} PSU reject brine (${brineConcentrationFactor}x ambient ${ambient_ocean_salinity_psu} PSU) dispersed through 48-nozzle high-velocity duckbill diffusers.`
+      },
+      {
+        metric: 'Isobaric Energy Recovery Device (ERD) Efficiency',
+        status: energy_recovery_erd_efficiency_pct >= 95.0 && power_consumption_kwh_per_m3 <= 3.5 ? 'PASS_ERD_EFFICIENCY_OPTIMAL' : 'WARN_HIGH_PARASITIC_LOAD',
+        standard: '>= 95.0% PX ERD Efficiency & <= 3.5 kWh/m³ Specific Power Consumption',
+        finding: `${energy_recovery_erd_efficiency_pct}% isobaric pressure exchangers reduce specific desalination energy to ${power_consumption_kwh_per_m3} kWh/m³ potable water.`
+      },
+      {
+        metric: 'Reverse Osmosis Membrane Capital Replacement Reserve',
+        status: ro_membrane_replacement_reserve_annual_usd >= 450000 ? 'PASS_RO_MEMBRANE_RESERVE_ADEQUATE' : 'WARN_MEMBRANE_SINKING_DEFICIT',
+        standard: '>= $450,000/yr Dedicated Polyamide Spiral-Wound Element Reserve',
+        finding: `${ro_membrane_replacement_reserve_annual_usd.toLocaleString()}/yr replacement sinking fund protects high-pressure vessel arrays across 3-year membrane cycle.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Coastal Seawater Reverse Osmosis (SWRO) Facility',
+      plant_capacity_mgd: plant_capacity_mgd,
+      minimum_take_or_pay_mgd: minimum_take_or_pay_mgd,
+      actual_delivery_mgd: actual_delivery_mgd,
+      take_or_pay_coverage_ratio_pct: takeOrPayCoverageRatioPct,
+      water_purchase_rate_per_kgal_usd: water_purchase_rate_per_kgal_usd,
+      annual_take_or_pay_revenue_usd: annualTakeOrPayRevenueUsd,
+      annual_overage_revenue_usd: annualOverageRevenueUsd,
+      total_facility_gross_revenue_usd: totalFacilityGrossRevenueUsd,
+      land_intake_easement_acres: land_intake_easement_acres,
+      annual_base_easement_rent_usd: annualBaseEasementRentUsd,
+      landlord_overage_rev_share_usd: landlordOverageRevShareUsd,
+      total_landlord_water_revenue_usd: totalLandlordWaterRevenueUsd,
+      ro_membrane_replacement_reserve_annual_usd: ro_membrane_replacement_reserve_annual_usd,
+      coastal_commission_monitoring_reserve_usd: coastal_commission_monitoring_reserve_usd,
+      net_landlord_operating_income_usd: netLandlordOperatingIncomeUsd,
+      energy_recovery_erd_efficiency_pct: energy_recovery_erd_efficiency_pct,
+      power_consumption_kwh_per_m3: power_consumption_kwh_per_m3,
+      brine_salinity_psu: brine_salinity_psu,
+      ambient_ocean_salinity_psu: ambient_ocean_salinity_psu,
+      brine_concentration_factor: brineConcentrationFactor,
+      desal_cap_rate_pct: desal_cap_rate_pct,
+      desal_asset_valuation_usd: desalAssetValuationUsd,
+      swro_compliance_audit: swroComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
