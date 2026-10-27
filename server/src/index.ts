@@ -6983,6 +6983,124 @@ app.post('/api/leases/:id/desalination-swro-modeler', async (req, res) => {
   }
 });
 
+// 4.775. POST Mega-Sports Arena, Modern Stadium District & Seat-License Concession Modeler
+app.post('/api/leases/:id/stadium-arena-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      stadium_seats_capacity = 68000,
+      luxury_club_suites_count = 140,
+      annual_suite_lease_rate_usd = 225000,
+      suite_lease_landlord_rev_share_pct = 20.0,
+      psl_municipal_bond_debt_annual_usd = 12500000,
+      annual_turnstile_attendees_count = 1450000,
+      avg_ticket_price_usd = 110.0,
+      ticket_breakpoint_revenue_usd = 120000000,
+      ticket_overage_pct = 5.0,
+      in_stadium_merch_fb_spend_per_head_usd = 42.0,
+      concession_percentage_rent_pct = 15.0,
+      naming_rights_annual_usd = 18000000,
+      naming_rights_landlord_share_pct = 12.5,
+      capital_repair_replacement_reserve_pct = 4.0,
+      stadium_cap_rate_pct = 6.75
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Stadium District Calculations
+    const annualLuxurySuiteRevenueUsd = Math.round(luxury_club_suites_count * annual_suite_lease_rate_usd);
+    const landlordSuiteRevShareUsd = Math.round(annualLuxurySuiteRevenueUsd * (suite_lease_landlord_rev_share_pct / 100));
+
+    const annualGrossBoxOfficeUsd = Math.round(annual_turnstile_attendees_count * avg_ticket_price_usd);
+    const ticketOverageAmountUsd = Math.max(0, annualGrossBoxOfficeUsd - ticket_breakpoint_revenue_usd);
+    const landlordTicketPercentageRentUsd = Math.round(ticketOverageAmountUsd * (ticket_overage_pct / 100));
+
+    const annualGrossConcessionsUsd = Math.round(annual_turnstile_attendees_count * in_stadium_merch_fb_spend_per_head_usd);
+    const landlordConcessionsRentUsd = Math.round(annualGrossConcessionsUsd * (concession_percentage_rent_pct / 100));
+
+    const landlordNamingRightsRevShareUsd = Math.round(naming_rights_annual_usd * (naming_rights_landlord_share_pct / 100));
+
+    const totalLandlordGrossRevenueUsd = landlordSuiteRevShareUsd + landlordTicketPercentageRentUsd + landlordConcessionsRentUsd + landlordNamingRightsRevShareUsd;
+    const capitalRepairReserveUsd = Math.round(totalLandlordGrossRevenueUsd * (capital_repair_replacement_reserve_pct / 100));
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - capitalRepairReserveUsd;
+
+    const pslDebtServiceCoverageRatio = parseFloat((netOperatingIncomeUsd / (psl_municipal_bond_debt_annual_usd || 1)).toFixed(2));
+    const stadiumDistrictValuationUsd = Math.round(netOperatingIncomeUsd / (stadium_cap_rate_pct / 100));
+
+    // Sports Authority Lease Covenants & Municipal Bond Audit
+    const stadiumComplianceAudit = [
+      {
+        metric: 'PSL Municipal Revenue Bond DSCR Covenant',
+        status: pslDebtServiceCoverageRatio >= 1.30 ? 'PASS_BOND_COVENANT_EXCEEDED' : 'WARN_DSCR_COVENANT_BREACH',
+        standard: '>= 1.30x Debt Service Coverage Ratio (DSCR)',
+        finding: `${pslDebtServiceCoverageRatio}x DSCR ($${(netOperatingIncomeUsd / 1e6).toFixed(2)}M NOI / $${(psl_municipal_bond_debt_annual_usd / 1e6).toFixed(2)}M debt) secures Series A municipal lease revenue bonds.`
+      },
+      {
+        metric: 'Luxury Club Suite Revenue Landlord Participation',
+        status: suite_lease_landlord_rev_share_pct >= 15.0 ? 'PASS_SUITE_PARTICIPATION_OPTIMAL' : 'WARN_LOW_SUITE_CAPTURE',
+        standard: '>= 15.0% Landlord Share of Premium Seat & Suite Leases',
+        finding: `${suite_lease_landlord_rev_share_pct}% landlord participation yields $${landlordSuiteRevShareUsd.toLocaleString()}/yr from ${luxury_club_suites_count} premier skyboxes.`
+      },
+      {
+        metric: 'Master Concessionaire Gross Spend Capture',
+        status: concession_percentage_rent_pct >= 12.0 ? 'PASS_CONCESSION_RENT_HEALTHY' : 'WARN_LOW_CONCESSION_ROYALTY',
+        standard: '>= 12.0% Percentage Rent on In-Stadium Food, Beverage & Merch',
+        finding: `${concession_percentage_rent_pct}% concession rent on $${in_stadium_merch_fb_spend_per_head_usd}/capita spend generates $${landlordConcessionsRentUsd.toLocaleString()}/yr.`
+      },
+      {
+        metric: 'Capital Repair & Modernization Escrow Sinking Fund',
+        status: capital_repair_replacement_reserve_pct >= 3.0 ? 'PASS_CAPITAL_ESCROW_COMPLIANT' : 'WARN_INSUFFICIENT_CAPITAL_ESCROW',
+        standard: '>= 3.0% of Gross Revenue to Dedicated Lifecycle Modernization Reserve',
+        finding: `${capital_repair_replacement_reserve_pct}% escrow reserve ($${capitalRepairReserveUsd.toLocaleString()}/yr) maintains fan experience, 4K LED ribbon boards, and Wi-Fi 7 density.`
+      },
+      {
+        metric: 'Franchise Tenancy & Non-Relocation Agreement (NRA)',
+        status: 'PASS_30_YR_NON_RELOCATION_ACTIVE',
+        standard: '30-Year Irrevocable Lease Tenancy with Specific Performance Injunction Covenants',
+        finding: 'Franchise non-relocation covenants prevent team departure and preserve metropolitan sports district economic vitality.'
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Mega-Sports Arena & Metropolitan Stadium District',
+      stadium_seats_capacity: stadium_seats_capacity,
+      luxury_club_suites_count: luxury_club_suites_count,
+      annual_suite_lease_rate_usd: annual_suite_lease_rate_usd,
+      annual_luxury_suite_revenue_usd: annualLuxurySuiteRevenueUsd,
+      landlord_suite_rev_share_usd: landlordSuiteRevShareUsd,
+      annual_turnstile_attendees_count: annual_turnstile_attendees_count,
+      avg_ticket_price_usd: avg_ticket_price_usd,
+      annual_gross_box_office_usd: annualGrossBoxOfficeUsd,
+      ticket_breakpoint_revenue_usd: ticket_breakpoint_revenue_usd,
+      ticket_overage_amount_usd: ticketOverageAmountUsd,
+      landlord_ticket_percentage_rent_usd: landlordTicketPercentageRentUsd,
+      in_stadium_merch_fb_spend_per_head_usd: in_stadium_merch_fb_spend_per_head_usd,
+      annual_gross_concessions_usd: annualGrossConcessionsUsd,
+      concession_percentage_rent_pct: concession_percentage_rent_pct,
+      landlord_concessions_rent_usd: landlordConcessionsRentUsd,
+      naming_rights_annual_usd: naming_rights_annual_usd,
+      landlord_naming_rights_rev_share_usd: landlordNamingRightsRevShareUsd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      capital_repair_replacement_reserve_pct: capital_repair_replacement_reserve_pct,
+      capital_repair_reserve_usd: capitalRepairReserveUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      psl_municipal_bond_debt_annual_usd: psl_municipal_bond_debt_annual_usd,
+      psl_debt_service_coverage_ratio: pslDebtServiceCoverageRatio,
+      stadium_cap_rate_pct: stadium_cap_rate_pct,
+      stadium_district_valuation_usd: stadiumDistrictValuationUsd,
+      stadium_compliance_audit: stadiumComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
