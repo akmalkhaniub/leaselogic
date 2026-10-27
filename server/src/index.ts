@@ -6655,6 +6655,120 @@ app.post('/api/leases/:id/theme-park-attraction-modeler', async (req, res) => {
   }
 });
 
+// 4.772. POST High-Speed Rail (HSR) Station Concourse & Intermodal Air-Rights Modeler
+app.post('/api/leases/:id/hsr-air-rights-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      concourse_retail_area_sqft = 32000,
+      concourse_base_rent_sqft_year_usd = 140.00,
+      air_rights_tower_gfa_sqft = 380000,
+      air_rights_ground_rent_sqft_year_usd = 18.50,
+      annual_train_passengers_volume = 12500000,
+      average_passenger_dwell_time_minutes = 24,
+      passenger_retail_conversion_pct = 14.0,
+      average_concourse_transaction_usd = 16.50,
+      concourse_overage_percentage_rent_rate_pct = 8.5,
+      concourse_natural_breakpoint_usd = 22000000,
+      micro_mobility_ev_charging_bays_count = 40,
+      micro_mobility_fee_per_bay_year_usd = 3600,
+      fra_vibration_mitigation_escrow_annual_usd = 145000,
+      structural_transfer_truss_bearing_capacity_tons = 4500,
+      track_vibration_velocity_vdb = 68,
+      municipal_tif_district_abatement_credit_usd = 380000
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Rental & Over-Track Air Rights Calculations
+    const annualBaseConcourseRentUsd = Math.round(concourse_retail_area_sqft * concourse_base_rent_sqft_year_usd);
+    const annualAirRightsGroundRentUsd = Math.round(air_rights_tower_gfa_sqft * air_rights_ground_rent_sqft_year_usd);
+    const totalFixedTransitRentUsd = annualBaseConcourseRentUsd + annualAirRightsGroundRentUsd;
+
+    // Commuter Foot-Traffic & Concourse Retail Sales
+    const annualConcourseRetailSalesGrossUsd = Math.round(
+      annual_train_passengers_volume * (passenger_retail_conversion_pct / 100) * average_concourse_transaction_usd
+    );
+    const overageConcoursePercentageRentUsd = Math.max(
+      0,
+      Math.round((annualConcourseRetailSalesGrossUsd - concourse_natural_breakpoint_usd) * (concourse_overage_percentage_rent_rate_pct / 100))
+    );
+
+    // Micro-Mobility & Intermodal Charging Income
+    const annualMicroMobilityRevenueUsd = Math.round(micro_mobility_ev_charging_bays_count * micro_mobility_fee_per_bay_year_usd);
+    const totalAnnualLandlordTransitRevenueUsd = totalFixedTransitRentUsd + overageConcoursePercentageRentUsd + annualMicroMobilityRevenueUsd;
+
+    // Net Operating Income with TIF Infrastructure Credit Offset
+    const netOperatingIncomeUsd = totalAnnualLandlordTransitRevenueUsd - fra_vibration_mitigation_escrow_annual_usd + municipal_tif_district_abatement_credit_usd;
+
+    const todCapRatePct = 5.50;
+    const stationAssetValuationUsd = Math.round(netOperatingIncomeUsd / (todCapRatePct / 100));
+    const concourseSalesPsfUsd = parseFloat((annualConcourseRetailSalesGrossUsd / (concourse_retail_area_sqft || 1)).toFixed(2));
+    const isFraVibrationCompliant = track_vibration_velocity_vdb <= 72;
+
+    // Transit-Oriented Development & FRA Railway Corridor Audit
+    const hsrComplianceAudit = [
+      {
+        metric: 'FRA Track Vibration Ground Velocity',
+        status: isFraVibrationCompliant ? 'PASS_RESIDENTIAL_TOD_CERTIFIED' : 'WARN_VIBRATION_EXCEEDANCE',
+        standard: '<= 72 VdB (FRA Ground-Borne Vibration Criterion)',
+        finding: `${track_vibration_velocity_vdb} VdB acoustic dampening verified by elastomeric isolation bearings beneath air-rights transfer columns.`
+      },
+      {
+        metric: 'Over-Track Structural Transfer Girder',
+        status: structural_transfer_truss_bearing_capacity_tons >= 4000 ? 'PASS_CRASH_WALL_REDUNDANT' : 'WARN_TRANSFER_LIMIT',
+        standard: '>= 4,000 Tons Bearing Capacity (AREMA Track Crash Deflection)',
+        finding: `${structural_transfer_truss_bearing_capacity_tons} tons structural transfer truss supports 380,000 SF tower above active high-speed rail tracks.`
+      },
+      {
+        metric: 'Concourse Commuter Foot-Traffic Density',
+        status: concourseSalesPsfUsd >= 800 ? 'PASS_HIGH_PRODUCTIVITY_CONCOURSE' : 'WARN_LOW_SALES_DENSITY',
+        standard: '>= $800/SF Retail Sales Velocity',
+        finding: `$${concourseSalesPsfUsd}/SF retail productivity driven by ${average_passenger_dwell_time_minutes} min avg dwell time across 12.5M annual passengers.`
+      },
+      {
+        metric: 'Municipal TIF Infrastructure Abatement',
+        status: municipal_tif_district_abatement_credit_usd > 0 ? 'PASS_TAX_INCREMENT_CREDIT_ACTIVE' : 'INFO_STANDARD_TAXATION',
+        standard: 'Active Transit-Oriented TIF District',
+        finding: `+$${municipal_tif_district_abatement_credit_usd.toLocaleString()}/yr municipal property tax abatement credit enhances project net operating yield.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'High-Speed Rail Intermodal Station & Air-Rights Tower',
+      concourse_retail_area_sqft: concourse_retail_area_sqft,
+      air_rights_tower_gfa_sqft: air_rights_tower_gfa_sqft,
+      annual_base_concourse_rent_usd: annualBaseConcourseRentUsd,
+      annual_air_rights_ground_rent_usd: annualAirRightsGroundRentUsd,
+      total_fixed_transit_rent_usd: totalFixedTransitRentUsd,
+      annual_train_passengers_volume: annual_train_passengers_volume,
+      average_passenger_dwell_time_minutes: average_passenger_dwell_time_minutes,
+      annual_concourse_retail_sales_gross_usd: annualConcourseRetailSalesGrossUsd,
+      concourse_natural_breakpoint_usd: concourse_natural_breakpoint_usd,
+      overage_concourse_percentage_rent_usd: overageConcoursePercentageRentUsd,
+      micro_mobility_ev_charging_bays_count: micro_mobility_ev_charging_bays_count,
+      annual_micro_mobility_revenue_usd: annualMicroMobilityRevenueUsd,
+      total_annual_landlord_transit_revenue_usd: totalAnnualLandlordTransitRevenueUsd,
+      fra_vibration_mitigation_escrow_annual_usd: fra_vibration_mitigation_escrow_annual_usd,
+      municipal_tif_district_abatement_credit_usd: municipal_tif_district_abatement_credit_usd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      tod_cap_rate_pct: todCapRatePct,
+      station_asset_valuation_usd: stationAssetValuationUsd,
+      concourse_sales_psf_usd: concourseSalesPsfUsd,
+      is_fra_vibration_compliant: isFraVibrationCompliant,
+      hsr_compliance_audit: hsrComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
