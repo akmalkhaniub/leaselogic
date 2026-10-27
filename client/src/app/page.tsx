@@ -876,9 +876,26 @@ export default function LeaseLogicApp() {
   const [stadiumCapRatePct, setStadiumCapRatePct] = useState(6.75);
   const [stadiumData, setStadiumData] = useState<any>(null);
   const [loadingStadium, setLoadingStadium] = useState(false);
+// Commercial Spaceport, Orbital Launch Complex & Cryogenic Propellant Concession state
+  const [spaceportAcres, setSpaceportAcres] = useState(120);
+  const [spaceportGroundRentAcre, setSpaceportGroundRentAcre] = useState(16000);
+  const [spaceportLaunches, setSpaceportLaunches] = useState(24);
+  const [spaceportSlotFee, setSpaceportSlotFee] = useState(380000);
+  const [spaceportMethaneGal, setSpaceportMethaneGal] = useState(4800000);
+  const [spaceportMethaneFeeGal, setSpaceportMethaneFeeGal] = useState(0.08);
+  const [spaceportLoxGal, setSpaceportLoxGal] = useState(12500000);
+  const [spaceportLoxFeeGal, setSpaceportLoxFeeGal] = useState(0.04);
+  const [spaceportHangarRent, setSpaceportHangarRent] = useState(1400000);
+  const [spaceportDelugeReserve, setSpaceportDelugeReserve] = useState(280000);
+  const [spaceportSecurityEscrow, setSpaceportSecurityEscrow] = useState(160000);
+  const [spaceportClearZoneMiles, setSpaceportClearZoneMiles] = useState(3.5);
+  const [spaceportMceBlastPsf, setSpaceportMceBlastPsf] = useState(450);
+  const [spaceportCapRatePct, setSpaceportCapRatePct] = useState(7.25);
+  const [spaceportData, setSpaceportData] = useState<any>(null);
+  const [loadingSpaceport, setLoadingSpaceport] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch'>('abstract');
 
 
 
@@ -2815,6 +2832,43 @@ export default function LeaseLogicApp() {
       setLoadingStadium(false);
     }
   };
+  // Run Commercial Spaceport, Orbital Launch Complex & Cryogenic Propellant Concession Modeler
+  const handleRunSpaceportLaunch = async () => {
+    if (!selectedLease) return;
+    setLoadingSpaceport(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/commercial-spaceport-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          launch_complex_footprint_acres: spaceportAcres,
+          pad_ground_rent_per_acre_year_usd: spaceportGroundRentAcre,
+          annual_orbital_launches_count: spaceportLaunches,
+          per_launch_pad_slot_turnaround_fee_usd: spaceportSlotFee,
+          liquid_methane_flowage_gal: spaceportMethaneGal,
+          methane_flowage_fee_per_gal_usd: spaceportMethaneFeeGal,
+          liquid_oxygen_lox_flowage_gal: spaceportLoxGal,
+          lox_flowage_fee_per_gal_usd: spaceportLoxFeeGal,
+          horizontal_hangar_integration_rent_annual_usd: spaceportHangarRent,
+          deluge_water_blast_suppression_reserve_usd: spaceportDelugeReserve,
+          spaceport_security_faa_escrow_annual_usd: spaceportSecurityEscrow,
+          faa_part_420_safety_clear_zone_radius_miles: spaceportClearZoneMiles,
+          mce_blast_overpressure_psf: spaceportMceBlastPsf,
+          spaceport_cap_rate_pct: spaceportCapRatePct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSpaceportData(data);
+      }
+    } catch (err) {
+      console.error('Error running Commercial Spaceport modeler:', err);
+    } finally {
+      setLoadingSpaceport(false);
+    }
+  };
+
+
 
 
 
@@ -7047,6 +7101,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'stadium_arena' ? 'active' : ''}`} onClick={() => { setActiveTab('stadium_arena'); handleRunStadiumArena(); }}>
                   🏟️ Stadium & Arena District
+                </div>
+                <div className={`tab ${activeTab === 'spaceport_launch' ? 'active' : ''}`} onClick={() => { setActiveTab('spaceport_launch'); handleRunSpaceportLaunch(); }}>
+                  🛰️ Spaceport Launch Complex
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -15938,6 +15995,263 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {stadiumData.stadium_compliance_audit?.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                                <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    background: item.status.startsWith('PASS') ? '#dcfce7' : '#fef3c7',
+                                    color: item.status.startsWith('PASS') ? '#15803d' : '#b45309'
+                                  }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px', color: 'var(--foreground)' }}>{item.finding}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                            ) : activeTab === 'spaceport_launch' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🛰️ Commercial Spaceport, Orbital Launch Complex & Cryogenic Propellant Concession Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Underwrite launch pad ground rents, per-launch turnaround slot fees, cryogenic LOX and liquid methane propellant flowage concession royalties, and FAA Part 420 safety clear-zone reserves.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunSpaceportLaunch}
+                      disabled={loadingSpaceport}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingSpaceport ? 'Underwriting Spaceport...' : '🛰️ Model Spaceport Asset'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Launch Complex (Acres)</label>
+                      <input
+                        type="number"
+                        value={spaceportAcres}
+                        onChange={(e) => setSpaceportAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Pad Ground Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={spaceportGroundRentAcre}
+                        onChange={(e) => setSpaceportGroundRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Orbital Launches / Yr</label>
+                      <input
+                        type="number"
+                        value={spaceportLaunches}
+                        onChange={(e) => setSpaceportLaunches(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Per-Launch Slot Fee ($)</label>
+                      <input
+                        type="number"
+                        value={spaceportSlotFee}
+                        onChange={(e) => setSpaceportSlotFee(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Liquid Methane (Gal/Yr)</label>
+                      <input
+                        type="number"
+                        value={spaceportMethaneGal}
+                        onChange={(e) => setSpaceportMethaneGal(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Methane Flowage Fee ($/Gal)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={spaceportMethaneFeeGal}
+                        onChange={(e) => setSpaceportMethaneFeeGal(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Liquid Oxygen LOX (Gal/Yr)</label>
+                      <input
+                        type="number"
+                        value={spaceportLoxGal}
+                        onChange={(e) => setSpaceportLoxGal(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>LOX Flowage Fee ($/Gal)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={spaceportLoxFeeGal}
+                        onChange={(e) => setSpaceportLoxFeeGal(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Payload Hangar Lease ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={spaceportHangarRent}
+                        onChange={(e) => setSpaceportHangarRent(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Deluge Water Escrow ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={spaceportDelugeReserve}
+                        onChange={(e) => setSpaceportDelugeReserve(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>FAA Clear-Zone Radius (Mi)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={spaceportClearZoneMiles}
+                        onChange={(e) => setSpaceportClearZoneMiles(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>MCE Blast Pressure (PSF)</label>
+                      <input
+                        type="number"
+                        value={spaceportMceBlastPsf}
+                        onChange={(e) => setSpaceportMceBlastPsf(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {spaceportData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Highlights */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '8px', border: '1px solid #10b981' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>Spaceport Net Operating Income</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#065f46', marginTop: '4px' }}>
+                            ${spaceportData.net_operating_income_usd?.toLocaleString()} / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#059669' }}>After ${spaceportData.total_operating_escrow_usd?.toLocaleString()} operating escrows</span>
+                        </div>
+
+                        <div style={{ background: '#eff6ff', padding: '16px', borderRadius: '8px', border: '1px solid #3b82f6' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: 600 }}>Spaceport Complex Valuation</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>
+                            ${(spaceportData.spaceport_asset_valuation_usd / 1e6)?.toFixed(2)}M
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>Cap Rate @ {spaceportData.spaceport_cap_rate_pct}%</span>
+                        </div>
+
+                        <div style={{ background: '#fdf4ff', padding: '16px', borderRadius: '8px', border: '1px solid #c084fc' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#7e22ce', fontWeight: 600 }}>Annual Launch Turnaround Fees</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6b21a8', marginTop: '4px' }}>
+                            ${(spaceportData.annual_launch_slot_fees_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#9333ea' }}>{spaceportData.annual_orbital_launches_count} launches @ ${spaceportSlotFee.toLocaleString()}</span>
+                        </div>
+
+                        <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #f59e0b' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Total Landlord Spaceport Revenue</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#92400e', marginTop: '4px' }}>
+                            ${(spaceportData.total_landlord_spaceport_revenue_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#d97706' }}>Pad rent, launches, cryo & hangar</span>
+                        </div>
+                      </div>
+
+                      {/* Revenue Streams Card */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          📊 Multi-Commodity Spaceport Concession Stream Summary
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Pad Fixed Ground Lease</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#1d4ed8' }}>
+                              ${spaceportData.annual_pad_ground_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{spaceportData.launch_complex_footprint_acres} acres @ ${spaceportGroundRentAcre.toLocaleString()}/acre</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Cryogenic Propellant Flowage Concession</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#047857' }}>
+                              ${spaceportData.annual_total_cryo_flowage_fees_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>LOX: ${spaceportData.annual_lox_flowage_fee_usd?.toLocaleString()} | Methane: ${spaceportData.annual_methane_flowage_fee_usd?.toLocaleString()}</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Payload Integration Hangar Lease</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#b45309' }}>
+                              ${spaceportData.horizontal_hangar_integration_rent_annual_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ISO Class 8 cleanroom integration facility</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Deluge Water & Perimeter Escrow</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#7e22ce' }}>
+                              ${spaceportData.total_operating_escrow_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Acoustic water: ${spaceportData.deluge_water_blast_suppression_reserve_usd?.toLocaleString()} | Security: ${spaceportData.spaceport_security_faa_escrow_annual_usd?.toLocaleString()}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* FAA Part 420 Table */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          🛡️ FAA Part 420 Explosive Safety & Commercial Space Launch License Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 10px' }}>Aerospace Safety Dimension</th>
+                              <th style={{ padding: '8px 10px' }}>Status</th>
+                              <th style={{ padding: '8px 10px' }}>Regulatory Standard</th>
+                              <th style={{ padding: '8px 10px' }}>Engineering Verification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {spaceportData.spaceport_compliance_audit?.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
                                 <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px' }}>
