@@ -788,9 +788,27 @@ export default function LeaseLogicApp() {
   const [radioPowerRateKwh, setRadioPowerRateKwh] = useState(0.082);
   const [radioData, setRadioData] = useState<any>(null);
   const [loadingRadio, setLoadingRadio] = useState(false);
+  // Experiential Entertainment, Theme Park & Immersive Attraction state
+  const [parkFootprintSqft, setParkFootprintSqft] = useState(55000);
+  const [parkMinBaseRent, setParkMinBaseRent] = useState(1850000);
+  const [parkAdmissionsCount, setParkAdmissionsCount] = useState(820000);
+  const [parkTicketPrice, setParkTicketPrice] = useState(48.50);
+  const [parkTicketingOveragePct, setParkTicketingOveragePct] = useState(6.5);
+  const [parkTicketingBreakpoint, setParkTicketingBreakpoint] = useState(28000000);
+  const [parkMerchandiseRetail, setParkMerchandiseRetail] = useState(6400000);
+  const [parkMerchandisePct, setParkMerchandisePct] = useState(8.0);
+  const [parkFbConcessions, setParkFbConcessions] = useState(7800000);
+  const [parkFbPct, setParkFbPct] = useState(7.5);
+  const [parkCoopMarketing, setParkCoopMarketing] = useState(125000);
+  const [parkAmusementTaxPct, setParkAmusementTaxPct] = useState(4.0);
+  const [parkAstmReserve, setParkAstmReserve] = useState(180000);
+  const [parkDynamicGForce, setParkDynamicGForce] = useState(3.8);
+  const [parkConnectedPowerKva, setParkConnectedPowerKva] = useState(3200);
+  const [parkData, setParkData] = useState<any>(null);
+  const [loadingPark, setLoadingPark] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park'>('abstract');
 
 
 
@@ -2544,6 +2562,43 @@ export default function LeaseLogicApp() {
       console.error('Error running radiopharmacy cyclotron modeler:', err);
     } finally {
       setLoadingRadio(false);
+    }
+  };
+
+  // Run Experiential Entertainment, Theme Park & Immersive Attraction Modeler
+  const handleRunThemePark = async () => {
+    if (!selectedLease) return;
+    setLoadingPark(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/theme-park-attraction-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attraction_footprint_sqft: parkFootprintSqft,
+          minimum_annual_base_rent_usd: parkMinBaseRent,
+          annual_turnstile_admissions_count: parkAdmissionsCount,
+          average_ticket_admission_price_usd: parkTicketPrice,
+          ticketing_overage_percentage_rent_rate_pct: parkTicketingOveragePct,
+          natural_ticketing_breakpoint_usd: parkTicketingBreakpoint,
+          annual_in_park_merchandise_retail_usd: parkMerchandiseRetail,
+          merchandise_percentage_rent_rate_pct: parkMerchandisePct,
+          annual_in_park_fb_concessions_usd: parkFbConcessions,
+          fb_percentage_rent_rate_pct: parkFbPct,
+          landlord_common_area_marketing_copop_usd: parkCoopMarketing,
+          municipal_amusement_occupancy_tax_pct: parkAmusementTaxPct,
+          astm_f24_ride_safety_reserve_annual_usd: parkAstmReserve,
+          ride_dynamic_loading_g_force: parkDynamicGForce,
+          connected_3phase_power_kva: parkConnectedPowerKva
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setParkData(data);
+      }
+    } catch (err) {
+      console.error('Error running theme park attraction modeler:', err);
+    } finally {
+      setLoadingPark(false);
     }
   };
 
@@ -6759,6 +6814,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'radiopharmacy' ? 'active' : ''}`} onClick={() => { setActiveTab('radiopharmacy'); handleRunRadiopharmacy(); }}>
                   🧪 Radiopharmacy & Cyclotron
+                </div>
+                <div className={`tab ${activeTab === 'theme_park' ? 'active' : ''}`} onClick={() => { setActiveTab('theme_park'); handleRunThemePark(); }}>
+                  🎢 Theme Park & Attractions
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -16687,6 +16745,228 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {radioData.radiopharmacy_compliance_audit.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px 12px', color: 'var(--foreground)' }}>{item.finding}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <span style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    background: item.status.includes('PASS') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: item.status.includes('PASS') ? 'var(--success)' : 'var(--error)'
+                                  }}>
+                                    {item.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === 'theme_park' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🎢 Experiential Entertainment, Theme Park & Immersive Attraction Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Minimum Annual Guarantee (MAG) vs turnstile ticketing overage waterfalls, retail merchandise percentage rents, and ASTM F24 dynamic ride safety compliance.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunThemePark}
+                      disabled={loadingPark}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingPark ? 'Modeling Entertainment...' : '🎢 Model Theme Park Lease'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ride Footprint (SqFt)</label>
+                      <input
+                        type="number"
+                        value={parkFootprintSqft}
+                        onChange={(e) => setParkFootprintSqft(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Base MAG Rent ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={parkMinBaseRent}
+                        onChange={(e) => setParkMinBaseRent(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Annual Turnstile Guests</label>
+                      <input
+                        type="number"
+                        value={parkAdmissionsCount}
+                        onChange={(e) => setParkAdmissionsCount(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Avg Ticket Price ($)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={parkTicketPrice}
+                        onChange={(e) => setParkTicketPrice(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ticket Overage % (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={parkTicketingOveragePct}
+                        onChange={(e) => setParkTicketingOveragePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Breakpoint ($ Revenue)</label>
+                      <input
+                        type="number"
+                        value={parkTicketingBreakpoint}
+                        onChange={(e) => setParkTicketingBreakpoint(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Merchandise Sales ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={parkMerchandiseRetail}
+                        onChange={(e) => setParkMerchandiseRetail(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Merchandise % Rent (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={parkMerchandisePct}
+                        onChange={(e) => setParkMerchandisePct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>F&B Concessions ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={parkFbConcessions}
+                        onChange={(e) => setParkFbConcessions(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>F&B % Rent (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={parkFbPct}
+                        onChange={(e) => setParkFbPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Dynamic G-Force (Gs)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={parkDynamicGForce}
+                        onChange={(e) => setParkDynamicGForce(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>ASTM Safety Reserve ($)</label>
+                      <input
+                        type="number"
+                        value={parkAstmReserve}
+                        onChange={(e) => setParkAstmReserve(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {parkData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Metric Cards Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Theme Park Landlord Revenue</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            ${parkData.total_annual_landlord_park_revenue_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                            Base MAG: ${parkData.minimum_annual_base_rent_usd.toLocaleString()} | Overage: ${parkData.overage_ticketing_percentage_rent_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Guest Admissions & Per-Capita</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            {parkData.annual_turnstile_admissions_count.toLocaleString()} Guests
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            ${parkData.per_capita_guest_spend_usd}/guest spend | Gross Tickets: ${parkData.gross_ticketing_revenue_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Merchandise & F&B Concessions</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--foreground)' }}>
+                            ${parkData.total_ancillary_concession_rent_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Retail: ${parkData.merchandise_percentage_rent_usd.toLocaleString()} | F&B: ${parkData.fb_percentage_rent_usd.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Net Operating Income & Valuation</span>
+                          <h4 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--success)' }}>
+                            ${parkData.net_operating_income_usd.toLocaleString()}/yr
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Valuation: ${(parkData.attraction_asset_valuation_usd / 1000000).toFixed(1)}M (@ {parkData.attraction_cap_rate_pct}% Cap Rate)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Theme Park Operations & ASTM F24 Audit Table */}
+                      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                        <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          🛡️ Theme Park Attraction Operations, ASTM F24 Ride Safety & Municipal Tax Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 12px' }}>Attraction Metric</th>
+                              <th style={{ padding: '8px 12px' }}>ASTM / Lease Standard</th>
+                              <th style={{ padding: '8px 12px' }}>Operational Finding</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Audit Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {parkData.theme_park_compliance_audit.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.standard}</td>
