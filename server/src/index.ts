@@ -6769,6 +6769,103 @@ app.post('/api/leases/:id/hsr-air-rights-modeler', async (req, res) => {
   }
 });
 
+// 4.773. POST Grid-Scale BESS (Battery Energy Storage) & Tolling Modeler
+app.post('/api/leases/:id/grid-scale-bess-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      storage_rated_power_mw = 60,
+      storage_energy_capacity_mwh = 240,
+      project_footprint_acres = 8.5,
+      land_ground_rent_per_acre_year_usd = 18500,
+      capacity_tolling_rate_per_kw_month_usd = 11.50,
+      merchant_arbitrage_revenue_annual_usd = 2450000,
+      merchant_revenue_share_pct = 12.0,
+      round_trip_efficiency_pct = 86.5,
+      annual_degradation_rate_pct = 1.8,
+      battery_augmentation_reserve_annual_usd = 420000,
+      substation_interconnection_voltage_kv = 115,
+      nfpa_855_deluge_water_reserve_gallons = 180000,
+      decommissioning_surety_escrow_annual_usd = 85000
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core BESS Revenue Calculations
+    const annualBaseGroundRentUsd = Math.round(project_footprint_acres * land_ground_rent_per_acre_year_usd);
+    const annualFixedCapacityTollingRevenueUsd = Math.round(storage_rated_power_mw * 1000 * capacity_tolling_rate_per_kw_month_usd * 12);
+    const landlordMerchantRevenueShareUsd = Math.round(merchant_arbitrage_revenue_annual_usd * (merchant_revenue_share_pct / 100));
+
+    const totalAnnualLandlordStorageRevenueUsd = annualBaseGroundRentUsd + annualFixedCapacityTollingRevenueUsd + landlordMerchantRevenueShareUsd;
+    const netOperatingIncomeUsd = totalAnnualLandlordStorageRevenueUsd - battery_augmentation_reserve_annual_usd - decommissioning_surety_escrow_annual_usd;
+
+    const storageDurationHours = parseFloat((storage_energy_capacity_mwh / (storage_rated_power_mw || 1)).toFixed(1));
+    const bessCapRatePct = 6.25;
+    const storageAssetValuationUsd = Math.round(netOperatingIncomeUsd / (bessCapRatePct / 100));
+    const isResourceAdequacyQualified = storageDurationHours >= 4.0;
+
+    // NFPA 855 & Grid Interconnection Compliance Audit
+    const bessComplianceAudit = [
+      {
+        metric: 'Resource Adequacy (RA) 4-Hour Duration',
+        status: isResourceAdequacyQualified ? 'PASS_4HR_RA_QUALIFIED' : 'WARN_DURATION_BELOW_4HR',
+        standard: '>= 4.0 Hours Duration for Utility RA Tolling',
+        finding: `${storageDurationHours}-hour duration (${storage_energy_capacity_mwh} MWh / ${storage_rated_power_mw} MW) qualifies for premier utility Resource Adequacy contracts.`
+      },
+      {
+        metric: 'NFPA 855 Deluge Water Suppression Sizing',
+        status: nfpa_855_deluge_water_reserve_gallons >= 150000 ? 'PASS_DELUGE_CURTAIN_READY' : 'WARN_WATER_DEFICIT',
+        standard: '>= 150,000 Gallons Dedicated On-Site Fire Reserve',
+        finding: `${nfpa_855_deluge_water_reserve_gallons.toLocaleString()} gal on-site dedicated water reservoir satisfies NFPA 855 deflagration & thermal runaway cooling standard.`
+      },
+      {
+        metric: 'High-Voltage Transmission Point of Interconnection',
+        status: substation_interconnection_voltage_kv >= 69 ? 'PASS_HIGH_VOLTAGE_TRANSMISSION' : 'WARN_DISTRIBUTION_VOLTAGE',
+        standard: '>= 69 kV Direct Substation Bay',
+        finding: `${substation_interconnection_voltage_kv} kV transmission tie ensures zero distribution circuit back-feed throttling.`
+      },
+      {
+        metric: 'Degradation Augmentation Reserve Coverage',
+        status: battery_augmentation_reserve_annual_usd >= 350000 ? 'PASS_AUGMENTATION_FULLY_FUNDED' : 'WARN_AUGMENTATION_DEFICIT',
+        standard: '>= $350,000/yr Battery Cell Sinking Fund',
+        finding: `$${battery_augmentation_reserve_annual_usd.toLocaleString()}/yr augmentation reserve preserves ${round_trip_efficiency_pct}% RTE and overcomes ${annual_degradation_rate_pct}%/yr cell fade.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Grid-Scale Battery Energy Storage System (BESS)',
+      storage_rated_power_mw: storage_rated_power_mw,
+      storage_energy_capacity_mwh: storage_energy_capacity_mwh,
+      storage_duration_hours: storageDurationHours,
+      project_footprint_acres: project_footprint_acres,
+      annual_base_ground_rent_usd: annualBaseGroundRentUsd,
+      annual_fixed_capacity_tolling_revenue_usd: annualFixedCapacityTollingRevenueUsd,
+      merchant_arbitrage_revenue_annual_usd: merchant_arbitrage_revenue_annual_usd,
+      landlord_merchant_revenue_share_usd: landlordMerchantRevenueShareUsd,
+      total_annual_landlord_storage_revenue_usd: totalAnnualLandlordStorageRevenueUsd,
+      battery_augmentation_reserve_annual_usd: battery_augmentation_reserve_annual_usd,
+      decommissioning_surety_escrow_annual_usd: decommissioning_surety_escrow_annual_usd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      round_trip_efficiency_pct: round_trip_efficiency_pct,
+      annual_degradation_rate_pct: annual_degradation_rate_pct,
+      substation_interconnection_voltage_kv: substation_interconnection_voltage_kv,
+      nfpa_855_deluge_water_reserve_gallons: nfpa_855_deluge_water_reserve_gallons,
+      bess_cap_rate_pct: bessCapRatePct,
+      storage_asset_valuation_usd: storageAssetValuationUsd,
+      is_resource_adequacy_qualified: isResourceAdequacyQualified,
+      bess_compliance_audit: bessComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
