@@ -893,9 +893,25 @@ export default function LeaseLogicApp() {
   const [spaceportCapRatePct, setSpaceportCapRatePct] = useState(7.25);
   const [spaceportData, setSpaceportData] = useState<any>(null);
   const [loadingSpaceport, setLoadingSpaceport] = useState(false);
+// Nuclear SMR (Small Modular Reactor) Clean Energy Campus & Industrial PPA state
+  const [smrPowerMwe, setSmrPowerMwe] = useState(300);
+  const [smrThermalMwt, setSmrThermalMwt] = useState(900);
+  const [smrCampusAcres, setSmrCampusAcres] = useState(65);
+  const [smrGroundRentAcre, setSmrGroundRentAcre] = useState(28000);
+  const [smrCapacityFactorPct, setSmrCapacityFactorPct] = useState(94.5);
+  const [smrPpaRateMwh, setSmrPpaRateMwh] = useState(88.50);
+  const [smrPpaRoyaltyPct, setSmrPpaRoyaltyPct] = useState(3.5);
+  const [smrSteamSalesAnnual, setSmrSteamSalesAnnual] = useState(6400000);
+  const [smrSteamRoyaltyPct, setSmrSteamRoyaltyPct] = useState(6.0);
+  const [smrNrcTrustAnnual, setSmrNrcTrustAnnual] = useState(850000);
+  const [smrSpentFuelEscrow, setSmrSpentFuelEscrow] = useState(420000);
+  const [smrEpzRadiusMiles, setSmrEpzRadiusMiles] = useState(1.2);
+  const [smrCapRatePct, setSmrCapRatePct] = useState(6.0);
+  const [smrData, setSmrData] = useState<any>(null);
+  const [loadingSmr, setLoadingSmr] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr'>('abstract');
 
 
 
@@ -2867,6 +2883,42 @@ export default function LeaseLogicApp() {
       setLoadingSpaceport(false);
     }
   };
+  // Run Nuclear SMR Clean Energy Campus & Industrial PPA Modeler
+  const handleRunNuclearSmr = async () => {
+    if (!selectedLease) return;
+    setLoadingSmr(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/nuclear-smr-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          smr_electric_capacity_mwe: smrPowerMwe,
+          smr_thermal_capacity_mwt: smrThermalMwt,
+          campus_site_footprint_acres: smrCampusAcres,
+          land_ground_rent_per_acre_year_usd: smrGroundRentAcre,
+          baseload_capacity_factor_pct: smrCapacityFactorPct,
+          baseload_ppa_rate_per_mwh_usd: smrPpaRateMwh,
+          landlord_ppa_royalty_pct: smrPpaRoyaltyPct,
+          steam_cogeneration_sales_annual_usd: smrSteamSalesAnnual,
+          steam_royalty_share_pct: smrSteamRoyaltyPct,
+          nrc_decommissioning_trust_annual_usd: smrNrcTrustAnnual,
+          spent_fuel_dry_cask_security_annual_usd: smrSpentFuelEscrow,
+          epz_emergency_planning_zone_radius_miles: smrEpzRadiusMiles,
+          smr_cap_rate_pct: smrCapRatePct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSmrData(data);
+      }
+    } catch (err) {
+      console.error('Error running Nuclear SMR modeler:', err);
+    } finally {
+      setLoadingSmr(false);
+    }
+  };
+
+
 
 
 
@@ -7104,6 +7156,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'spaceport_launch' ? 'active' : ''}`} onClick={() => { setActiveTab('spaceport_launch'); handleRunSpaceportLaunch(); }}>
                   🛰️ Spaceport Launch Complex
+                </div>
+                <div className={`tab ${activeTab === 'nuclear_smr' ? 'active' : ''}`} onClick={() => { setActiveTab('nuclear_smr'); handleRunNuclearSmr(); }}>
+                  ⚡ Nuclear SMR Campus
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -16252,6 +16307,265 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {spaceportData.spaceport_compliance_audit?.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                                <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    background: item.status.startsWith('PASS') ? '#dcfce7' : '#fef3c7',
+                                    color: item.status.startsWith('PASS') ? '#15803d' : '#b45309'
+                                  }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px', color: 'var(--foreground)' }}>{item.finding}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                            ) : activeTab === 'nuclear_smr' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        ⚡ Nuclear SMR (Small Modular Reactor) Clean Energy Campus & Industrial PPA Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Underwrite behind-the-meter 300 MWe SMR generation ground leases, 24/7/365 baseload PPA royalties ($/MWh), industrial steam cogeneration sales, NRC 10 CFR 50.75 decommissioning trusts, and EPZ perimeter buffers.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunNuclearSmr}
+                      disabled={loadingSmr}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingSmr ? 'Underwriting SMR...' : '⚡ Model Nuclear SMR Campus'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Electric Power (MWe)</label>
+                      <input
+                        type="number"
+                        value={smrPowerMwe}
+                        onChange={(e) => setSmrPowerMwe(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Thermal Output (MWt)</label>
+                      <input
+                        type="number"
+                        value={smrThermalMwt}
+                        onChange={(e) => setSmrThermalMwt(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Site Footprint (Acres)</label>
+                      <input
+                        type="number"
+                        value={smrCampusAcres}
+                        onChange={(e) => setSmrCampusAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ground Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={smrGroundRentAcre}
+                        onChange={(e) => setSmrGroundRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Capacity Factor (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={smrCapacityFactorPct}
+                        onChange={(e) => setSmrCapacityFactorPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>PPA Rate ($/MWh)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={smrPpaRateMwh}
+                        onChange={(e) => setSmrPpaRateMwh(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Landlord PPA Royalty (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={smrPpaRoyaltyPct}
+                        onChange={(e) => setSmrPpaRoyaltyPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Steam Cogen Sales ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={smrSteamSalesAnnual}
+                        onChange={(e) => setSmrSteamSalesAnnual(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Steam Royalty Share (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={smrSteamRoyaltyPct}
+                        onChange={(e) => setSmrSteamRoyaltyPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>NRC Decommissioning Escrow ($)</label>
+                      <input
+                        type="number"
+                        value={smrNrcTrustAnnual}
+                        onChange={(e) => setSmrNrcTrustAnnual(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Spent Fuel ISFSI Reserve ($)</label>
+                      <input
+                        type="number"
+                        value={smrSpentFuelEscrow}
+                        onChange={(e) => setSmrSpentFuelEscrow(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>NRC EPZ Radius (Miles)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={smrEpzRadiusMiles}
+                        onChange={(e) => setSmrEpzRadiusMiles(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {smrData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Highlights */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '8px', border: '1px solid #10b981' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>Landlord Net Operating Income</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#065f46', marginTop: '4px' }}>
+                            ${smrData.net_operating_income_usd?.toLocaleString()} / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#059669' }}>After ${smrData.total_operating_reserves_annual_usd?.toLocaleString()} NRC/ISFSI escrows</span>
+                        </div>
+
+                        <div style={{ background: '#eff6ff', padding: '16px', borderRadius: '8px', border: '1px solid #3b82f6' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: 600 }}>SMR Campus Valuation</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>
+                            ${(smrData.smr_campus_valuation_usd / 1e6)?.toFixed(2)}M
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>Cap Rate @ {smrData.smr_cap_rate_pct}%</span>
+                        </div>
+
+                        <div style={{ background: '#fdf4ff', padding: '16px', borderRadius: '8px', border: '1px solid #c084fc' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#7e22ce', fontWeight: 600 }}>Annual Baseload Generation</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6b21a8', marginTop: '4px' }}>
+                            {(smrData.annual_generation_mwh / 1e6)?.toFixed(2)}M MWh / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#9333ea' }}>{smrData.baseload_capacity_factor_pct}% capacity factor (24/7/365)</span>
+                        </div>
+
+                        <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #f59e0b' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Gross Facility Power Revenue</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#92400e', marginTop: '4px' }}>
+                            ${(smrData.annual_gross_ppa_revenue_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#d97706' }}>${smrData.baseload_ppa_rate_per_mwh_usd}/MWh firm PPA</span>
+                        </div>
+                      </div>
+
+                      {/* Revenue Streams Card */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          📊 Landlord Clean Energy Campus Revenue Streams
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Fixed Campus Ground Rent</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#1d4ed8' }}>
+                              ${smrData.annual_ground_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{smrData.campus_site_footprint_acres} acres @ ${smrGroundRentAcre.toLocaleString()}/acre</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Landlord PPA Royalty Share</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#047857' }}>
+                              ${smrData.landlord_ppa_royalty_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{smrPpaRoyaltyPct}% share of gross power sales</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Steam Cogeneration Royalty</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#b45309' }}>
+                              ${smrData.landlord_steam_royalty_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{smrSteamRoyaltyPct}% of ${(smrData.steam_cogeneration_sales_annual_usd / 1e6)?.toFixed(2)}M steam sales</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>NRC Trust & ISFSI Escrows</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#7e22ce' }}>
+                              ${smrData.total_operating_reserves_annual_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>NDTF: ${smrData.nrc_decommissioning_trust_annual_usd?.toLocaleString()} | ISFSI: ${smrData.spent_fuel_dry_cask_security_annual_usd?.toLocaleString()}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* NRC Part 50/52 Table */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          🛡️ Nuclear Regulatory Commission (NRC) Part 50/52 & Safety Siting Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 10px' }}>Nuclear Safety Dimension</th>
+                              <th style={{ padding: '8px 10px' }}>Status</th>
+                              <th style={{ padding: '8px 10px' }}>NRC / Industry Standard</th>
+                              <th style={{ padding: '8px 10px' }}>Engineering Verification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {smrData.smr_compliance_audit?.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
                                 <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px' }}>
