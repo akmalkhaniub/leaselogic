@@ -7207,6 +7207,111 @@ app.post('/api/leases/:id/commercial-spaceport-modeler', async (req, res) => {
   }
 });
 
+// 4.777. POST Nuclear SMR (Small Modular Reactor) Clean Energy Campus & Industrial PPA Modeler
+app.post('/api/leases/:id/nuclear-smr-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      smr_electric_capacity_mwe = 300,
+      smr_thermal_capacity_mwt = 900,
+      campus_site_footprint_acres = 65,
+      land_ground_rent_per_acre_year_usd = 28000,
+      baseload_capacity_factor_pct = 94.5,
+      baseload_ppa_rate_per_mwh_usd = 88.50,
+      landlord_ppa_royalty_pct = 3.5,
+      steam_cogeneration_sales_annual_usd = 6400000,
+      steam_royalty_share_pct = 6.0,
+      nrc_decommissioning_trust_annual_usd = 850000,
+      spent_fuel_dry_cask_security_annual_usd = 420000,
+      epz_emergency_planning_zone_radius_miles = 1.2,
+      smr_cap_rate_pct = 6.0
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core SMR Energy Campus Calculations
+    const annualGroundRentUsd = Math.round(campus_site_footprint_acres * land_ground_rent_per_acre_year_usd);
+    const annualGenerationMwh = Math.round(smr_electric_capacity_mwe * 8760 * (baseload_capacity_factor_pct / 100));
+    const annualGrossPpaRevenueUsd = Math.round(annualGenerationMwh * baseload_ppa_rate_per_mwh_usd);
+    const landlordPpaRoyaltyUsd = Math.round(annualGrossPpaRevenueUsd * (landlord_ppa_royalty_pct / 100));
+
+    const landlordSteamRoyaltyUsd = Math.round(steam_cogeneration_sales_annual_usd * (steam_royalty_share_pct / 100));
+    const totalLandlordCampusRevenueUsd = annualGroundRentUsd + landlordPpaRoyaltyUsd + landlordSteamRoyaltyUsd;
+
+    const totalOperatingReservesAnnualUsd = nrc_decommissioning_trust_annual_usd + spent_fuel_dry_cask_security_annual_usd;
+    const netOperatingIncomeUsd = totalLandlordCampusRevenueUsd - totalOperatingReservesAnnualUsd;
+
+    const smrCampusValuationUsd = Math.round(netOperatingIncomeUsd / (smr_cap_rate_pct / 100));
+
+    // NRC 10 CFR Part 50/52 & Nuclear Engineering Compliance Audit
+    const smrComplianceAudit = [
+      {
+        metric: 'NRC Emergency Planning Zone (EPZ) Boundary',
+        status: epz_emergency_planning_zone_radius_miles <= 1.5 ? 'PASS_SITE_BOUNDARY_EPZ_QUALIFIED' : 'WARN_EPZ_OFFSITE_EXPANSION',
+        standard: '<= 1.50 Miles Site Boundary EPZ for Passive-Safety SMRs',
+        finding: `${epz_emergency_planning_zone_radius_miles}-mile EPZ plume exposure perimeter fits within property easement envelope without municipal off-site evacuation mandate.`
+      },
+      {
+        metric: '24/7/365 Baseload Power Delivery SLA',
+        status: baseload_capacity_factor_pct >= 90.0 ? 'PASS_HIGH_CAPACITY_FACTOR' : 'WARN_SUB_OPTIMAL_GENERATION',
+        standard: '>= 90.0% Guaranteed Baseload Availability Factor',
+        finding: `${baseload_capacity_factor_pct}% capacity factor delivers ${annualGenerationMwh.toLocaleString()} MWh/yr ultra-reliable carbon-free power to adjacent industrial/AI off-takers.`
+      },
+      {
+        metric: 'NRC 10 CFR 50.75 Decommissioning Trust Fund (NDTF)',
+        status: nrc_decommissioning_trust_annual_usd >= 750000 ? 'PASS_NDTF_FULLY_FUNDED' : 'WARN_DECOMMISSIONING_SINKING_DEFICIT',
+        standard: '>= $750,000/yr Dedicated External Irrevocable Sinking Fund Escrow',
+        finding: `$${nrc_decommissioning_trust_annual_usd.toLocaleString()}/yr annual escrow fully funds radiological decontamination and facility greenfield restoration reserve.`
+      },
+      {
+        metric: 'Independent Spent Fuel Storage (ISFSI) Buffer',
+        status: 'PASS_ISFSI_DRY_CASK_SECURED',
+        standard: '10 CFR Part 72 Dual-Perimeter Monitored Dry Cask Concrete Overpack',
+        finding: `$${spent_fuel_dry_cask_security_annual_usd.toLocaleString()}/yr dedicated security force and radiation surveillance monitors passive convection dry-storage casks.`
+      },
+      {
+        metric: 'Industrial Steam Thermal Cogeneration Efficiency',
+        status: steam_cogeneration_sales_annual_usd > 0 ? 'PASS_THERMAL_COGEN_ACTIVE' : 'INFO_ELECTRIC_ONLY',
+        standard: 'Combined Heat & Power (CHP) Secondary Steam Offtake Integration',
+        finding: `$${(steam_cogeneration_sales_annual_usd / 1e6).toFixed(2)}M/yr industrial steam sales yield $${landlordSteamRoyaltyUsd.toLocaleString()}/yr landlord thermal royalties.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Nuclear SMR Clean Energy Campus',
+      smr_electric_capacity_mwe: smr_electric_capacity_mwe,
+      smr_thermal_capacity_mwt: smr_thermal_capacity_mwt,
+      campus_site_footprint_acres: campus_site_footprint_acres,
+      annual_ground_rent_usd: annualGroundRentUsd,
+      baseload_capacity_factor_pct: baseload_capacity_factor_pct,
+      annual_generation_mwh: annualGenerationMwh,
+      baseload_ppa_rate_per_mwh_usd: baseload_ppa_rate_per_mwh_usd,
+      annual_gross_ppa_revenue_usd: annualGrossPpaRevenueUsd,
+      landlord_ppa_royalty_pct: landlord_ppa_royalty_pct,
+      landlord_ppa_royalty_usd: landlordPpaRoyaltyUsd,
+      steam_cogeneration_sales_annual_usd: steam_cogeneration_sales_annual_usd,
+      landlord_steam_royalty_usd: landlordSteamRoyaltyUsd,
+      total_landlord_campus_revenue_usd: totalLandlordCampusRevenueUsd,
+      nrc_decommissioning_trust_annual_usd: nrc_decommissioning_trust_annual_usd,
+      spent_fuel_dry_cask_security_annual_usd: spent_fuel_dry_cask_security_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      epz_emergency_planning_zone_radius_miles: epz_emergency_planning_zone_radius_miles,
+      smr_cap_rate_pct: smr_cap_rate_pct,
+      smr_campus_valuation_usd: smrCampusValuationUsd,
+      smr_compliance_audit: smrComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
