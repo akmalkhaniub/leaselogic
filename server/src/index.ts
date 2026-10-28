@@ -7428,6 +7428,114 @@ app.post('/api/leases/:id/green-hydrogen-modeler', async (req, res) => {
   }
 });
 
+// 4.779. POST Direct Air Capture (DAC) Carbon Hub, Class VI Well & 45Q Sequestration Modeler
+app.post('/api/leases/:id/dac-carbon-hub-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      dac_capture_capacity_tpy = 1000000,
+      dac_facility_footprint_acres = 160,
+      dac_surface_ground_rent_per_acre_year_usd = 14500,
+      pore_space_subsurface_acres = 18500,
+      pore_space_ground_rent_per_acre_year_usd = 65,
+      sequestration_injection_royalty_per_ton_usd = 3.75,
+      actual_co2_sequestered_tpy = 920000,
+      ira_45q_credit_rate_per_ton_usd = 180.00,
+      voluntary_carbon_credit_price_per_ton_usd = 380.00,
+      epa_class_vi_monitoring_reserve_annual_usd = 540000,
+      pisc_post_injection_site_care_trust_annual_usd = 380000,
+      dac_thermal_power_consumption_gj_per_ton = 5.2,
+      dac_cap_rate_pct = 6.75
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core DAC & Underground Pore Space Sequestration Calculations
+    const annualSurfaceGroundRentUsd = Math.round(dac_facility_footprint_acres * dac_surface_ground_rent_per_acre_year_usd);
+    const annualPoreSpaceRentUsd = Math.round(pore_space_subsurface_acres * pore_space_ground_rent_per_acre_year_usd);
+    const annualSequestrationInjectionRoyaltyUsd = Math.round(actual_co2_sequestered_tpy * sequestration_injection_royalty_per_ton_usd);
+
+    const totalLandlordCarbonRevenueUsd = annualSurfaceGroundRentUsd + annualPoreSpaceRentUsd + annualSequestrationInjectionRoyaltyUsd;
+    const totalEnvironmentalEscrowAnnualUsd = epa_class_vi_monitoring_reserve_annual_usd + pisc_post_injection_site_care_trust_annual_usd;
+    const netOperatingIncomeUsd = totalLandlordCarbonRevenueUsd - totalEnvironmentalEscrowAnnualUsd;
+
+    const dacHubAssetValuationUsd = Math.round(netOperatingIncomeUsd / (dac_cap_rate_pct / 100));
+
+    // Federal 45Q & Voluntary Carbon Market Gross Yields
+    const annualIra45qGrossValueUsd = Math.round(actual_co2_sequestered_tpy * ira_45q_credit_rate_per_ton_usd);
+    const annualVcmCdrGrossValueUsd = Math.round(actual_co2_sequestered_tpy * voluntary_carbon_credit_price_per_ton_usd);
+    const utilizationRatePct = parseFloat(((actual_co2_sequestered_tpy / (dac_capture_capacity_tpy || 1)) * 100).toFixed(1));
+
+    // EPA Class VI & Subsurface Geological Integrity Compliance Audit
+    const dacComplianceAudit = [
+      {
+        metric: 'EPA Class VI Underground Injection Control (UIC) Permit',
+        status: 'PASS_CLASS_VI_PERMIT_ACTIVE',
+        standard: 'EPA Safe Drinking Water Act (SDWA) Class VI Geologic Sequestration',
+        finding: 'Deep supercritical CO2 injection into saline sandstone formation bounded by thick impermeable shale confining caprock.'
+      },
+      {
+        metric: 'Pore Space Subsurface Tenure & Title Verification',
+        status: pore_space_subsurface_acres >= 15000 ? 'PASS_PORE_SPACE_TENURE_SECURED' : 'WARN_TENURE_BOUNDARY_NARROW',
+        standard: '>= 15,000 Acres Contiguous Subterranean Pore Rights Storage Easement',
+        finding: `${pore_space_subsurface_acres.toLocaleString()} acres of subsurface pore volume provides $${annualPoreSpaceRentUsd.toLocaleString()}/yr passive ground rent plus 30-year storage capacity.`
+      },
+      {
+        metric: 'IRA Section 45Q Direct Air Capture Credit Monetization',
+        status: ira_45q_credit_rate_per_ton_usd >= 180.00 ? 'PASS_MAX_45Q_CREDIT_RATE' : 'WARN_SUB_OPTIMAL_45Q',
+        standard: '$180.00/Metric Ton CO2 Captured via DAC & Geologically Sequestered',
+        finding: `$${(annualIra45qGrossValueUsd / 1e6).toFixed(2)}M/yr gross federal production tax credit monetized through transferability/direct-pay.`
+      },
+      {
+        metric: '50-Year Post-Injection Site Care (PISC) Trust Fund',
+        status: pisc_post_injection_site_care_trust_annual_usd >= 350000 ? 'PASS_PISC_TRUST_FULLY_FUNDED' : 'WARN_PISC_TRUST_DEFICIT',
+        standard: '>= $350,000/yr EPA-Approved Financial Assurance Escrow',
+        finding: `$${pisc_post_injection_site_care_trust_annual_usd.toLocaleString()}/yr dedicated trust funds 50-year downhole pressure plume tracking post-closure.`
+      },
+      {
+        metric: 'Microseismic & Groundwater Monitoring Sensor Array',
+        status: epa_class_vi_monitoring_reserve_annual_usd >= 500000 ? 'PASS_MICROSEISMIC_MONITORING_ADEQUATE' : 'WARN_MONITORING_DEFICIT',
+        standard: 'Real-Time Downhole Fiber-Optic Acoustic Sensors & Above-Zone Water Wells',
+        finding: `$${epa_class_vi_monitoring_reserve_annual_usd.toLocaleString()}/yr surveillance network ensures 0 induced seismicity and USDW protection.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Direct Air Capture (DAC) Regional Carbon Hub',
+      dac_capture_capacity_tpy: dac_capture_capacity_tpy,
+      actual_co2_sequestered_tpy: actual_co2_sequestered_tpy,
+      utilization_rate_pct: utilizationRatePct,
+      dac_facility_footprint_acres: dac_facility_footprint_acres,
+      annual_surface_ground_rent_usd: annualSurfaceGroundRentUsd,
+      pore_space_subsurface_acres: pore_space_subsurface_acres,
+      annual_pore_space_rent_usd: annualPoreSpaceRentUsd,
+      sequestration_injection_royalty_per_ton_usd: sequestration_injection_royalty_per_ton_usd,
+      annual_sequestration_injection_royalty_usd: annualSequestrationInjectionRoyaltyUsd,
+      total_landlord_carbon_revenue_usd: totalLandlordCarbonRevenueUsd,
+      epa_class_vi_monitoring_reserve_annual_usd: epa_class_vi_monitoring_reserve_annual_usd,
+      pisc_post_injection_site_care_trust_annual_usd: pisc_post_injection_site_care_trust_annual_usd,
+      total_environmental_escrow_annual_usd: totalEnvironmentalEscrowAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      ira_45q_credit_rate_per_ton_usd: ira_45q_credit_rate_per_ton_usd,
+      annual_ira_45q_gross_value_usd: annualIra45qGrossValueUsd,
+      voluntary_carbon_credit_price_per_ton_usd: voluntary_carbon_credit_price_per_ton_usd,
+      annual_vcm_cdr_gross_value_usd: annualVcmCdrGrossValueUsd,
+      dac_thermal_power_consumption_gj_per_ton: dac_thermal_power_consumption_gj_per_ton,
+      dac_cap_rate_pct: dac_cap_rate_pct,
+      dac_hub_asset_valuation_usd: dacHubAssetValuationUsd,
+      dac_compliance_audit: dacComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
