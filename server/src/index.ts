@@ -7312,6 +7312,122 @@ app.post('/api/leases/:id/nuclear-smr-modeler', async (req, res) => {
   }
 });
 
+// 4.778. POST Green Hydrogen Production Facility, PEM Electrolyzer & Pipeline Offtake Modeler
+app.post('/api/leases/:id/green-hydrogen-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      pem_electrolyzer_capacity_mw = 100,
+      hydrogen_production_kg_per_day = 45000,
+      electrolyzer_efficiency_kwh_per_kg = 52.5,
+      facility_footprint_acres = 35,
+      land_ground_rent_per_acre_year_usd = 24000,
+      hydrogen_offtake_contract_price_per_kg_usd = 5.25,
+      minimum_take_or_pay_volume_pct = 80.0,
+      landlord_hydrogen_royalty_pct = 2.5,
+      pipeline_easement_length_miles = 12.5,
+      pipeline_easement_rent_per_mile_year_usd = 18500,
+      ira_45v_tax_credit_tier_per_kg_usd = 3.00,
+      deionized_water_treatment_reserve_annual_usd = 320000,
+      stack_cell_membrane_replacement_reserve_annual_usd = 650000,
+      asme_b31_12_piping_integrity_reserve_annual_usd = 140000,
+      hydrogen_cap_rate_pct = 6.5
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Green Hydrogen Facility & Pipeline Calculations
+    const annualPlantGroundRentUsd = Math.round(facility_footprint_acres * land_ground_rent_per_acre_year_usd);
+    const annualPipelineEasementRentUsd = Math.round(pipeline_easement_length_miles * pipeline_easement_rent_per_mile_year_usd);
+    const totalBaseEasementRentUsd = annualPlantGroundRentUsd + annualPipelineEasementRentUsd;
+
+    const annualHydrogenProductionKg = hydrogen_production_kg_per_day * 365;
+    const annualGrossHydrogenSalesUsd = Math.round(annualHydrogenProductionKg * hydrogen_offtake_contract_price_per_kg_usd);
+    const annualTakeOrPayBackstopUsd = Math.round(annualGrossHydrogenSalesUsd * (minimum_take_or_pay_volume_pct / 100));
+
+    const landlordHydrogenRoyaltyUsd = Math.round(annualGrossHydrogenSalesUsd * (landlord_hydrogen_royalty_pct / 100));
+    const totalLandlordGrossRevenueUsd = totalBaseEasementRentUsd + landlordHydrogenRoyaltyUsd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - asme_b31_12_piping_integrity_reserve_annual_usd;
+    const hydrogenAssetValuationUsd = Math.round(netOperatingIncomeUsd / (hydrogen_cap_rate_pct / 100));
+
+    const annualIra45vCreditValueUsd = Math.round(annualHydrogenProductionKg * ira_45v_tax_credit_tier_per_kg_usd);
+    const totalAnnualPowerConsumptionMwh = Math.round((annualHydrogenProductionKg * electrolyzer_efficiency_kwh_per_kg) / 1000);
+
+    // IRA 45V & Clean Hydrogen Engineering Compliance Audit
+    const hydrogenComplianceAudit = [
+      {
+        metric: 'IRA Section 45V Clean Hydrogen 3-Pillars Compliance',
+        status: ira_45v_tax_credit_tier_per_kg_usd >= 3.00 ? 'PASS_TIER_1_CREDIT_QUALIFIED' : 'WARN_PARTIAL_CREDIT',
+        standard: 'Additionality, Hourly Time-Matching & Deliverability (<= 0.45 kg CO2e/kg H2)',
+        finding: `$${ira_45v_tax_credit_tier_per_kg_usd.toFixed(2)}/kg tax credit generates $${(annualIra45vCreditValueUsd / 1e6).toFixed(2)}M/yr federal production tax credit value via clean renewable power wheeling.`
+      },
+      {
+        metric: 'Industrial Take-or-Pay Offtake Backstop',
+        status: minimum_take_or_pay_volume_pct >= 75.0 ? 'PASS_HIGH_OFFTAKE_SECURITY' : 'WARN_LOW_OFFTAKE_COVERAGE',
+        standard: '>= 75.0% Guaranteed Take-or-Pay Volume Commitment',
+        finding: `${minimum_take_or_pay_volume_pct}% guaranteed volume provides $${(annualTakeOrPayBackstopUsd / 1e6).toFixed(2)}M/yr investment-grade off-take revenue floor.`
+      },
+      {
+        metric: 'PEM Electrolyzer Stack & CCM Replacement Sinking Fund',
+        status: stack_cell_membrane_replacement_reserve_annual_usd >= 500000 ? 'PASS_STACK_RESERVE_ADEQUATE' : 'WARN_STACK_RESERVE_DEFICIT',
+        standard: '>= $500,000/yr Catalyst-Coated Membrane (CCM) Degradation Reserve',
+        finding: `$${stack_cell_membrane_replacement_reserve_annual_usd.toLocaleString()}/yr sinking fund funds 80,000-hour bipolar plate and membrane replacement cycle.`
+      },
+      {
+        metric: 'ASME B31.12 Hydrogen Pipeline Embrittlement Integrity',
+        status: 'PASS_HYDROGEN_EMBRITTLEMENT_COMPLIANT',
+        standard: 'ASME B31.12 High-Pressure Gaseous Hydrogen Pipeline Standard',
+        finding: `${pipeline_easement_length_miles} miles of API 5L X52-MS microalloyed pipeline monitored with smart PIG inline ultrasonic inspection.`
+      },
+      {
+        metric: 'Ultrapure Deionized Water Consumption & Pre-Treatment',
+        status: deionized_water_treatment_reserve_annual_usd >= 250000 ? 'PASS_WATER_TREATMENT_ADEQUATE' : 'WARN_WATER_TREATMENT_DEFICIT',
+        standard: '<= 0.1 uS/cm Conductivity & 9.0 kg H2O / kg H2 Consumption',
+        finding: `$${deionized_water_treatment_reserve_annual_usd.toLocaleString()}/yr double-pass RO and continuous electrodeionization (CEDI) maintains electrolyzer longevity.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Green Hydrogen Production & Pipeline Facility',
+      pem_electrolyzer_capacity_mw: pem_electrolyzer_capacity_mw,
+      hydrogen_production_kg_per_day: hydrogen_production_kg_per_day,
+      annual_hydrogen_production_kg: annualHydrogenProductionKg,
+      electrolyzer_efficiency_kwh_per_kg: electrolyzer_efficiency_kwh_per_kg,
+      total_annual_power_consumption_mwh: totalAnnualPowerConsumptionMwh,
+      facility_footprint_acres: facility_footprint_acres,
+      annual_plant_ground_rent_usd: annualPlantGroundRentUsd,
+      pipeline_easement_length_miles: pipeline_easement_length_miles,
+      annual_pipeline_easement_rent_usd: annualPipelineEasementRentUsd,
+      total_base_easement_rent_usd: totalBaseEasementRentUsd,
+      hydrogen_offtake_contract_price_per_kg_usd: hydrogen_offtake_contract_price_per_kg_usd,
+      annual_gross_hydrogen_sales_usd: annualGrossHydrogenSalesUsd,
+      minimum_take_or_pay_volume_pct: minimum_take_or_pay_volume_pct,
+      annual_take_or_pay_backstop_usd: annualTakeOrPayBackstopUsd,
+      landlord_hydrogen_royalty_pct: landlord_hydrogen_royalty_pct,
+      landlord_hydrogen_royalty_usd: landlordHydrogenRoyaltyUsd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      ira_45v_tax_credit_tier_per_kg_usd: ira_45v_tax_credit_tier_per_kg_usd,
+      annual_ira_45v_credit_value_usd: annualIra45vCreditValueUsd,
+      stack_cell_membrane_replacement_reserve_annual_usd: stack_cell_membrane_replacement_reserve_annual_usd,
+      deionized_water_treatment_reserve_annual_usd: deionized_water_treatment_reserve_annual_usd,
+      asme_b31_12_piping_integrity_reserve_annual_usd: asme_b31_12_piping_integrity_reserve_annual_usd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      hydrogen_cap_rate_pct: hydrogen_cap_rate_pct,
+      hydrogen_asset_valuation_usd: hydrogenAssetValuationUsd,
+      hydrogen_compliance_audit: hydrogenComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
