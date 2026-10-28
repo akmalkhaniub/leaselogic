@@ -927,9 +927,25 @@ export default function LeaseLogicApp() {
   const [h2CapRatePct, setH2CapRatePct] = useState(6.5);
   const [h2Data, setH2Data] = useState<any>(null);
   const [loadingH2, setLoadingH2] = useState(false);
+// Direct Air Capture (DAC) Carbon Hub, Class VI Well & 45Q Sequestration state
+  const [dacCapacityTpy, setDacCapacityTpy] = useState(1000000);
+  const [dacFacilityAcres, setDacFacilityAcres] = useState(160);
+  const [dacSurfaceRentAcre, setDacSurfaceRentAcre] = useState(14500);
+  const [dacPoreSpaceAcres, setDacPoreSpaceAcres] = useState(18500);
+  const [dacPoreSpaceRentAcre, setDacPoreSpaceRentAcre] = useState(65);
+  const [dacInjectionRoyaltyTon, setDacInjectionRoyaltyTon] = useState(3.75);
+  const [dacActualSequesteredTpy, setDacActualSequesteredTpy] = useState(920000);
+  const [dacIra45qRateTon, setDacIra45qRateTon] = useState(180.00);
+  const [dacVcmPriceTon, setDacVcmPriceTon] = useState(380.00);
+  const [dacClassViEscrow, setDacClassViEscrow] = useState(540000);
+  const [dacPiscTrustAnnual, setDacPiscTrustAnnual] = useState(380000);
+  const [dacThermalGjTon, setDacThermalGjTon] = useState(5.2);
+  const [dacCapRatePct, setDacCapRatePct] = useState(6.75);
+  const [dacData, setDacData] = useState<any>(null);
+  const [loadingDac, setLoadingDac] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub'>('abstract');
 
 
 
@@ -2971,6 +2987,42 @@ export default function LeaseLogicApp() {
       setLoadingH2(false);
     }
   };
+  // Run Direct Air Capture (DAC) Carbon Hub & Sequestration Modeler
+  const handleRunDacCarbonHub = async () => {
+    if (!selectedLease) return;
+    setLoadingDac(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/dac-carbon-hub-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dac_capture_capacity_tpy: dacCapacityTpy,
+          dac_facility_footprint_acres: dacFacilityAcres,
+          dac_surface_ground_rent_per_acre_year_usd: dacSurfaceRentAcre,
+          pore_space_subsurface_acres: dacPoreSpaceAcres,
+          pore_space_ground_rent_per_acre_year_usd: dacPoreSpaceRentAcre,
+          sequestration_injection_royalty_per_ton_usd: dacInjectionRoyaltyTon,
+          actual_co2_sequestered_tpy: dacActualSequesteredTpy,
+          ira_45q_credit_rate_per_ton_usd: dacIra45qRateTon,
+          voluntary_carbon_credit_price_per_ton_usd: dacVcmPriceTon,
+          epa_class_vi_monitoring_reserve_annual_usd: dacClassViEscrow,
+          pisc_post_injection_site_care_trust_annual_usd: dacPiscTrustAnnual,
+          dac_thermal_power_consumption_gj_per_ton: dacThermalGjTon,
+          dac_cap_rate_pct: dacCapRatePct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDacData(data);
+      }
+    } catch (err) {
+      console.error('Error running DAC Carbon Hub modeler:', err);
+    } finally {
+      setLoadingDac(false);
+    }
+  };
+
+
 
 
 
@@ -7218,6 +7270,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'green_hydrogen' ? 'active' : ''}`} onClick={() => { setActiveTab('green_hydrogen'); handleRunGreenHydrogen(); }}>
                   🧪 Green Hydrogen Facility
+                </div>
+                <div className={`tab ${activeTab === 'dac_carbon_hub' ? 'active' : ''}`} onClick={() => { setActiveTab('dac_carbon_hub'); handleRunDacCarbonHub(); }}>
+                  💨 DAC Carbon Hub
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -16884,6 +16939,264 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {h2Data.hydrogen_compliance_audit?.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                                <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    background: item.status.startsWith('PASS') ? '#dcfce7' : '#fef3c7',
+                                    color: item.status.startsWith('PASS') ? '#15803d' : '#b45309'
+                                  }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px', color: 'var(--foreground)' }}>{item.finding}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                            ) : activeTab === 'dac_carbon_hub' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        💨 Direct Air Capture (DAC) Carbon Hub, Class VI Well & 45Q Sequestration Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Underwrite 1.0 MtCO2/yr atmospheric direct air capture facilities, subterranean saline aquifer pore space leases ($/acre/yr), permanent sequestration royalties ($/ton CO2), IRA Section 45Q monetization, and 50-year PISC escrows.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunDacCarbonHub}
+                      disabled={loadingDac}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingDac ? 'Underwriting DAC...' : '💨 Model DAC Carbon Hub'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Capture Capacity (t CO2/Yr)</label>
+                      <input
+                        type="number"
+                        value={dacCapacityTpy}
+                        onChange={(e) => setDacCapacityTpy(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Actual Sequestered (t/Yr)</label>
+                      <input
+                        type="number"
+                        value={dacActualSequesteredTpy}
+                        onChange={(e) => setDacActualSequesteredTpy(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Surface Footprint (Acres)</label>
+                      <input
+                        type="number"
+                        value={dacFacilityAcres}
+                        onChange={(e) => setDacFacilityAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Surface Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={dacSurfaceRentAcre}
+                        onChange={(e) => setDacSurfaceRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Pore Space Subsurface (Acres)</label>
+                      <input
+                        type="number"
+                        value={dacPoreSpaceAcres}
+                        onChange={(e) => setDacPoreSpaceAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Pore Space Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={dacPoreSpaceRentAcre}
+                        onChange={(e) => setDacPoreSpaceRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Injection Royalty ($/Ton)</label>
+                      <input
+                        type="number"
+                        step="0.25"
+                        value={dacInjectionRoyaltyTon}
+                        onChange={(e) => setDacInjectionRoyaltyTon(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>IRA 45Q Credit ($/Ton)</label>
+                      <input
+                        type="number"
+                        step="5"
+                        value={dacIra45qRateTon}
+                        onChange={(e) => setDacIra45qRateTon(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>VCM CDR Price ($/Ton)</label>
+                      <input
+                        type="number"
+                        step="10"
+                        value={dacVcmPriceTon}
+                        onChange={(e) => setDacVcmPriceTon(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>EPA Class VI Escrow ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={dacClassViEscrow}
+                        onChange={(e) => setDacClassViEscrow(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>50-Yr PISC Trust ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={dacPiscTrustAnnual}
+                        onChange={(e) => setDacPiscTrustAnnual(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Thermal Heat (GJ / Ton)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={dacThermalGjTon}
+                        onChange={(e) => setDacThermalGjTon(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {dacData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Highlights */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '8px', border: '1px solid #10b981' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>Landlord Net Operating Income</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#065f46', marginTop: '4px' }}>
+                            ${dacData.net_operating_income_usd?.toLocaleString()} / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#059669' }}>After ${dacData.total_environmental_escrow_annual_usd?.toLocaleString()} Class VI/PISC reserves</span>
+                        </div>
+
+                        <div style={{ background: '#eff6ff', padding: '16px', borderRadius: '8px', border: '1px solid #3b82f6' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: 600 }}>DAC Carbon Hub Valuation</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>
+                            ${(dacData.dac_hub_asset_valuation_usd / 1e6)?.toFixed(2)}M
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>Cap Rate @ {dacData.dac_cap_rate_pct}%</span>
+                        </div>
+
+                        <div style={{ background: '#fdf4ff', padding: '16px', borderRadius: '8px', border: '1px solid #c084fc' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#7e22ce', fontWeight: 600 }}>IRA Section 45Q Value</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6b21a8', marginTop: '4px' }}>
+                            ${(dacData.annual_ira_45q_gross_value_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#9333ea' }}>${dacData.ira_45q_credit_rate_per_ton_usd}/ton DAC geological credit</span>
+                        </div>
+
+                        <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #f59e0b' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Voluntary Carbon Market CDR</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#92400e', marginTop: '4px' }}>
+                            ${(dacData.annual_vcm_cdr_gross_value_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#d97706' }}>${dacData.voluntary_carbon_credit_price_per_ton_usd}/ton durable removal</span>
+                        </div>
+                      </div>
+
+                      {/* Revenue Streams Card */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          📊 Landlord Surface & Subsurface Carbon Revenue Breakdown
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>DAC Surface Facility Ground Rent</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#1d4ed8' }}>
+                              ${dacData.annual_surface_ground_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dacData.dac_facility_footprint_acres} acres @ ${dacSurfaceRentAcre.toLocaleString()}/acre</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Subsurface Pore Space Ground Rent</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#047857' }}>
+                              ${dacData.annual_pore_space_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dacData.pore_space_subsurface_acres.toLocaleString()} acres @ ${dacPoreSpaceRentAcre.toLocaleString()}/acre</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>CO2 Geologic Injection Royalty</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#b45309' }}>
+                              ${dacData.annual_sequestration_injection_royalty_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>${dacInjectionRoyaltyTon}/ton on {dacData.actual_co2_sequestered_tpy.toLocaleString()} t CO2</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>EPA Class VI & PISC Escrows</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#7e22ce' }}>
+                              ${dacData.total_environmental_escrow_annual_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Downhole plume tracking & 50-year trust</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* EPA Class VI Table */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          🛡️ EPA Class VI Underground Injection Control (UIC) & Geological Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 10px' }}>Geological Dimension</th>
+                              <th style={{ padding: '8px 10px' }}>Status</th>
+                              <th style={{ padding: '8px 10px' }}>EPA / Industry Standard</th>
+                              <th style={{ padding: '8px 10px' }}>Verification Finding</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {dacData.dac_compliance_audit?.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
                                 <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px' }}>
