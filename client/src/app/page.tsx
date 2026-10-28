@@ -909,9 +909,27 @@ export default function LeaseLogicApp() {
   const [smrCapRatePct, setSmrCapRatePct] = useState(6.0);
   const [smrData, setSmrData] = useState<any>(null);
   const [loadingSmr, setLoadingSmr] = useState(false);
+// Green Hydrogen Production Facility, PEM Electrolyzer & Pipeline Offtake state
+  const [h2ElectrolyzerMw, setH2ElectrolyzerMw] = useState(100);
+  const [h2OutputKgDay, setH2OutputKgDay] = useState(45000);
+  const [h2EfficiencyKwh, setH2EfficiencyKwh] = useState(52.5);
+  const [h2PlantAcres, setH2PlantAcres] = useState(35);
+  const [h2GroundRentAcre, setH2GroundRentAcre] = useState(24000);
+  const [h2ContractPriceKg, setH2ContractPriceKg] = useState(5.25);
+  const [h2TakeOrPayPct, setH2TakeOrPayPct] = useState(80.0);
+  const [h2RoyaltyPct, setH2RoyaltyPct] = useState(2.5);
+  const [h2PipelineMiles, setH2PipelineMiles] = useState(12.5);
+  const [h2PipelineRentMile, setH2PipelineRentMile] = useState(18500);
+  const [h2Ira45vTierKg, setH2Ira45vTierKg] = useState(3.00);
+  const [h2WaterTreatmentReserve, setH2WaterTreatmentReserve] = useState(320000);
+  const [h2StackMembraneReserve, setH2StackMembraneReserve] = useState(650000);
+  const [h2PipingIntegrityReserve, setH2PipingIntegrityReserve] = useState(140000);
+  const [h2CapRatePct, setH2CapRatePct] = useState(6.5);
+  const [h2Data, setH2Data] = useState<any>(null);
+  const [loadingH2, setLoadingH2] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen'>('abstract');
 
 
 
@@ -2917,6 +2935,44 @@ export default function LeaseLogicApp() {
       setLoadingSmr(false);
     }
   };
+  // Run Green Hydrogen Production Facility & Pipeline Offtake Modeler
+  const handleRunGreenHydrogen = async () => {
+    if (!selectedLease) return;
+    setLoadingH2(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/green-hydrogen-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pem_electrolyzer_capacity_mw: h2ElectrolyzerMw,
+          hydrogen_production_kg_per_day: h2OutputKgDay,
+          electrolyzer_efficiency_kwh_per_kg: h2EfficiencyKwh,
+          facility_footprint_acres: h2PlantAcres,
+          land_ground_rent_per_acre_year_usd: h2GroundRentAcre,
+          hydrogen_offtake_contract_price_per_kg_usd: h2ContractPriceKg,
+          minimum_take_or_pay_volume_pct: h2TakeOrPayPct,
+          landlord_hydrogen_royalty_pct: h2RoyaltyPct,
+          pipeline_easement_length_miles: h2PipelineMiles,
+          pipeline_easement_rent_per_mile_year_usd: h2PipelineRentMile,
+          ira_45v_tax_credit_tier_per_kg_usd: h2Ira45vTierKg,
+          deionized_water_treatment_reserve_annual_usd: h2WaterTreatmentReserve,
+          stack_cell_membrane_replacement_reserve_annual_usd: h2StackMembraneReserve,
+          asme_b31_12_piping_integrity_reserve_annual_usd: h2PipingIntegrityReserve,
+          hydrogen_cap_rate_pct: h2CapRatePct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setH2Data(data);
+      }
+    } catch (err) {
+      console.error('Error running Green Hydrogen modeler:', err);
+    } finally {
+      setLoadingH2(false);
+    }
+  };
+
+
 
 
 
@@ -7159,6 +7215,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'nuclear_smr' ? 'active' : ''}`} onClick={() => { setActiveTab('nuclear_smr'); handleRunNuclearSmr(); }}>
                   ⚡ Nuclear SMR Campus
+                </div>
+                <div className={`tab ${activeTab === 'green_hydrogen' ? 'active' : ''}`} onClick={() => { setActiveTab('green_hydrogen'); handleRunGreenHydrogen(); }}>
+                  🧪 Green Hydrogen Facility
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -16566,6 +16625,265 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {smrData.smr_compliance_audit?.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                                <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    background: item.status.startsWith('PASS') ? '#dcfce7' : '#fef3c7',
+                                    color: item.status.startsWith('PASS') ? '#15803d' : '#b45309'
+                                  }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px', color: 'var(--foreground)' }}>{item.finding}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                            ) : activeTab === 'green_hydrogen' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🧪 Green Hydrogen Production Facility, PEM Electrolyzer & Pipeline Offtake Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Underwrite 100 MW PEM electrolyzer production hubs, industrial take-or-pay hydrogen contracts ($/kg H2), pipeline transport easements, IRA Section 45V clean fuel tax credits, and stack replacement sinking funds.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunGreenHydrogen}
+                      disabled={loadingH2}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingH2 ? 'Underwriting H2...' : '🧪 Model Green Hydrogen Plant'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Electrolyzer Power (MW)</label>
+                      <input
+                        type="number"
+                        value={h2ElectrolyzerMw}
+                        onChange={(e) => setH2ElectrolyzerMw(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>H2 Output (kg / Day)</label>
+                      <input
+                        type="number"
+                        value={h2OutputKgDay}
+                        onChange={(e) => setH2OutputKgDay(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Plant Footprint (Acres)</label>
+                      <input
+                        type="number"
+                        value={h2PlantAcres}
+                        onChange={(e) => setH2PlantAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ground Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={h2GroundRentAcre}
+                        onChange={(e) => setH2GroundRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>H2 Price ($/kg H2)</label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        value={h2ContractPriceKg}
+                        onChange={(e) => setH2ContractPriceKg(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Take-or-Pay Volume (%)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={h2TakeOrPayPct}
+                        onChange={(e) => setH2TakeOrPayPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Landlord Royalty (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={h2RoyaltyPct}
+                        onChange={(e) => setH2RoyaltyPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Pipeline Length (Miles)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={h2PipelineMiles}
+                        onChange={(e) => setH2PipelineMiles(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Pipeline Rent ($/Mile/Yr)</label>
+                      <input
+                        type="number"
+                        value={h2PipelineRentMile}
+                        onChange={(e) => setH2PipelineRentMile(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>IRA 45V Credit ($/kg)</label>
+                      <input
+                        type="number"
+                        step="0.25"
+                        value={h2Ira45vTierKg}
+                        onChange={(e) => setH2Ira45vTierKg(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Stack Replacement ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={h2StackMembraneReserve}
+                        onChange={(e) => setH2StackMembraneReserve(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>DI Water Treatment ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={h2WaterTreatmentReserve}
+                        onChange={(e) => setH2WaterTreatmentReserve(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {h2Data && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Highlights */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '8px', border: '1px solid #10b981' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>Landlord Net Operating Income</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#065f46', marginTop: '4px' }}>
+                            ${h2Data.net_operating_income_usd?.toLocaleString()} / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#059669' }}>Ground, pipeline & production royalties</span>
+                        </div>
+
+                        <div style={{ background: '#eff6ff', padding: '16px', borderRadius: '8px', border: '1px solid #3b82f6' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: 600 }}>Hydrogen Concession Valuation</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>
+                            ${(h2Data.hydrogen_asset_valuation_usd / 1e6)?.toFixed(2)}M
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>Cap Rate @ {h2Data.hydrogen_cap_rate_pct}%</span>
+                        </div>
+
+                        <div style={{ background: '#fdf4ff', padding: '16px', borderRadius: '8px', border: '1px solid #c084fc' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#7e22ce', fontWeight: 600 }}>Annual Take-or-Pay Floor</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6b21a8', marginTop: '4px' }}>
+                            ${(h2Data.annual_take_or_pay_backstop_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#9333ea' }}>{h2Data.minimum_take_or_pay_volume_pct}% guaranteed off-take</span>
+                        </div>
+
+                        <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #f59e0b' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>IRA Section 45V Credit Value</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#92400e', marginTop: '4px' }}>
+                            ${(h2Data.annual_ira_45v_credit_value_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#d97706' }}>${h2Data.ira_45v_tax_credit_tier_per_kg_usd}/kg clean credit tier</span>
+                        </div>
+                      </div>
+
+                      {/* Revenue Streams Card */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          📊 Landlord Hydrogen Plant & Pipeline Revenue Breakdown
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Electrolyzer Plant Ground Rent</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#1d4ed8' }}>
+                              ${h2Data.annual_plant_ground_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{h2Data.facility_footprint_acres} acres @ ${h2GroundRentAcre.toLocaleString()}/acre</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Pipeline Right-of-Way Easement</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#047857' }}>
+                              ${h2Data.annual_pipeline_easement_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{h2Data.pipeline_easement_length_miles} miles @ ${h2PipelineRentMile.toLocaleString()}/mile</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Landlord Production Royalty</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#b45309' }}>
+                              ${h2Data.landlord_hydrogen_royalty_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{h2RoyaltyPct}% of ${(h2Data.annual_gross_hydrogen_sales_usd / 1e6)?.toFixed(2)}M annual sales</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>PEM Stack Sinking Fund</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#7e22ce' }}>
+                              ${h2Data.stack_cell_membrane_replacement_reserve_annual_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>80,000-hr cell stack replacement escrow</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* IRA 45V & ASME B31.12 Table */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          🛡️ IRA Section 45V & ASME B31.12 Hydrogen Engineering Compliance
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 10px' }}>Hydrogen Standard</th>
+                              <th style={{ padding: '8px 10px' }}>Status</th>
+                              <th style={{ padding: '8px 10px' }}>Regulatory Criteria</th>
+                              <th style={{ padding: '8px 10px' }}>Engineering Verification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {h2Data.hydrogen_compliance_audit?.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
                                 <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px' }}>
