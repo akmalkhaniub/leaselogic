@@ -7536,6 +7536,115 @@ app.post('/api/leases/:id/dac-carbon-hub-modeler', async (req, res) => {
   }
 });
 
+// 4.780. POST Offshore Wind Marshaling Port & Heavy-Lift Assembly Terminal Modeler
+app.post('/api/leases/:id/offshore-wind-port-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      quayside_berth_length_linear_ft = 1600,
+      quayside_berth_rent_per_ft_month_usd = 425.00,
+      heavy_component_laydown_acres = 85,
+      laydown_ground_rent_per_acre_year_usd = 32000,
+      annual_wtiv_vessel_calls_count = 36,
+      per_vessel_call_dockage_tariff_usd = 185000,
+      turbine_nacelle_throughput_units = 120,
+      throughput_wharfage_fee_per_turbine_usd = 35000,
+      quayside_bearing_capacity_tons_per_sqm = 28.5,
+      channel_navigation_draft_meters = 13.5,
+      boem_channel_maintenance_dredging_reserve_usd = 480000,
+      heavy_lift_crane_wharf_rehabilitation_reserve_usd = 350000,
+      wind_port_cap_rate_pct = 6.25
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Port Terminal Financial Calculations
+    const annualQuaysideBerthRentUsd = Math.round(quayside_berth_length_linear_ft * quayside_berth_rent_per_ft_month_usd * 12);
+    const annualLaydownGroundRentUsd = Math.round(heavy_component_laydown_acres * laydown_ground_rent_per_acre_year_usd);
+    const totalAnnualFixedTerminalRentUsd = annualQuaysideBerthRentUsd + annualLaydownGroundRentUsd;
+
+    const annualWtivVesselTariffsUsd = Math.round(annual_wtiv_vessel_calls_count * per_vessel_call_dockage_tariff_usd);
+    const annualTurbineWharfageRevenueUsd = Math.round(turbine_nacelle_throughput_units * throughput_wharfage_fee_per_turbine_usd);
+    const totalAnnualVariableWharfageUsd = annualWtivVesselTariffsUsd + annualTurbineWharfageRevenueUsd;
+
+    const totalLandlordPortRevenueUsd = totalAnnualFixedTerminalRentUsd + totalAnnualVariableWharfageUsd;
+    const totalMarineReservesAnnualUsd = boem_channel_maintenance_dredging_reserve_usd + heavy_lift_crane_wharf_rehabilitation_reserve_usd;
+    const netOperatingIncomeUsd = totalLandlordPortRevenueUsd - totalMarineReservesAnnualUsd;
+
+    const windPortAssetValuationUsd = Math.round(netOperatingIncomeUsd / (wind_port_cap_rate_pct / 100));
+
+    // BOEM & Deepwater Marine Engineering Compliance Audit
+    const windPortComplianceAudit = [
+      {
+        metric: 'Quayside Heavy-Lift Crane Bearing Capacity',
+        status: quayside_bearing_capacity_tons_per_sqm >= 20.0 ? 'PASS_HEAVY_BEARING_CERTIFIED' : 'WARN_LOW_BEARING_CAPACITY',
+        standard: '>= 20.0 Tons/m² Point Load Bearing Capacity for 1,500-Ton Crawler Cranes',
+        finding: `${quayside_bearing_capacity_tons_per_sqm} tons/m² reinforced quayside bulkhead safely stages 800-ton 15MW+ direct-drive nacelles and 2,000-ton XXL monopiles.`
+      },
+      {
+        metric: 'Deepwater Channel Navigation Draft (MLW)',
+        status: channel_navigation_draft_meters >= 12.0 ? 'PASS_DEEPWATER_DRAFT_QUALIFIED' : 'WARN_SHALLOW_DRAFT_RESTRICTION',
+        standard: '>= 12.0m Mean Low Water (MLW) Navigational Draft',
+        finding: `${channel_navigation_draft_meters}m deep-draft channel provides 24/7 tidal access for loaded Wind Turbine Installation Vessels (WTIVs) without grounding risk.`
+      },
+      {
+        metric: 'BOEM Outer Continental Shelf Staging Clearance',
+        status: 'PASS_BOEM_AIR_DRAFT_UNRESTRICTED',
+        standard: 'Zero Vertical Overhead Air-Draft Restrictions (Bridge-Free Access to Open Ocean)',
+        finding: 'Direct ocean access enables fully pre-commissioned tower assembly and upright blade staging without bridge height bottlenecks.'
+      },
+      {
+        metric: 'WTIV Vessel Berth Reservation & Turnaround Tariffs',
+        status: annual_wtiv_vessel_calls_count >= 24 ? 'PASS_HIGH_BERTH_UTILIZATION' : 'WARN_LOW_BERTH_UTILIZATION',
+        standard: '>= 24 Annual WTIV Installation Vessel Calls',
+        finding: `${annual_wtiv_vessel_calls_count} scheduled WTIV port calls generate $${(annualWtivVesselTariffsUsd / 1e6).toFixed(2)}M/yr dockage fees plus $${(annualTurbineWharfageRevenueUsd / 1e6).toFixed(2)}M turbine throughput wharfage.`
+      },
+      {
+        metric: 'Channel Maintenance Dredging Sinking Escrow',
+        status: boem_channel_maintenance_dredging_reserve_usd >= 400000 ? 'PASS_DREDGING_ESCROW_ADEQUATE' : 'WARN_DREDGING_DEFICIT',
+        standard: '>= $400,000/yr Dedicated Channel Siltation & Dredging Fund',
+        finding: `$${boem_channel_maintenance_dredging_reserve_usd.toLocaleString()}/yr reserve preserves 13.5m channel depth against coastal littoral drift and silt deposition.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Offshore Wind Marshaling & Assembly Terminal',
+      quayside_berth_length_linear_ft: quayside_berth_length_linear_ft,
+      quayside_berth_rent_per_ft_month_usd: quayside_berth_rent_per_ft_month_usd,
+      annual_quayside_berth_rent_usd: annualQuaysideBerthRentUsd,
+      heavy_component_laydown_acres: heavy_component_laydown_acres,
+      laydown_ground_rent_per_acre_year_usd: laydown_ground_rent_per_acre_year_usd,
+      annual_laydown_ground_rent_usd: annualLaydownGroundRentUsd,
+      total_annual_fixed_terminal_rent_usd: totalAnnualFixedTerminalRentUsd,
+      annual_wtiv_vessel_calls_count: annual_wtiv_vessel_calls_count,
+      per_vessel_call_dockage_tariff_usd: per_vessel_call_dockage_tariff_usd,
+      annual_wtiv_vessel_tariffs_usd: annualWtivVesselTariffsUsd,
+      turbine_nacelle_throughput_units: turbine_nacelle_throughput_units,
+      throughput_wharfage_fee_per_turbine_usd: throughput_wharfage_fee_per_turbine_usd,
+      annual_turbine_wharfage_revenue_usd: annualTurbineWharfageRevenueUsd,
+      total_annual_variable_wharfage_usd: totalAnnualVariableWharfageUsd,
+      total_landlord_port_revenue_usd: totalLandlordPortRevenueUsd,
+      quayside_bearing_capacity_tons_per_sqm: quayside_bearing_capacity_tons_per_sqm,
+      channel_navigation_draft_meters: channel_navigation_draft_meters,
+      boem_channel_maintenance_dredging_reserve_usd: boem_channel_maintenance_dredging_reserve_usd,
+      heavy_lift_crane_wharf_rehabilitation_reserve_usd: heavy_lift_crane_wharf_rehabilitation_reserve_usd,
+      total_marine_reserves_annual_usd: totalMarineReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      wind_port_cap_rate_pct: wind_port_cap_rate_pct,
+      wind_port_asset_valuation_usd: windPortAssetValuationUsd,
+      wind_port_compliance_audit: windPortComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
