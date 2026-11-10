@@ -7645,6 +7645,120 @@ app.post('/api/leases/:id/offshore-wind-port-modeler', async (req, res) => {
   }
 });
 
+// 4.781. POST Commercial Fusion Power Prototype & Superconducting Magnet Facility Modeler
+app.post('/api/leases/:id/fusion-power-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      fusion_thermal_output_mwt = 500,
+      net_electric_output_mwe = 150,
+      plasma_q_factor = 10.5,
+      campus_footprint_acres = 45,
+      land_ground_rent_per_acre_year_usd = 34000,
+      grid_interconnection_capacity_mw = 200,
+      grid_capacity_reservation_rate_per_kw_month_usd = 9.50,
+      pilot_power_delivery_annual_mwh = 650000,
+      power_offtake_rate_per_mwh_usd = 95.00,
+      landlord_power_royalty_pct = 3.0,
+      tritium_breeding_sales_annual_usd = 8500000,
+      tritium_royalty_share_pct = 5.0,
+      cryogenic_plant_hts_reserve_annual_usd = 480000,
+      neutron_activation_vessel_escrow_annual_usd = 620000,
+      magnetic_exclusion_radius_meters = 150,
+      fusion_cap_rate_pct = 6.25
+    } = req.body;
+
+    const leaseRes = await pool.query("SELECT id, filename, property_name FROM leases WHERE id = $1", [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Fusion Power & HTS Magnet Facility Financial Calculations
+    const annualGroundRentUsd = Math.round(campus_footprint_acres * land_ground_rent_per_acre_year_usd);
+    const annualGridCapacityReservationRentUsd = Math.round(grid_interconnection_capacity_mw * 1000 * grid_capacity_reservation_rate_per_kw_month_usd * 12);
+    const totalBaseFacilityRentUsd = annualGroundRentUsd + annualGridCapacityReservationRentUsd;
+
+    const annualGrossPowerSalesUsd = Math.round(pilot_power_delivery_annual_mwh * power_offtake_rate_per_mwh_usd);
+    const landlordPowerRoyaltyUsd = Math.round(annualGrossPowerSalesUsd * (landlord_power_royalty_pct / 100));
+
+    const landlordTritiumRoyaltyUsd = Math.round(tritium_breeding_sales_annual_usd * (tritium_royalty_share_pct / 100));
+    const totalLandlordGrossRevenueUsd = totalBaseFacilityRentUsd + landlordPowerRoyaltyUsd + landlordTritiumRoyaltyUsd;
+
+    const totalOperatingReservesAnnualUsd = cryogenic_plant_hts_reserve_annual_usd + neutron_activation_vessel_escrow_annual_usd;
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+
+    const fusionFacilityValuationUsd = Math.round(netOperatingIncomeUsd / (fusion_cap_rate_pct / 100));
+
+    // Fusion Energy Regulatory & Magnetic Safety Audit
+    const fusionComplianceAudit = [
+      {
+        metric: 'Net Energy Gain Plasma Q-Factor Verification',
+        status: plasma_q_factor >= 5.0 ? 'PASS_NET_ENERGY_GAIN_VALIDATED' : 'WARN_SUB_CRITICAL_Q_FACTOR',
+        standard: 'Plasma Q-Factor >= 5.0 (Thermal Fusion Power / External Heating Input)',
+        finding: `Q = ${plasma_q_factor} achieves burning plasma state generating ${fusion_thermal_output_mwt} MWt and ${net_electric_output_mwe} MWe net electricity export.`
+      },
+      {
+        metric: 'NRC Non-Fission Materials Categorization (10 CFR Part 30)',
+        status: 'PASS_NRC_NON_FISSION_EXEMPTION',
+        standard: 'Regulated Under NRC Byproduct Materials Framework (Part 30) rather than Part 50/52 Reactor Rules',
+        finding: 'Absence of runaway criticality, fissile uranium/plutonium, or high-level radioactive waste ensures streamlined licensing without emergency off-site evacuation mandates.'
+      },
+      {
+        metric: 'HTS Superconducting Magnet & Cryogenic Cooling Plant Reserve',
+        status: cryogenic_plant_hts_reserve_annual_usd >= 400000 ? 'PASS_CRYOGENIC_RESERVE_ADEQUATE' : 'WARN_CRYOGENIC_RESERVE_DEFICIT',
+        standard: '>= $400,000/yr Liquid Helium/Nitrogen Cryoplant Sinking Fund',
+        finding: `$${cryogenic_plant_hts_reserve_annual_usd.toLocaleString()}/yr reserve protects 20-Tesla High-Temperature Superconducting (HTS) tape magnet coils against quench degradation.`
+      },
+      {
+        metric: 'Neutron Activation & Vacuum Vessel Decommissioning Trust',
+        status: neutron_activation_vessel_escrow_annual_usd >= 500000 ? 'PASS_DECOMMISSIONING_ESCROW_FULLY_FUNDED' : 'WARN_DECOMMISSIONING_ESCROW_DEFICIT',
+        standard: '>= $500,000/yr First-Wall Divertor & Vacuum Chamber Replacement Trust',
+        finding: `$${neutron_activation_vessel_escrow_annual_usd.toLocaleString()}/yr dedicated trust funds remote robotic replacement of tungsten divertor plates and Class C low-level waste recycling.`
+      },
+      {
+        metric: 'Magnetic Stray Field Exclusion Zone',
+        status: magnetic_exclusion_radius_meters >= 100 ? 'PASS_MAGNETIC_PERIMETER_SECURED' : 'WARN_MAGNETIC_PERIMETER_ENCROACHMENT',
+        standard: '>= 100m Perimeter Buffer for 5 Gauss Fringe Magnetic Boundary',
+        finding: `${magnetic_exclusion_radius_meters}m radial safety envelope isolates pace-maker sensitive electronics and substation components from high magnetic flux.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Commercial Fusion Power Prototype Campus',
+      fusion_thermal_output_mwt: fusion_thermal_output_mwt,
+      net_electric_output_mwe: net_electric_output_mwe,
+      plasma_q_factor: plasma_q_factor,
+      campus_footprint_acres: campus_footprint_acres,
+      annual_ground_rent_usd: annualGroundRentUsd,
+      grid_interconnection_capacity_mw: grid_interconnection_capacity_mw,
+      annual_grid_capacity_reservation_rent_usd: annualGridCapacityReservationRentUsd,
+      total_base_facility_rent_usd: totalBaseFacilityRentUsd,
+      pilot_power_delivery_annual_mwh: pilot_power_delivery_annual_mwh,
+      power_offtake_rate_per_mwh_usd: power_offtake_rate_per_mwh_usd,
+      annual_gross_power_sales_usd: annualGrossPowerSalesUsd,
+      landlord_power_royalty_pct: landlord_power_royalty_pct,
+      landlord_power_royalty_usd: landlordPowerRoyaltyUsd,
+      tritium_breeding_sales_annual_usd: tritium_breeding_sales_annual_usd,
+      tritium_royalty_share_pct: tritium_royalty_share_pct,
+      landlord_tritium_royalty_usd: landlordTritiumRoyaltyUsd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      cryogenic_plant_hts_reserve_annual_usd: cryogenic_plant_hts_reserve_annual_usd,
+      neutron_activation_vessel_escrow_annual_usd: neutron_activation_vessel_escrow_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      magnetic_exclusion_radius_meters: magnetic_exclusion_radius_meters,
+      fusion_cap_rate_pct: fusion_cap_rate_pct,
+      fusion_facility_valuation_usd: fusionFacilityValuationUsd,
+      fusion_compliance_audit: fusionComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
