@@ -997,9 +997,23 @@ export default function LeaseLogicApp() {
   const [bmCapRatePct, setBmCapRatePct] = useState(6.5);
   const [bmData, setBmData] = useState<any>(null);
   const [loadingBm, setLoadingBm] = useState(false);
+// Biomanufacturing Foundry Modeler States
+  const [bioCleanroomSqft, setBioCleanroomSqft] = useState(22000);
+  const [bioBaseRentPerSqft, setBioBaseRentPerSqft] = useState(115.0);
+  const [bioSkidCount, setBioSkidCount] = useState(6);
+  const [bioSkidFeeUsd, setBioSkidFeeUsd] = useState(85000);
+  const [bioAnnualBatches, setBioAnnualBatches] = useState(48);
+  const [bioBatchRoyaltyUsd, setBioBatchRoyaltyUsd] = useState(42000);
+  const [bioTiterYieldBonusUsd, setBioTiterYieldBonusUsd] = useState(650000);
+  const [bioWfiReserveUsd, setBioWfiReserveUsd] = useState(380000);
+  const [bioLn2EscrowUsd, setBioLn2EscrowUsd] = useState(210000);
+  const [bioAirflowAch, setBioAirflowAch] = useState(65);
+  const [bioCapRatePct, setBioCapRatePct] = useState(6.75);
+  const [bioData, setBioData] = useState<any>(null);
+  const [loadingBio, setLoadingBio] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry'>('abstract');
 
 
 
@@ -3182,7 +3196,39 @@ export default function LeaseLogicApp() {
     } finally {
       setLoadingBm(false);
     }
+  };  const handleRunBiomanufacturingFoundry = async () => {
+    if (!selectedLease) return;
+    setLoadingBio(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/biomanufacturing-foundry-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cleanroom_iso5_grade_a_sqft: bioCleanroomSqft,
+          cleanroom_base_rent_per_sqft_year_usd: bioBaseRentPerSqft,
+          modular_suite_skid_count: bioSkidCount,
+          single_use_bioreactor_perfusion_skid_fee_usd: bioSkidFeeUsd,
+          annual_commercial_batches_harvested: bioAnnualBatches,
+          batch_harvest_royalty_fee_usd: bioBatchRoyaltyUsd,
+          annual_titer_yield_bonus_usd: bioTiterYieldBonusUsd,
+          usp_645_wfi_water_loop_reserve_annual_usd: bioWfiReserveUsd,
+          liquid_nitrogen_cryogenic_escrow_annual_usd: bioLn2EscrowUsd,
+          hepa_airflow_ach: bioAirflowAch,
+          biomanufacturing_cap_rate_pct: bioCapRatePct
+        })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setBioData(json);
+      }
+    } catch (err) {
+      console.error('Error fetching biomanufacturing model:', err);
+    } finally {
+      setLoadingBio(false);
+    }
   };
+
+
 
 
 
@@ -7450,6 +7496,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'battery_metals' ? 'active' : ''}`} onClick={() => { setActiveTab('battery_metals'); handleRunBatteryMetals(); }}>
                   🔋 Battery Metals Complex
+                </div>
+                <div className={`tab ${activeTab === 'biomanufacturing_foundry' ? 'active' : ''}`} onClick={() => { setActiveTab('biomanufacturing_foundry'); handleRunBiomanufacturingFoundry(); }}>
+                  🧬 Biomanufacturing
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -18173,6 +18222,243 @@ export default function LeaseLogicApp() {
                   )}
                 </div>
 
+                            ) : activeTab === 'biomanufacturing_foundry' ? (
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-teal-900/40 via-emerald-900/30 to-slate-900/40 border border-teal-500/30 rounded-xl p-6 backdrop-blur-sm shadow-xl">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-3xl">🧬</span>
+                          <div>
+                            <h2 className="text-2xl font-bold text-white tracking-tight">Continuous Biomanufacturing, Viral Vector & Monoclonal Antibody (mAb) Foundry</h2>
+                            <p className="text-sm text-teal-300/80">FDA 21 CFR Part 210/211 cGMP Cleanrooms, Perfusion Skids, WFI Loop Reserves & Cap Rate Valuation</p>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleRunBiomanufacturingFoundry}
+                        disabled={loadingBio}
+                        className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-medium rounded-lg shadow-lg hover:shadow-teal-500/25 transition-all flex items-center gap-2 self-start md:self-auto disabled:opacity-50"
+                      >
+                        {loadingBio ? (
+                          <>
+                            <span className="animate-spin text-lg">⏳</span>
+                            <span>Simulating Biomanufacturing Run...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>⚡</span>
+                            <span>Recalculate Foundry NOI</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-teal-500/20 text-sm">
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">ISO 5 Cleanroom Footprint (sqft)</label>
+                        <input
+                          type="number"
+                          value={bioCleanroomSqft}
+                          onChange={(e) => setBioCleanroomSqft(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Cleanroom Base Rent ($/sqft/yr)</label>
+                        <input
+                          type="number"
+                          value={bioBaseRentPerSqft}
+                          onChange={(e) => setBioBaseRentPerSqft(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Perfusion Suite Skids (count)</label>
+                        <input
+                          type="number"
+                          value={bioSkidCount}
+                          onChange={(e) => setBioSkidCount(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Single-Use Skid Fee ($/skid/yr)</label>
+                        <input
+                          type="number"
+                          value={bioSkidFeeUsd}
+                          onChange={(e) => setBioSkidFeeUsd(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Annual Commercial Batches Harvested</label>
+                        <input
+                          type="number"
+                          value={bioAnnualBatches}
+                          onChange={(e) => setBioAnnualBatches(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Batch Harvest Royalty Fee ($/harvest)</label>
+                        <input
+                          type="number"
+                          value={bioBatchRoyaltyUsd}
+                          onChange={(e) => setBioBatchRoyaltyUsd(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Annual Titer Yield Bonus ($)</label>
+                        <input
+                          type="number"
+                          value={bioTiterYieldBonusUsd}
+                          onChange={(e) => setBioTiterYieldBonusUsd(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">USP 645 WFI Water Loop Reserve ($/yr)</label>
+                        <input
+                          type="number"
+                          value={bioWfiReserveUsd}
+                          onChange={(e) => setBioWfiReserveUsd(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Liquid Nitrogen (LN2) Escrow ($/yr)</label>
+                        <input
+                          type="number"
+                          value={bioLn2EscrowUsd}
+                          onChange={(e) => setBioLn2EscrowUsd(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">HEPA Airflow Rate (ACH)</label>
+                        <input
+                          type="number"
+                          value={bioAirflowAch}
+                          onChange={(e) => setBioAirflowAch(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Biomanufacturing Cap Rate (%)</label>
+                        <input
+                          type="number"
+                          step="0.05"
+                          value={bioCapRatePct}
+                          onChange={(e) => setBioCapRatePct(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {bioData && (
+                    <div className="space-y-6 animate-fadeIn">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <span className="text-xs uppercase tracking-wider text-slate-400 block mb-1">Gross Landlord Revenue</span>
+                          <span className="text-2xl font-bold text-teal-400">
+                            ${bioData.financial_breakdown?.total_landlord_gross_revenue_usd?.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-slate-400 block mt-1">Base + Perfusion Skids + Royalties</span>
+                        </div>
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <span className="text-xs uppercase tracking-wider text-slate-400 block mb-1">Net Operating Income (NOI)</span>
+                          <span className="text-2xl font-bold text-emerald-400">
+                            ${bioData.financial_breakdown?.net_operating_income_usd?.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-emerald-400/80 block mt-1">Post-WFI & LN2 Escrows</span>
+                        </div>
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <span className="text-xs uppercase tracking-wider text-slate-400 block mb-1">Capitalized Valuation</span>
+                          <span className="text-2xl font-bold text-amber-400">
+                            ${bioData.financial_breakdown?.capitalized_valuation_usd?.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-slate-400 block mt-1">@ {bioData.financial_breakdown?.biomanufacturing_cap_rate_pct}% Cap Rate</span>
+                        </div>
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <span className="text-xs uppercase tracking-wider text-slate-400 block mb-1">Cleanroom Airflow Standard</span>
+                          <span className="text-2xl font-bold text-indigo-400">
+                            {bioData.cleanroom_specs?.hepa_airflow_ach} ACH
+                          </span>
+                          <span className="text-xs text-indigo-300 block mt-1">{bioData.cleanroom_specs?.cleanroom_compliance_grade}</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <span>📊</span> Revenue Breakdown & Unit Economics
+                          </h3>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Annual Base Cleanroom Lease Rent:</span>
+                              <span className="text-white font-medium">${bioData.financial_breakdown?.annual_base_cleanroom_rent_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Perfusion Skid Infrastructure Suite Fees:</span>
+                              <span className="text-white font-medium">${bioData.financial_breakdown?.annual_skid_infrastructure_fees_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Batch Harvest Production Royalties:</span>
+                              <span className="text-white font-medium">${bioData.financial_breakdown?.annual_batch_harvest_royalties_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Annual Titer Yield Milestone Bonus:</span>
+                              <span className="text-white font-medium">${bioData.financial_breakdown?.annual_titer_yield_bonus_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Estimated Annual Fluid Harvest Volume:</span>
+                              <span className="text-white font-medium">{bioData.production_metrics?.estimated_annual_harvest_volume_liters?.toLocaleString()} Liters</span>
+                            </div>
+                            <div className="flex justify-between py-2">
+                              <span className="text-slate-400">Landlord Net Revenue per Liter Harvested:</span>
+                              <span className="text-teal-400 font-bold">${bioData.production_metrics?.landlord_revenue_per_liter_usd?.toFixed(2)} / L</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <span>🛡️</span> Quality Escrows & FDA cGMP Compliance
+                          </h3>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">USP 645 Water For Injection (WFI) Loop Reserve:</span>
+                              <span className="text-rose-400 font-medium">-${bioData.financial_breakdown?.usp_645_wfi_water_loop_reserve_annual_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Liquid Nitrogen (LN2) Cryo Bank Escrow:</span>
+                              <span className="text-rose-400 font-medium">-${bioData.financial_breakdown?.liquid_nitrogen_cryogenic_escrow_annual_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Total Mandatory Escrows & Quality Reserves:</span>
+                              <span className="text-rose-300 font-bold">-${bioData.financial_breakdown?.total_escrows_and_reserves_annual_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">FDA 21 CFR Part 11 Audit Trail Status:</span>
+                              <span className="text-emerald-400 font-medium">{bioData.audit_trail?.fda_21_cfr_part_11_audit_logging}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">ISO 14644-1 Particulate Standard:</span>
+                              <span className="text-slate-200">{bioData.audit_trail?.iso_14644_particle_count_standard}</span>
+                            </div>
+                            <div className="flex justify-between py-2">
+                              <span className="text-slate-400">USP WFI Online Conductivity Standard:</span>
+                              <span className="text-slate-200">{bioData.audit_trail?.usp_wfi_conductivity_standard}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : activeTab === 'hospitality_revpar' ? (
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
                   {/* Header */}
