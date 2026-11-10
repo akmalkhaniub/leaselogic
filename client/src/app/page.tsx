@@ -1011,9 +1011,24 @@ export default function LeaseLogicApp() {
   const [bioCapRatePct, setBioCapRatePct] = useState(6.75);
   const [bioData, setBioData] = useState<any>(null);
   const [loadingBio, setLoadingBio] = useState(false);
+// Autonomous Freight Logistics Modeler States
+  const [afYardAcres, setAfYardAcres] = useState(40);
+  const [afGroundRentPerAcre, setAfGroundRentPerAcre] = useState(36000);
+  const [afIngressLanesCount, setAfIngressLanesCount] = useState(8);
+  const [afLaneTariffPerMonth, setAfLaneTariffPerMonth] = useState(12500);
+  const [afMcsChargersCount, setAfMcsChargersCount] = useState(16);
+  const [afMcsPowerCapacityMw, setAfMcsPowerCapacityMw] = useState(1.2);
+  const [afAnnualThroughputMwh, setAfAnnualThroughputMwh] = useState(42000);
+  const [afElectricityMarginKwh, setAfElectricityMarginKwh] = useState(0.045);
+  const [afBatterySwapConcessionUsd, setAfBatterySwapConcessionUsd] = useState(580000);
+  const [afTeleoperationReserveUsd, setAfTeleoperationReserveUsd] = useState(290000);
+  const [afThermalContainmentEscrowUsd, setAfThermalContainmentEscrowUsd] = useState(180000);
+  const [afCapRatePct, setAfCapRatePct] = useState(6.25);
+  const [afData, setAfData] = useState<any>(null);
+  const [loadingAf, setLoadingAf] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry' | 'autonomous_freight'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry' | 'autonomous_freight'>('abstract');
 
 
 
@@ -3226,7 +3241,40 @@ export default function LeaseLogicApp() {
     } finally {
       setLoadingBio(false);
     }
+  };  const handleRunAutonomousFreight = async () => {
+    if (!selectedLease) return;
+    setLoadingAf(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/autonomous-freight-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          yard_staging_acres: afYardAcres,
+          yard_ground_rent_per_acre_year_usd: afGroundRentPerAcre,
+          automated_ingress_lanes_count: afIngressLanesCount,
+          lane_access_tariff_per_month_usd: afLaneTariffPerMonth,
+          mcs_megawatt_chargers_count: afMcsChargersCount,
+          mcs_charger_power_capacity_mw: afMcsPowerCapacityMw,
+          annual_charging_throughput_mwh: afAnnualThroughputMwh,
+          electricity_markup_margin_per_kwh_usd: afElectricityMarginKwh,
+          battery_swap_stall_concession_annual_usd: afBatterySwapConcessionUsd,
+          av_yard_teleoperation_tower_reserve_annual_usd: afTeleoperationReserveUsd,
+          def_thermal_containment_escrow_annual_usd: afThermalContainmentEscrowUsd,
+          autonomous_freight_cap_rate_pct: afCapRatePct
+        })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setAfData(json);
+      }
+    } catch (err) {
+      console.error('Error fetching autonomous freight model:', err);
+    } finally {
+      setLoadingAf(false);
+    }
   };
+
+
 
 
 
@@ -7499,6 +7547,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'biomanufacturing_foundry' ? 'active' : ''}`} onClick={() => { setActiveTab('biomanufacturing_foundry'); handleRunBiomanufacturingFoundry(); }}>
                   🧬 Biomanufacturing
+                </div>
+                <div className={`tab ${activeTab === 'autonomous_freight' ? 'active' : ''}`} onClick={() => { setActiveTab('autonomous_freight'); handleRunAutonomousFreight(); }}>
+                  🚚 Autonomous Freight
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -18452,6 +18503,254 @@ export default function LeaseLogicApp() {
                             <div className="flex justify-between py-2">
                               <span className="text-slate-400">USP WFI Online Conductivity Standard:</span>
                               <span className="text-slate-200">{bioData.audit_trail?.usp_wfi_conductivity_standard}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                            ) : activeTab === 'autonomous_freight' ? (
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-blue-950/40 via-cyan-950/30 to-slate-900/40 border border-blue-500/30 rounded-xl p-6 backdrop-blur-sm shadow-xl">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-3xl">🚚</span>
+                          <div>
+                            <h2 className="text-2xl font-bold text-white tracking-tight">Autonomous Freight Logistics Terminal & Megawatt Charging Depots</h2>
+                            <p className="text-sm text-cyan-300/80">SAE Level 4 AV Staging, Ingress Gantry Tariffs, CharIN MCS High-Power Chargers & Cap Rate Valuation</p>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleRunAutonomousFreight}
+                        disabled={loadingAf}
+                        className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-medium rounded-lg shadow-lg hover:shadow-cyan-500/25 transition-all flex items-center gap-2 self-start md:self-auto disabled:opacity-50"
+                      >
+                        {loadingAf ? (
+                          <>
+                            <span className="animate-spin text-lg">⏳</span>
+                            <span>Simulating Logistics Yard...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>⚡</span>
+                            <span>Recalculate Terminal NOI</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-blue-500/20 text-sm">
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Yard Staging Footprint (Acres)</label>
+                        <input
+                          type="number"
+                          value={afYardAcres}
+                          onChange={(e) => setAfYardAcres(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Ground Rent ($/acre/yr)</label>
+                        <input
+                          type="number"
+                          value={afGroundRentPerAcre}
+                          onChange={(e) => setAfGroundRentPerAcre(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Automated Ingress Lanes (Count)</label>
+                        <input
+                          type="number"
+                          value={afIngressLanesCount}
+                          onChange={(e) => setAfIngressLanesCount(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Lane Access Tariff ($/mo/lane)</label>
+                        <input
+                          type="number"
+                          value={afLaneTariffPerMonth}
+                          onChange={(e) => setAfLaneTariffPerMonth(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">MCS Dispensers (Count)</label>
+                        <input
+                          type="number"
+                          value={afMcsChargersCount}
+                          onChange={(e) => setAfMcsChargersCount(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">MCS Charger Rating (MW/dispenser)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={afMcsPowerCapacityMw}
+                          onChange={(e) => setAfMcsPowerCapacityMw(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Annual Power Delivered (MWh)</label>
+                        <input
+                          type="number"
+                          value={afAnnualThroughputMwh}
+                          onChange={(e) => setAfAnnualThroughputMwh(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Electricity Margin Margin ($/kWh)</label>
+                        <input
+                          type="number"
+                          step="0.005"
+                          value={afElectricityMarginKwh}
+                          onChange={(e) => setAfElectricityMarginKwh(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Battery Swap Concession ($/yr)</label>
+                        <input
+                          type="number"
+                          value={afBatterySwapConcessionUsd}
+                          onChange={(e) => setAfBatterySwapConcessionUsd(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">AV Teleoperation Reserve ($/yr)</label>
+                        <input
+                          type="number"
+                          value={afTeleoperationReserveUsd}
+                          onChange={(e) => setAfTeleoperationReserveUsd(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">DEF / Thermal Deluge Escrow ($/yr)</label>
+                        <input
+                          type="number"
+                          value={afThermalContainmentEscrowUsd}
+                          onChange={(e) => setAfThermalContainmentEscrowUsd(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Terminal Cap Rate (%)</label>
+                        <input
+                          type="number"
+                          step="0.05"
+                          value={afCapRatePct}
+                          onChange={(e) => setAfCapRatePct(Number(e.target.value))}
+                          className="w-full bg-slate-950/60 border border-slate-700/60 rounded px-3 py-1.5 text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {afData && (
+                    <div className="space-y-6 animate-fadeIn">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <span className="text-xs uppercase tracking-wider text-slate-400 block mb-1">Gross Landlord Revenue</span>
+                          <span className="text-2xl font-bold text-cyan-400">
+                            ${afData.financial_breakdown?.total_landlord_gross_revenue_usd?.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-slate-400 block mt-1">Ground + Gantry + MCS + Swap</span>
+                        </div>
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <span className="text-xs uppercase tracking-wider text-slate-400 block mb-1">Net Operating Income (NOI)</span>
+                          <span className="text-2xl font-bold text-emerald-400">
+                            ${afData.financial_breakdown?.net_operating_income_usd?.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-emerald-400/80 block mt-1">Post-Teleop & Safety Escrows</span>
+                        </div>
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <span className="text-xs uppercase tracking-wider text-slate-400 block mb-1">Capitalized Valuation</span>
+                          <span className="text-2xl font-bold text-amber-400">
+                            ${afData.financial_breakdown?.capitalized_valuation_usd?.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-slate-400 block mt-1">@ {afData.financial_breakdown?.autonomous_freight_cap_rate_pct}% Cap Rate</span>
+                        </div>
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <span className="text-xs uppercase tracking-wider text-slate-400 block mb-1">Peak Charging Capacity</span>
+                          <span className="text-2xl font-bold text-blue-400">
+                            {afData.charging_and_grid_metrics?.total_peak_charging_capacity_mw} MW
+                          </span>
+                          <span className="text-xs text-blue-300 block mt-1">{afData.charging_and_grid_metrics?.mcs_megawatt_chargers_count} Megawatt Dispensers</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <span>⚡</span> Revenue & Charging Concession Stream
+                          </h3>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Annual Staging Yard Ground Rent:</span>
+                              <span className="text-white font-medium">${afData.financial_breakdown?.annual_yard_ground_rent_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Automated Ingress Optical Gate Tariffs:</span>
+                              <span className="text-white font-medium">${afData.financial_breakdown?.annual_gate_tariffs_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">MCS Electricity Throughput Concession:</span>
+                              <span className="text-white font-medium">${afData.financial_breakdown?.annual_charging_concession_revenue_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Robotic Battery Swap Stall Concession:</span>
+                              <span className="text-white font-medium">${afData.financial_breakdown?.battery_swap_stall_concession_annual_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Annual Power Throughput:</span>
+                              <span className="text-white font-medium">{afData.charging_and_grid_metrics?.annual_charging_throughput_mwh?.toLocaleString()} MWh</span>
+                            </div>
+                            <div className="flex justify-between py-2">
+                              <span className="text-slate-400">Supported Class 8 Electric Fleet Miles:</span>
+                              <span className="text-cyan-400 font-bold">{afData.charging_and_grid_metrics?.estimated_supported_class8_electric_miles?.toLocaleString()} miles/yr</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <span>🛡️</span> Safety Escrows & FMCSA Regulations
+                          </h3>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">AV Teleoperation Command Tower Reserve:</span>
+                              <span className="text-rose-400 font-medium">-${afData.financial_breakdown?.av_yard_teleoperation_tower_reserve_annual_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">DEF & Thermal Containment Foam Escrow:</span>
+                              <span className="text-rose-400 font-medium">-${afData.financial_breakdown?.def_thermal_containment_escrow_annual_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">Total Mandatory Terminal Reserves:</span>
+                              <span className="text-rose-300 font-bold">-${afData.financial_breakdown?.total_escrows_and_reserves_annual_usd?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">FMCSA ADS Safety Protocol:</span>
+                              <span className="text-emerald-400 font-medium">{afData.audit_trail?.fmcsa_automated_driving_system_safety_protocol}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-800/80">
+                              <span className="text-slate-400">CharIN Megawatt Charging Standard:</span>
+                              <span className="text-slate-200">{afData.audit_trail?.charin_megawatt_charging_system_standard}</span>
+                            </div>
+                            <div className="flex justify-between py-2">
+                              <span className="text-slate-400">NFPA 855 Fire Suppression System:</span>
+                              <span className="text-slate-200">{afData.audit_trail?.fire_safety_nfpa_855_thermal_runaway_suppression}</span>
                             </div>
                           </div>
                         </div>
