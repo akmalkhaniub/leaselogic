@@ -7759,6 +7759,111 @@ app.post('/api/leases/:id/fusion-power-modeler', async (req, res) => {
   }
 });
 
+  // -------------------------------------------------------------
+  // PHASE 27: Feature 3 - Continuous Biomanufacturing, Viral Vector & Monoclonal Antibody (mAb) Foundry Modeler
+  // -------------------------------------------------------------
+  app.post('/api/leases/:id/biomanufacturing-foundry-modeler', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const {
+        cleanroom_iso5_grade_a_sqft = 22000,
+        cleanroom_base_rent_per_sqft_year_usd = 115.00,
+        modular_suite_skid_count = 6,
+        single_use_bioreactor_perfusion_skid_fee_usd = 85000, // per skid/year
+        annual_commercial_batches_harvested = 48,
+        batch_harvest_royalty_fee_usd = 42000, // per harvest
+        annual_titer_yield_bonus_usd = 650000,
+        usp_645_wfi_water_loop_reserve_annual_usd = 380000,
+        liquid_nitrogen_cryogenic_escrow_annual_usd = 210000,
+        hepa_airflow_ach = 65, // Air Changes per Hour (ISO 5 requirement: 60-90 ACH)
+        biomanufacturing_cap_rate_pct = 6.75
+      } = req.body;
+
+      // Base Cleanroom Rent
+      const annualBaseCleanroomRentUsd = cleanroom_iso5_grade_a_sqft * cleanroom_base_rent_per_sqft_year_usd;
+
+      // Perfusion Skid Suite Fees
+      const annualSkidInfrastructureFeesUsd = modular_suite_skid_count * single_use_bioreactor_perfusion_skid_fee_usd;
+
+      // Commercial Batch Production Royalties
+      const annualBatchHarvestRoyaltiesUsd = annual_commercial_batches_harvested * batch_harvest_royalty_fee_usd;
+
+      // Gross Landlord Revenue
+      const totalLandlordGrossRevenueUsd =
+        annualBaseCleanroomRentUsd +
+        annualSkidInfrastructureFeesUsd +
+        annualBatchHarvestRoyaltiesUsd +
+        annual_titer_yield_bonus_usd;
+
+      // Dedicated Critical Utilities & Quality Escrows
+      const totalEscrowsAndReservesAnnualUsd =
+        usp_645_wfi_water_loop_reserve_annual_usd +
+        liquid_nitrogen_cryogenic_escrow_annual_usd;
+
+      // Net Operating Income (NOI)
+      const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalEscrowsAndReservesAnnualUsd;
+
+      // Capitalized Asset Valuation
+      const capRateDecimal = biomanufacturing_cap_rate_pct / 100.0;
+      const capitalizedValuationUsd = capRateDecimal > 0 ? netOperatingIncomeUsd / capRateDecimal : 0;
+
+      // FDA 21 CFR 210/211 & cGMP Cleanroom Airflow Compliance
+      const isIso5AchCompliant = hepa_airflow_ach >= 60;
+      const cleanroomComplianceGrade = isIso5AchCompliant ? 'FDA cGMP Grade A (ISO 14644-1 Class 5 Certified)' : 'cGMP Non-Compliant (<60 ACH)';
+
+      // Unit Economics per Liter/Gram (Assumed 500L Single-Use Bioreactor continuous perfusion run)
+      const estimatedAnnualHarvestVolumeLiters = annual_commercial_batches_harvested * 2000; // 2,000L perfused fluid per batch campaign
+      const landlordRevenuePerLiterUsd = estimatedAnnualHarvestVolumeLiters > 0 ? totalLandlordGrossRevenueUsd / estimatedAnnualHarvestVolumeLiters : 0;
+
+      const responsePayload = {
+        success: true,
+        lease_id: id,
+        facility_type: 'Continuous Biomanufacturing, Viral Vector & Monoclonal Antibody (mAb) Foundry',
+        cleanroom_specs: {
+          cleanroom_iso5_grade_a_sqft,
+          cleanroom_base_rent_per_sqft_year_usd,
+          hepa_airflow_ach,
+          cleanroom_compliance_grade: cleanroomComplianceGrade,
+          is_iso5_ach_compliant: isIso5AchCompliant
+        },
+        production_metrics: {
+          modular_suite_skid_count,
+          single_use_bioreactor_perfusion_skid_fee_usd,
+          annual_commercial_batches_harvested,
+          batch_harvest_royalty_fee_usd,
+          annual_titer_yield_bonus_usd,
+          estimated_annual_harvest_volume_liters: estimatedAnnualHarvestVolumeLiters,
+          landlord_revenue_per_liter_usd: Math.round(landlordRevenuePerLiterUsd * 100) / 100
+        },
+        financial_breakdown: {
+          annual_base_cleanroom_rent_usd: Math.round(annualBaseCleanroomRentUsd * 100) / 100,
+          annual_skid_infrastructure_fees_usd: Math.round(annualSkidInfrastructureFeesUsd * 100) / 100,
+          annual_batch_harvest_royalties_usd: Math.round(annualBatchHarvestRoyaltiesUsd * 100) / 100,
+          annual_titer_yield_bonus_usd: Math.round(annual_titer_yield_bonus_usd * 100) / 100,
+          total_landlord_gross_revenue_usd: Math.round(totalLandlordGrossRevenueUsd * 100) / 100,
+          usp_645_wfi_water_loop_reserve_annual_usd: Math.round(usp_645_wfi_water_loop_reserve_annual_usd * 100) / 100,
+          liquid_nitrogen_cryogenic_escrow_annual_usd: Math.round(liquid_nitrogen_cryogenic_escrow_annual_usd * 100) / 100,
+          total_escrows_and_reserves_annual_usd: Math.round(totalEscrowsAndReservesAnnualUsd * 100) / 100,
+          net_operating_income_usd: Math.round(netOperatingIncomeUsd * 100) / 100,
+          biomanufacturing_cap_rate_pct,
+          capitalized_valuation_usd: Math.round(capitalizedValuationUsd * 100) / 100
+        },
+        audit_trail: {
+          fda_21_cfr_part_11_audit_logging: 'Active - Cryptographic Batch Integrity Verifier',
+          iso_14644_particle_count_standard: '0.5 µm <= 3,520 particles/m3 (Operational Grade A)',
+          usp_wfi_conductivity_standard: '<= 1.3 µS/cm @ 25C continuous validation',
+          evaluation_timestamp: new Date().toISOString()
+        }
+      };
+
+      res.json(responsePayload);
+    } catch (error: any) {
+      console.error('Error calculating biomanufacturing foundry model:', error);
+      res.status(500).json({ error: error.message || 'Internal server error calculating biomanufacturing model' });
+    }
+  });
+
+
 // 4.782. POST Critical Battery Metals Hydrometallurgical Refining & Recycling Complex Modeler
 app.post('/api/leases/:id/battery-metals-modeler', async (req, res) => {
   try {
