@@ -978,9 +978,28 @@ export default function LeaseLogicApp() {
   const [fusionCapRatePct, setFusionCapRatePct] = useState(6.25);
   const [fusionData, setFusionData] = useState<any>(null);
   const [loadingFusion, setLoadingFusion] = useState(false);
+// Critical Battery Metals Hydrometallurgical Refining & Recycling Complex state
+  const [bmCapacityTpy, setBmCapacityTpy] = useState(35000);
+  const [bmSpodumeneTpy, setBmSpodumeneTpy] = useState(120000);
+  const [bmFootprintAcres, setBmFootprintAcres] = useState(55);
+  const [bmGroundRentAcre, setBmGroundRentAcre] = useState(26000);
+  const [bmHazmatEasement, setBmHazmatEasement] = useState(380000);
+  const [bmTollRateTon, setBmTollRateTon] = useState(280.00);
+  const [bmTakeOrPayPct, setBmTakeOrPayPct] = useState(80.0);
+  const [bmProcessedTpy, setBmProcessedTpy] = useState(31500);
+  const [bmThroughputRoyaltyPct, setBmThroughputRoyaltyPct] = useState(2.5);
+  const [bmLithiumOutputTpy, setBmLithiumOutputTpy] = useState(6800);
+  const [bmLithiumPriceTon, setBmLithiumPriceTon] = useState(18500);
+  const [bmLithiumRoyaltyPct, setBmLithiumRoyaltyPct] = useState(1.5);
+  const [bmIra30dCompliancePct, setBmIra30dCompliancePct] = useState(85.0);
+  const [bmZldReserve, setBmZldReserve] = useState(420000);
+  const [bmSxScrubberReserve, setBmSxScrubberReserve] = useState(310000);
+  const [bmCapRatePct, setBmCapRatePct] = useState(6.5);
+  const [bmData, setBmData] = useState<any>(null);
+  const [loadingBm, setLoadingBm] = useState(false);
 
-  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power'>('abstract');
+  // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals'
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals'>('abstract');
 
 
 
@@ -3127,6 +3146,45 @@ export default function LeaseLogicApp() {
       setLoadingFusion(false);
     }
   };
+  // Run Critical Battery Metals Refining & Recycling Modeler
+  const handleRunBatteryMetals = async () => {
+    if (!selectedLease) return;
+    setLoadingBm(true);
+    try {
+      const res = await fetch(`${API_BASE}/leases/${selectedLease.id}/battery-metals-modeler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          black_mass_refining_capacity_tpy: bmCapacityTpy,
+          spodumene_concentrate_input_tpy: bmSpodumeneTpy,
+          facility_site_footprint_acres: bmFootprintAcres,
+          plant_ground_rent_per_acre_year_usd: bmGroundRentAcre,
+          hazardous_hazmat_easement_annual_usd: bmHazmatEasement,
+          black_mass_refining_toll_rate_per_ton_usd: bmTollRateTon,
+          minimum_take_or_pay_throughput_pct: bmTakeOrPayPct,
+          actual_black_mass_processed_tpy: bmProcessedTpy,
+          landlord_throughput_royalty_pct: bmThroughputRoyaltyPct,
+          battery_grade_lithium_carbonate_output_tpy: bmLithiumOutputTpy,
+          lithium_sales_price_per_ton_usd: bmLithiumPriceTon,
+          landlord_lithium_sales_royalty_pct: bmLithiumRoyaltyPct,
+          ira_30d_domestic_sourcing_compliance_pct: bmIra30dCompliancePct,
+          zero_liquid_discharge_zld_reserve_annual_usd: bmZldReserve,
+          solvent_extraction_fire_scrubber_reserve_annual_usd: bmSxScrubberReserve,
+          battery_metals_cap_rate_pct: bmCapRatePct
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBmData(data);
+      }
+    } catch (err) {
+      console.error('Error running Battery Metals modeler:', err);
+    } finally {
+      setLoadingBm(false);
+    }
+  };
+
+
 
 
 
@@ -7389,6 +7447,9 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'fusion_power' ? 'active' : ''}`} onClick={() => { setActiveTab('fusion_power'); handleRunFusionPower(); }}>
                   ⚛️ Fusion Power Campus
+                </div>
+                <div className={`tab ${activeTab === 'battery_metals' ? 'active' : ''}`} onClick={() => { setActiveTab('battery_metals'); handleRunBatteryMetals(); }}>
+                  🔋 Battery Metals Complex
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -17828,6 +17889,264 @@ export default function LeaseLogicApp() {
                           </thead>
                           <tbody>
                             {fusionData.fusion_compliance_audit?.map((item: any, idx: number) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                                <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
+                                <td style={{ padding: '10px' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    background: item.status.startsWith('PASS') ? '#dcfce7' : '#fef3c7',
+                                    color: item.status.startsWith('PASS') ? '#15803d' : '#b45309'
+                                  }}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{item.standard}</td>
+                                <td style={{ padding: '10px', color: 'var(--foreground)' }}>{item.finding}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                            ) : activeTab === 'battery_metals' ? (
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        🔋 Critical Battery Metals Hydrometallurgical Refining & Recycling Complex Modeler
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Underwrite closed-loop battery black mass and spodumene hydrometallurgical refining facilities, take-or-pay OEM tolling contracts ($/ton), battery-grade lithium carbonate (Li2CO3) sales royalties, IRA Section 30D/45X domestic content sourcing, and zero liquid discharge (ZLD) environmental reserves.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunBatteryMetals}
+                      disabled={loadingBm}
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {loadingBm ? 'Underwriting Refining...' : '🔋 Model Battery Metals Plant'}
+                    </button>
+                  </div>
+
+                  {/* Inputs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Black Mass Cap (t/Yr)</label>
+                      <input
+                        type="number"
+                        value={bmCapacityTpy}
+                        onChange={(e) => setBmCapacityTpy(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Actual Processed (t/Yr)</label>
+                      <input
+                        type="number"
+                        value={bmProcessedTpy}
+                        onChange={(e) => setBmProcessedTpy(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Tolling Rate ($/Ton)</label>
+                      <input
+                        type="number"
+                        step="5"
+                        value={bmTollRateTon}
+                        onChange={(e) => setBmTollRateTon(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Take-or-Pay Floor (%)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={bmTakeOrPayPct}
+                        onChange={(e) => setBmTakeOrPayPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Site Footprint (Acres)</label>
+                      <input
+                        type="number"
+                        value={bmFootprintAcres}
+                        onChange={(e) => setBmFootprintAcres(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Ground Rent ($/Acre/Yr)</label>
+                      <input
+                        type="number"
+                        value={bmGroundRentAcre}
+                        onChange={(e) => setBmGroundRentAcre(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Hazmat Easement ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={bmHazmatEasement}
+                        onChange={(e) => setBmHazmatEasement(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Throughput Royalty (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={bmThroughputRoyaltyPct}
+                        onChange={(e) => setBmThroughputRoyaltyPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Li2CO3 Output (t/Yr)</label>
+                      <input
+                        type="number"
+                        value={bmLithiumOutputTpy}
+                        onChange={(e) => setBmLithiumOutputTpy(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Lithium Price ($/Ton)</label>
+                      <input
+                        type="number"
+                        value={bmLithiumPriceTon}
+                        onChange={(e) => setBmLithiumPriceTon(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Lithium Royalty (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={bmLithiumRoyaltyPct}
+                        onChange={(e) => setBmLithiumRoyaltyPct(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>ZLD Water Reserve ($/Yr)</label>
+                      <input
+                        type="number"
+                        value={bmZldReserve}
+                        onChange={(e) => setBmZldReserve(Number(e.target.value))}
+                        style={{ width: '100%', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Results Section */}
+                  {bmData && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Metric Highlights */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                        <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '8px', border: '1px solid #10b981' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>Landlord Net Operating Income</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#065f46', marginTop: '4px' }}>
+                            ${bmData.net_operating_income_usd?.toLocaleString()} / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#059669' }}>After ${bmData.total_environmental_reserves_annual_usd?.toLocaleString()} ZLD/SX reserves</span>
+                        </div>
+
+                        <div style={{ background: '#eff6ff', padding: '16px', borderRadius: '8px', border: '1px solid #3b82f6' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: 600 }}>Refining Complex Valuation</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>
+                            ${(bmData.battery_metals_valuation_usd / 1e6)?.toFixed(2)}M
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>Cap Rate @ {bmData.battery_metals_cap_rate_pct}%</span>
+                        </div>
+
+                        <div style={{ background: '#fdf4ff', padding: '16px', borderRadius: '8px', border: '1px solid #c084fc' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#7e22ce', fontWeight: 600 }}>Take-or-Pay Tolling Floor</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6b21a8', marginTop: '4px' }}>
+                            ${(bmData.guaranteed_take_or_pay_tolling_usd / 1e6)?.toFixed(2)}M / yr
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#9333ea' }}>{bmData.minimum_take_or_pay_throughput_pct}% volume commitment</span>
+                        </div>
+
+                        <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #f59e0b' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>IRA 30D / 45X Compliance</span>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#92400e', marginTop: '4px' }}>
+                            {bmData.ira_30d_domestic_sourcing_compliance_pct}% Domestic Content
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#d97706' }}>Full $3,750 EV credit eligibility</span>
+                        </div>
+                      </div>
+
+                      {/* Revenue Streams Card */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          📊 Landlord Metals Processing Revenue Breakdown
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Base Plant & Hazmat Ground Lease</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#1d4ed8' }}>
+                              ${bmData.total_base_terminal_rent_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{bmData.facility_site_footprint_acres} acres plant + hazmat easement</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Black Mass Tolling Royalty</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#047857' }}>
+                              ${bmData.landlord_tolling_royalty_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{bmThroughputRoyaltyPct}% of ${(bmData.annual_gross_tolling_revenue_usd / 1e6)?.toFixed(2)}M processing fees</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Battery Lithium Sales Royalty</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#b45309' }}>
+                              ${bmData.landlord_lithium_royalty_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{bmLithiumRoyaltyPct}% of ${(bmData.annual_gross_lithium_sales_usd / 1e6)?.toFixed(2)}M Li2CO3 sales</div>
+                          </div>
+
+                          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>ZLD & Environmental Escrows</div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginTop: '2px', color: '#7e22ce' }}>
+                              ${bmData.total_environmental_reserves_annual_usd?.toLocaleString()}/yr
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ZLD water crystallizer + SX scrubber escrow</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Compliance Audit Table */}
+                      <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--foreground)' }}>
+                          🛡️ IRA Section 30D/45X & EPA Environmental Permitting Audit
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '8px 10px' }}>Metallurgical Standard</th>
+                              <th style={{ padding: '8px 10px' }}>Status</th>
+                              <th style={{ padding: '8px 10px' }}>Regulatory Criteria</th>
+                              <th style={{ padding: '8px 10px' }}>Engineering Verification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {bmData.battery_metals_compliance_audit?.map((item: any, idx: number) => (
                               <tr key={idx} style={{ borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
                                 <td style={{ padding: '10px', fontWeight: 600 }}>{item.metric}</td>
                                 <td style={{ padding: '10px' }}>
