@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { SemiconductorFabView, QuantumCryogenicView, SubseaClsView, SatelliteTeleportView } from '@/components/Phase28Modelers';
+import { MODULE_CATEGORIES, MODULE_REGISTRY, ModuleCategory, ModuleCommandPaletteModal, InfrastructureRollupView } from '@/components/InfrastructureCommandCenter';
 
 interface Lease {
   id: string;
@@ -59,7 +61,7 @@ export default function LeaseLogicApp() {
   const [cmbsTapeData, setCmbsTapeData] = useState<any>(null);
   const [loadingCmbsTape, setLoadingCmbsTape] = useState(false);
 
-  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration' | 'dispatcher' | 'credit_monitor' | 'dscr_monitor' | 'cmbs_tape'>('workspace');
+  const [currentView, setCurrentView] = useState<'workspace' | 'observability' | 'compliance' | 'timeline' | 'benchmark' | 'risk' | 'stacking' | 'compare' | 'anomalies' | 'stresstest' | 'concentration' | 'dispatcher' | 'credit_monitor' | 'dscr_monitor' | 'cmbs_tape' | 'infra_rollup'>('workspace');
   
   // Notification Dispatcher state
   const [dispatchData, setDispatchData] = useState<any>(null);
@@ -1028,7 +1030,7 @@ export default function LeaseLogicApp() {
   const [loadingAf, setLoadingAf] = useState(false);
 
   // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry' | 'autonomous_freight'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry' | 'autonomous_freight'>('abstract');
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry' | 'autonomous_freight' | 'semiconductor_fab' | 'quantum_cryogenic' | 'subsea_cls' | 'satellite_teleport'>('abstract');
 
 
 
@@ -1062,6 +1064,102 @@ export default function LeaseLogicApp() {
   const [automationSuccess, setAutomationSuccess] = useState<string | null>(null);
 
   const API_BASE = 'http://localhost:5000/api';
+
+  // Phase 28 Option B: Command Palette & Category Filter State
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [selectedModuleCategory, setSelectedModuleCategory] = useState<ModuleCategory>('All');
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  const handleJumpToModule = (moduleId: string) => {
+    setCurrentView('workspace');
+    setActiveTab(moduleId as any);
+    const dispatchMap: Record<string, () => void> = {
+      cam_audit: handleRunCamAudit,
+      esg: handleFetchEsgAudit,
+      negotiation: handleGenerateCounterOffer,
+      sublease: handleRunSubleaseAnalysis,
+      accounting: handleRunLeaseAccounting,
+      strategy: handleRunRenewalStrategy,
+      spatial: handleFetchSpatialAnalytics,
+      approvals: handleFetchApprovalWorkflow,
+      carbon: handleFetchCarbonEmissions,
+      buyout: handleRunBuyoutOptimizer,
+      drafter: handleRunClauseDrafter,
+      inflation: handleRunInflationSimulator,
+      regulatory: handleFetchRegulatoryAudit,
+      restructure: handleRunRestructureWorkout,
+      cam_dispute: handleRunCamDisputeAudit,
+      tax_calc: handleRunInternationalTaxCalc,
+      carbon_marketplace: handleRunCarbonMarketplace,
+      coi_audit: handleFetchCoiAudit,
+      fitout_estimator: handleRunFitoutEstimator,
+      sublease_royalty: handleFetchSubleaseRoyalty,
+      zoning_screener: handleRunZoningScreener,
+      demand_response: handleRunDemandResponse,
+      industrial_logistics: handleRunIndustrialLogistics,
+      ev_charging: handleRunEvCharging,
+      climate_risk: handleFetchClimateRisk,
+      iot_occupancy: handleRunIotOccupancy,
+      estoppel_waiver: handleFetchEstoppel,
+      version_diff: handleRunVersionDiff,
+      solar_bess: handleRunSolarBess,
+      bms_diagnostics: handleRunBmsDiagnostics,
+      break_optimizer: handleRunBreakOptimizer,
+      lab_compliance: handleRunLabCompliance,
+      cmbs_debt: handleRunCmbsTester,
+      water_leak: handleRunWaterSubmetering,
+      argus_dcf: handleRunArgusDcf,
+      ev_microgrid: handleRunEvMicrogrid,
+      construction_delay: handleRunConstructionDelay,
+      cold_storage: handleRunColdStorage,
+      syndication_waterfall: handleRunSyndicationWaterfall,
+      datacenter_pue: handleRunDatacenterPue,
+      mob_compliance: handleRunMobCompliance,
+      cool_roof_uhi: handleRunCoolRoofUhi,
+      abandonment_recovery: handleRunAbandonmentRecovery,
+      geothermal_gshp: handleRunGeothermalGshp,
+      condemnation_taking: handleRunCondemnationTaking,
+      vertiport_aam: handleRunVertiportAam,
+      agrivoltaics_ground_lease: handleRunAgrivoltaics,
+      port_ftz_logistics: handleRunPortFtz,
+      telecom_5g: handleRunTelecom5g,
+      film_soundstage: handleRunFilmSoundstage,
+      brownfield_remediation: handleRunBrownfield,
+      port_terminal: handleRunPortTerminal,
+      cea_farm: handleRunCeaFarm,
+      self_storage: handleRunSelfStorage,
+      aviation_fbo: handleRunAviationFbo,
+      hyperscale_ai: handleRunHyperscaleAi,
+      radiopharmacy: handleRunRadiopharmacy,
+      theme_park: handleRunThemePark,
+      hsr_station: handleRunHsrStation,
+      grid_bess: handleRunGridBess,
+      desalination_swro: handleRunDesalination,
+      stadium_arena: handleRunStadiumArena,
+      spaceport_launch: handleRunSpaceportLaunch,
+      nuclear_smr: handleRunNuclearSmr,
+      green_hydrogen: handleRunGreenHydrogen,
+      dac_carbon_hub: handleRunDacCarbonHub,
+      offshore_wind_port: handleRunOffshoreWindPort,
+      fusion_power: handleRunFusionPower,
+      battery_metals: handleRunBatteryMetals,
+      biomanufacturing_foundry: handleRunBiomanufacturingFoundry,
+      autonomous_freight: handleRunAutonomousFreight,
+      hospitality_revpar: handleRunHospitality
+    };
+    const fn = dispatchMap[moduleId];
+    if (fn) fn();
+  };
 
   // Fetch Leases (with optional property filter)
   const fetchLeases = async (propertyFilter?: string) => {
@@ -4832,6 +4930,13 @@ export default function LeaseLogicApp() {
             onClick={() => { setCurrentView('cmbs_tape'); handleFetchCmbsTape(); }}
           >
             💼 CMBS
+          </button>
+          <button 
+            className={`btn ${currentView === 'infra_rollup' ? '' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '8px 1px', fontSize: '0.65rem', borderRadius: '6px' }}
+            onClick={() => setCurrentView('infra_rollup')}
+          >
+            🏛️ Rollup
           </button>
         </div>
 
@@ -7111,6 +7216,13 @@ export default function LeaseLogicApp() {
               </div>
             </div>
           </div>
+        ) : currentView === 'infra_rollup' ? (
+          <InfrastructureRollupView
+            leaseId={selectedLease?.id}
+            leaseName={selectedLease?.property_name || selectedLease?.filename}
+            apiBase={API_BASE}
+            onNavigateToModule={handleJumpToModule}
+          />
         ) : (
           <div className="dashboard-grid">
             {/* Split Screen Left: Terms Abstract */}
@@ -7322,7 +7434,59 @@ export default function LeaseLogicApp() {
 
             {/* Split Screen Right: Explorer / Chat / Schedule */}
             <div className="pane">
-              <div className="tabs">
+                            {/* Phase 28 Option B: Category Filter Strip & Ctrl+K Command Palette */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {MODULE_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedModuleCategory(cat)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        border: selectedModuleCategory === cat ? '1px solid var(--primary)' : '1px solid rgba(15,23,42,0.12)',
+                        background: selectedModuleCategory === cat ? 'var(--primary)' : '#ffffff',
+                        color: selectedModuleCategory === cat ? '#ffffff' : 'var(--text-muted)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button
+                    onClick={() => setCurrentView('infra_rollup')}
+                    className="btn btn-secondary"
+                    style={{ padding: '5px 10px', fontSize: '0.74rem' }}
+                  >
+                    🏛️ Portfolio Rollup
+                  </button>
+                  <button
+                    onClick={() => setCommandPaletteOpen(true)}
+                    className="btn btn-primary"
+                    style={{ padding: '5px 12px', fontSize: '0.74rem' }}
+                  >
+                    🔍 Jump ({MODULE_REGISTRY.length}) &bull; Ctrl+K
+                  </button>
+                </div>
+              </div>
+              {selectedModuleCategory !== 'All' && (
+                <div className="tabs" style={{ marginBottom: '10px' }}>
+                  {MODULE_REGISTRY.filter((m) => m.category === selectedModuleCategory).map((m) => (
+                    <div
+                      key={m.id}
+                      className={`tab ${activeTab === m.id ? 'active' : ''}`}
+                      onClick={() => handleJumpToModule(m.id)}
+                    >
+                      {m.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+<div className="tabs" style={{ display: selectedModuleCategory === 'All' ? undefined : 'none' }}>
                 <div className={`tab ${activeTab === 'abstract' ? 'active' : ''}`} onClick={() => setActiveTab('abstract')}>
                   Document Explorer
                 </div>
@@ -7550,6 +7714,18 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'autonomous_freight' ? 'active' : ''}`} onClick={() => { setActiveTab('autonomous_freight'); handleRunAutonomousFreight(); }}>
                   🚚 Autonomous Freight
+                </div>
+                <div className={`tab ${activeTab === 'semiconductor_fab' ? 'active' : ''}`} onClick={() => setActiveTab('semiconductor_fab')}>
+                  💎 Semiconductor EUV Fab
+                </div>
+                <div className={`tab ${activeTab === 'quantum_cryogenic' ? 'active' : ''}`} onClick={() => setActiveTab('quantum_cryogenic')}>
+                  ❄️ Quantum Cryogenic Vault
+                </div>
+                <div className={`tab ${activeTab === 'subsea_cls' ? 'active' : ''}`} onClick={() => setActiveTab('subsea_cls')}>
+                  🌊 Subsea Cable Landing (CLS)
+                </div>
+                <div className={`tab ${activeTab === 'satellite_teleport' ? 'active' : ''}`} onClick={() => setActiveTab('satellite_teleport')}>
+                  🌌 Satellite Teleport
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -18758,7 +18934,15 @@ export default function LeaseLogicApp() {
                     </div>
                   )}
                 </div>
-              ) : activeTab === 'hospitality_revpar' ? (
+                            ) : activeTab === 'semiconductor_fab' ? (
+                <SemiconductorFabView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+              ) : activeTab === 'quantum_cryogenic' ? (
+                <QuantumCryogenicView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+              ) : activeTab === 'subsea_cls' ? (
+                <SubseaClsView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+              ) : activeTab === 'satellite_teleport' ? (
+                <SatelliteTeleportView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+) : activeTab === 'hospitality_revpar' ? (
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
                   {/* Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -20981,6 +21165,12 @@ export default function LeaseLogicApp() {
           </div>
         )}
       </div>
+
+      <ModuleCommandPaletteModal
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onSelectModule={handleJumpToModule}
+      />
 
       {/* Cross-Lease Comparison Overlay Modal */}
       {isComparing && (
