@@ -8085,6 +8085,609 @@ app.post('/api/leases/:id/battery-metals-modeler', async (req, res) => {
   }
 });
 
+// =========================================================================
+// PHASE 28: Deep-Tech, Quantum, Semiconductor, Subsea & Portfolio Rollup
+// =========================================================================
+
+// 4.783. POST Semiconductor EUV Lithography & Advanced Packaging Fab Modeler
+app.post('/api/leases/:id/semiconductor-euv-fab-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      cleanroom_iso1_subfab_sqft = 120000,
+      cleanroom_base_rent_per_sqft_year_usd = 145.0,
+      euv_scanner_bays_count = 6,
+      euv_vibration_isolated_pedestal_fee_usd = 240000,
+      annual_wafer_starts_300mm = 420000,
+      wafer_start_royalty_fee_usd = 6.5,
+      upw_ultrapure_water_plant_concession_annual_usd = 1150000,
+      substation_power_capacity_mw = 95,
+      pfas_fluorinated_gas_abatement_escrow_annual_usd = 780000,
+      vib_isolation_floor_vc_rating = 'VC-G',
+      chips_act_48d_eligible_pct = 100,
+      semiconductor_cap_rate_pct = 6.25
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const annualBaseCleanroomRentUsd = Math.round(cleanroom_iso1_subfab_sqft * cleanroom_base_rent_per_sqft_year_usd);
+    const annualEuvPedestalFeesUsd = Math.round(euv_scanner_bays_count * euv_vibration_isolated_pedestal_fee_usd);
+    const annualWaferStartRoyaltiesUsd = Math.round(annual_wafer_starts_300mm * wafer_start_royalty_fee_usd);
+    const totalLandlordGrossRevenueUsd =
+      annualBaseCleanroomRentUsd +
+      annualEuvPedestalFeesUsd +
+      annualWaferStartRoyaltiesUsd +
+      upw_ultrapure_water_plant_concession_annual_usd;
+
+    const totalEnvironmentalReservesAnnualUsd = Math.round(pfas_fluorinated_gas_abatement_escrow_annual_usd);
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalEnvironmentalReservesAnnualUsd;
+    const capRateDecimal = semiconductor_cap_rate_pct / 100.0;
+    const semiconductorAssetValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const isVcGradeCompliant = ['VC-E', 'VC-F', 'VC-G', 'VC-H'].includes(String(vib_isolation_floor_vc_rating).toUpperCase());
+
+    const semiconductorComplianceAudit = [
+      {
+        metric: 'Ashrae/IEST Sub-Fab Micro-Vibration Criterion',
+        status: isVcGradeCompliant ? 'PASS_EUV_VIBRATION_ISOLATED' : 'WARN_SUBOPTIMAL_FLOOR_STIFFNESS',
+        standard: 'IEST-RP-CC012.2 >= VC-E (<= 3.1 µm/s RMS for 0.33NA/High-NA EUV)',
+        finding: `Reinforced waffle slab rated ${vib_isolation_floor_vc_rating} isolates ${euv_scanner_bays_count} High-NA EUV lithography pedestals from metro/highway seismic noise.`
+      },
+      {
+        metric: 'SEMI F75 Ultra-Pure Water (UPW) & Bulk Gas Plant',
+        status: upw_ultrapure_water_plant_concession_annual_usd >= 800000 ? 'PASS_UPW_RESISTIVITY_18_2_MOHM' : 'WARN_UPW_CONCESSION_LOW',
+        standard: '18.2 MOhm-cm @ 25C Resistivity, < 1 ppb TOC Closed-Loop Reclamation',
+        finding: `$${upw_ultrapure_water_plant_concession_annual_usd.toLocaleString()}/yr landlord UPW concession recovers 85% fab rinse water across ${substation_power_capacity_mw} MW critical substation.`
+      },
+      {
+        metric: 'EPA PFAS & Fluorinated GHG Point-of-Use Abatement',
+        status: pfas_fluorinated_gas_abatement_escrow_annual_usd >= 650000 ? 'PASS_SCRUBBER_ESCROW_FUNDED' : 'WARN_ABATEMENT_RESERVE_SHORTFALL',
+        standard: 'EPA NESHAP / EU F-Gas >= 99% Thermal Oxidation & Wet Scrubber Capture',
+        finding: `$${pfas_fluorinated_gas_abatement_escrow_annual_usd.toLocaleString()}/yr dedicated environmental escrow covers NF3/CF4 plasma chamber exhaust treatment.`
+      },
+      {
+        metric: 'CHIPS & Science Act Section 48D 25% Advanced Manufacturing ITC',
+        status: chips_act_48d_eligible_pct >= 80 ? 'PASS_CHIPS_48D_QUALIFIED' : 'WARN_CHIPS_48D_PARTIAL',
+        standard: 'IRC Section 48D Domestic Leading-Edge Wafer & Packaging Eligibility',
+        finding: `${chips_act_48d_eligible_pct}% shell & core facility basis qualifies for federal Section 48D direct-pay capital offset supporting ${annual_wafer_starts_300mm.toLocaleString()} annual 300mm wafer starts.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Semiconductor EUV Lithography & Packaging Fab',
+      cleanroom_iso1_subfab_sqft,
+      cleanroom_base_rent_per_sqft_year_usd,
+      annual_base_cleanroom_rent_usd: annualBaseCleanroomRentUsd,
+      euv_scanner_bays_count,
+      euv_vibration_isolated_pedestal_fee_usd,
+      annual_euv_pedestal_fees_usd: annualEuvPedestalFeesUsd,
+      annual_wafer_starts_300mm,
+      wafer_start_royalty_fee_usd,
+      annual_wafer_start_royalties_usd: annualWaferStartRoyaltiesUsd,
+      upw_ultrapure_water_plant_concession_annual_usd,
+      substation_power_capacity_mw,
+      vib_isolation_floor_vc_rating,
+      chips_act_48d_eligible_pct,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      pfas_fluorinated_gas_abatement_escrow_annual_usd,
+      total_environmental_reserves_annual_usd: totalEnvironmentalReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      semiconductor_cap_rate_pct,
+      semiconductor_asset_valuation_usd: semiconductorAssetValuationUsd,
+      semiconductor_compliance_audit: semiconductorComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.784. POST Quantum Computing Cryogenic Dilution Vault & Photonic Node Modeler
+app.post('/api/leases/:id/quantum-cryogenic-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      shielded_cryostat_vault_sqft = 18000,
+      faraday_vault_base_rent_per_sqft_year_usd = 165.0,
+      dilution_fridge_bays_count = 12,
+      cryostat_bay_vibration_shield_fee_usd = 110000,
+      helium3_closed_loop_concession_annual_usd = 640000,
+      photonic_entanglement_fiber_strands = 48,
+      dark_fiber_iru_fee_per_strand_year_usd = 14500,
+      millikelvin_stage_temp_mk = 12,
+      rf_attenuation_db = 115,
+      helium_recovery_cryo_reserve_annual_usd = 320000,
+      nist_pqc_physical_security_escrow_annual_usd = 240000,
+      quantum_cap_rate_pct = 6.5
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const annualVaultBaseRentUsd = Math.round(shielded_cryostat_vault_sqft * faraday_vault_base_rent_per_sqft_year_usd);
+    const annualCryostatBayFeesUsd = Math.round(dilution_fridge_bays_count * cryostat_bay_vibration_shield_fee_usd);
+    const annualPhotonicFiberIruUsd = Math.round(photonic_entanglement_fiber_strands * dark_fiber_iru_fee_per_strand_year_usd);
+
+    const totalLandlordGrossRevenueUsd =
+      annualVaultBaseRentUsd +
+      annualCryostatBayFeesUsd +
+      helium3_closed_loop_concession_annual_usd +
+      annualPhotonicFiberIruUsd;
+
+    const totalOperatingReservesAnnualUsd = helium_recovery_cryo_reserve_annual_usd + nist_pqc_physical_security_escrow_annual_usd;
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = quantum_cap_rate_pct / 100.0;
+    const quantumAssetValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const quantumComplianceAudit = [
+      {
+        metric: 'Millikelvin Mixing-Chamber Thermal Stability',
+        status: millikelvin_stage_temp_mk <= 15 ? 'PASS_SUB_15MK_COHERENCE' : 'WARN_THERMAL_DECOHERENCE_RISK',
+        standard: '<= 15 mK Continuous Dilution Refrigerator Stage Operating Envelope',
+        finding: `${millikelvin_stage_temp_mk} mK steady-state mixing chamber across ${dilution_fridge_bays_count} suspended cryostat bays preserves superconducting qubit T1/T2 coherence.`
+      },
+      {
+        metric: 'MIL-STD-188-125 Mu-Metal & Faraday Cage EMI Shielding',
+        status: rf_attenuation_db >= 100 ? 'PASS_FARADAY_ATTENUATION_VERIFIED' : 'WARN_RF_LEAKAGE_DETECTED',
+        standard: '>= 100 dB Electromagnetic Attenuation (10 kHz - 40 GHz)',
+        finding: `${rf_attenuation_db} dB multi-layer copper/mu-metal shielding protects microwave control lines from ambient cellular and radar stray RF.`
+      },
+      {
+        metric: 'Closed-Cycle Helium-3 / Helium-4 Boil-Off Capture',
+        status: helium_recovery_cryo_reserve_annual_usd >= 250000 ? 'PASS_HELIUM_RECOVERY_ADEQUATE' : 'WARN_CRYOGEN_LOSS_EXPOSURE',
+        standard: '>= $250,000/yr Gas-Handling Compressor & Liquefier Maintenance Escrow',
+        finding: `$${helium_recovery_cryo_reserve_annual_usd.toLocaleString()}/yr sinking fund supports 99.4% closed-loop He-3/He-4 isotope recapture.`
+      },
+      {
+        metric: 'NIST PQC & SCIF Physical Key-Custody Security',
+        status: nist_pqc_physical_security_escrow_annual_usd >= 200000 ? 'PASS_NIST_800_53_HIGH_SECURED' : 'WARN_PHYSICAL_SECURITY_DEFICIT',
+        standard: 'NIST SP 800-53 High / SCIF Acoustic & Fiber-Tap Tamper Perimeter',
+        finding: `$${nist_pqc_physical_security_escrow_annual_usd.toLocaleString()}/yr security escrow funds biometric mantraps and ${photonic_entanglement_fiber_strands}-strand hollow-core photonic trunks.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Quantum Computing Cryogenic Vault & Photonic Node',
+      shielded_cryostat_vault_sqft,
+      faraday_vault_base_rent_per_sqft_year_usd,
+      annual_vault_base_rent_usd: annualVaultBaseRentUsd,
+      dilution_fridge_bays_count,
+      cryostat_bay_vibration_shield_fee_usd,
+      annual_cryostat_bay_fees_usd: annualCryostatBayFeesUsd,
+      helium3_closed_loop_concession_annual_usd,
+      photonic_entanglement_fiber_strands,
+      dark_fiber_iru_fee_per_strand_year_usd,
+      annual_photonic_fiber_iru_usd: annualPhotonicFiberIruUsd,
+      millikelvin_stage_temp_mk,
+      rf_attenuation_db,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      helium_recovery_cryo_reserve_annual_usd,
+      nist_pqc_physical_security_escrow_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      quantum_cap_rate_pct,
+      quantum_asset_valuation_usd: quantumAssetValuationUsd,
+      quantum_compliance_audit: quantumComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.785. POST Subsea Transoceanic Fiber Cable Landing Station (CLS) & Meet-Me-Room Modeler
+app.post('/api/leases/:id/subsea-cable-cls-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      cls_facility_sqft = 32000,
+      cls_base_rent_per_sqft_year_usd = 92.0,
+      subsea_borehole_conduits_count = 6,
+      borehole_beach_easement_annual_fee_usd = 285000,
+      mmr_cross_connects_count = 450,
+      cross_connect_monthly_mrc_usd = 325,
+      pfe_high_voltage_dc_feed_capacity_kw = 2400,
+      pfe_rack_tariff_per_kw_month_usd = 195.0,
+      coastal_storm_hardening_reserve_annual_usd = 410000,
+      diesel_bess_72hr_autonomy_escrow_annual_usd = 275000,
+      coastal_elevation_above_mhhw_feet = 24,
+      cls_cap_rate_pct = 5.75
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const annualClsBaseRentUsd = Math.round(cls_facility_sqft * cls_base_rent_per_sqft_year_usd);
+    const annualBoreholeEasementUsd = Math.round(subsea_borehole_conduits_count * borehole_beach_easement_annual_fee_usd);
+    const annualMmrCrossConnectUsd = Math.round(mmr_cross_connects_count * cross_connect_monthly_mrc_usd * 12);
+    const annualPfePowerFeedUsd = Math.round(pfe_high_voltage_dc_feed_capacity_kw * pfe_rack_tariff_per_kw_month_usd * 12);
+
+    const totalLandlordGrossRevenueUsd =
+      annualClsBaseRentUsd +
+      annualBoreholeEasementUsd +
+      annualMmrCrossConnectUsd +
+      annualPfePowerFeedUsd;
+
+    const totalResilienceReservesAnnualUsd = coastal_storm_hardening_reserve_annual_usd + diesel_bess_72hr_autonomy_escrow_annual_usd;
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalResilienceReservesAnnualUsd;
+    const capRateDecimal = cls_cap_rate_pct / 100.0;
+    const clsAssetValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const clsComplianceAudit = [
+      {
+        metric: 'FEMA Zone VE Coastal Surge & HDD Borehole Elevation',
+        status: coastal_elevation_above_mhhw_feet >= 20 ? 'PASS_FLOOD_IMMUNE_ELEVATION' : 'WARN_SURGE_EXPOSURE_BELOW_20FT',
+        standard: '>= 20 ft Above Mean Higher High Water (MHHW) + Directional Drilled Beach Manhole',
+        finding: `Finished floor elevation of +${coastal_elevation_above_mhhw_feet} ft MHHW protects ${subsea_borehole_conduits_count} armored submarine trunk boreholes against Category 5 storm surge.`
+      },
+      {
+        metric: 'FCC Submarine Cable Landing License (47 CFR §1.767)',
+        status: 'PASS_FCC_LANDING_LICENSE_ACTIVE',
+        standard: 'Team Telecom / FCC §1.767 Physical Access & Open-Access Compliance',
+        finding: `Carrier-neutral Meet-Me-Room supports ${mmr_cross_connects_count} diverse hyperscale/carrier optical cross-connects under strict access telemetry.`
+      },
+      {
+        metric: 'High-Voltage Power Feed Equipment (PFE) DC Bus Redundancy',
+        status: pfe_high_voltage_dc_feed_capacity_kw >= 1500 ? 'PASS_2N_PFE_CAPACITY_VERIFIED' : 'WARN_PFE_POWER_MARGIN_TIGHT',
+        standard: '>= 1,500 kW Isolated 10kV–15kV DC Repeater Line Powering',
+        finding: `${pfe_high_voltage_dc_feed_capacity_kw.toLocaleString()} kW PFE bus delivers uninterrupted repeater voltage across transoceanic wet-plant segments.`
+      },
+      {
+        metric: '72-Hour Black-Start Diesel + BESS Fuel Autonomy Reserve',
+        status: diesel_bess_72hr_autonomy_escrow_annual_usd >= 225000 ? 'PASS_AUTONOMY_RESERVE_FUNDED' : 'WARN_AUTONOMY_ESCROW_LOW',
+        standard: '>= 72 Hours Unrefueled Microgrid Operation Post-Grid Outage',
+        finding: `$${(totalResilienceReservesAnnualUsd / 1e3).toFixed(0)}k/yr combined hardening & generator reserve ensures Tier IV continuous optical termination.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Subsea Cable Landing Station & MMR Hub',
+      cls_facility_sqft,
+      cls_base_rent_per_sqft_year_usd,
+      annual_cls_base_rent_usd: annualClsBaseRentUsd,
+      subsea_borehole_conduits_count,
+      borehole_beach_easement_annual_fee_usd,
+      annual_borehole_easement_usd: annualBoreholeEasementUsd,
+      mmr_cross_connects_count,
+      cross_connect_monthly_mrc_usd,
+      annual_mmr_cross_connect_usd: annualMmrCrossConnectUsd,
+      pfe_high_voltage_dc_feed_capacity_kw,
+      pfe_rack_tariff_per_kw_month_usd,
+      annual_pfe_power_feed_usd: annualPfePowerFeedUsd,
+      coastal_elevation_above_mhhw_feet,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      coastal_storm_hardening_reserve_annual_usd,
+      diesel_bess_72hr_autonomy_escrow_annual_usd,
+      total_resilience_reserves_annual_usd: totalResilienceReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      cls_cap_rate_pct,
+      cls_asset_valuation_usd: clsAssetValuationUsd,
+      cls_compliance_audit: clsComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.786. POST Satellite Ground-Segment, Phased-Array Teleport & Optical Downlink Modeler
+app.post('/api/leases/:id/satellite-teleport-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      teleport_campus_acres = 30,
+      antenna_pad_ground_rent_per_acre_year_usd = 29000,
+      phased_array_radomes_count = 14,
+      radome_pad_license_fee_annual_usd = 145000,
+      optical_fsoc_domes_count = 4,
+      optical_dome_concession_annual_usd = 320000,
+      annual_satellite_pass_minutes = 1850000,
+      downlink_royalty_per_pass_minute_usd = 0.85,
+      rf_quiet_zone_buffer_easement_annual_usd = 460000,
+      fcc_ntia_spectrum_coordination_escrow_annual_usd = 195000,
+      pedestal_maintenance_deicing_reserve_annual_usd = 240000,
+      clear_sky_optical_availability_pct = 96.8,
+      teleport_cap_rate_pct = 6.25
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const annualGroundLeaseRentUsd = Math.round(teleport_campus_acres * antenna_pad_ground_rent_per_acre_year_usd);
+    const annualRadomePadFeesUsd = Math.round(phased_array_radomes_count * radome_pad_license_fee_annual_usd);
+    const annualOpticalDomeConcessionUsd = Math.round(optical_fsoc_domes_count * optical_dome_concession_annual_usd);
+    const annualPassMinuteRoyaltiesUsd = Math.round(annual_satellite_pass_minutes * downlink_royalty_per_pass_minute_usd);
+
+    const totalLandlordGrossRevenueUsd =
+      annualGroundLeaseRentUsd +
+      annualRadomePadFeesUsd +
+      annualOpticalDomeConcessionUsd +
+      annualPassMinuteRoyaltiesUsd +
+      rf_quiet_zone_buffer_easement_annual_usd;
+
+    const totalOperatingReservesAnnualUsd = fcc_ntia_spectrum_coordination_escrow_annual_usd + pedestal_maintenance_deicing_reserve_annual_usd;
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = teleport_cap_rate_pct / 100.0;
+    const teleportAssetValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const teleportComplianceAudit = [
+      {
+        metric: 'FCC Part 25 / NTIA Ka-Q-V-Band Spectrum Coordination',
+        status: fcc_ntia_spectrum_coordination_escrow_annual_usd >= 150000 ? 'PASS_SPECTRUM_COORDINATION_CLEAR' : 'WARN_COORDINATION_ESCROW_LOW',
+        standard: 'FCC 47 CFR Part 25 Earth Station & ITU Ka/Q/V Coordination Registry',
+        finding: `$${fcc_ntia_spectrum_coordination_escrow_annual_usd.toLocaleString()}/yr coordination reserve clears non-geostationary LEO/MEO gateway frequency interference across ${phased_array_radomes_count} radomes.`
+      },
+      {
+        metric: 'Free-Space Optical (1550nm) Clear-Sky Site Diversity',
+        status: clear_sky_optical_availability_pct >= 94.0 ? 'PASS_HIGH_OPTICAL_AVAILABILITY' : 'WARN_CLOUD_ATTENUATION_RISK',
+        standard: '>= 94.0% Annual Cloud-Free Line-of-Sight for Multi-100Gbps Laser Downlinks',
+        finding: `${clear_sky_optical_availability_pct}% optical availability across ${optical_fsoc_domes_count} laser-comms domes supports ${annual_satellite_pass_minutes.toLocaleString()} annual pass minutes.`
+      },
+      {
+        metric: 'RF Quiet-Zone Berm & Backhaul Diversity Easement',
+        status: rf_quiet_zone_buffer_easement_annual_usd >= 350000 ? 'PASS_RF_QUIET_ZONE_PROTECTED' : 'WARN_ADJACENT_5G_INTERFERENCE',
+        standard: 'Perimeter RF Buffer Easement Isolating Terrestrial C-Band/Sub-6 Harmonic Noise',
+        finding: `$${rf_quiet_zone_buffer_easement_annual_usd.toLocaleString()}/yr adjacent parcel buffer lease secures clean horizon elevation angles down to 5 degrees.`
+      },
+      {
+        metric: 'Radome Pedestal Torque & Hydrophobic De-Icing Reserve',
+        status: pedestal_maintenance_deicing_reserve_annual_usd >= 200000 ? 'PASS_ALL_WEATHER_SLEW_READY' : 'WARN_PEDESTAL_RESERVE_DEFICIT',
+        standard: '>= $200,000/yr Radome Membrane & Dual-Axis Gimbal Sinking Fund',
+        finding: `$${pedestal_maintenance_deicing_reserve_annual_usd.toLocaleString()}/yr reserve guarantees 99.99% LEO satellite horizon-to-horizon tracking reliability.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Satellite Ground-Segment & Optical Teleport Campus',
+      teleport_campus_acres,
+      antenna_pad_ground_rent_per_acre_year_usd,
+      annual_ground_lease_rent_usd: annualGroundLeaseRentUsd,
+      phased_array_radomes_count,
+      radome_pad_license_fee_annual_usd,
+      annual_radome_pad_fees_usd: annualRadomePadFeesUsd,
+      optical_fsoc_domes_count,
+      optical_dome_concession_annual_usd,
+      annual_optical_dome_concession_usd: annualOpticalDomeConcessionUsd,
+      annual_satellite_pass_minutes,
+      downlink_royalty_per_pass_minute_usd,
+      annual_pass_minute_royalties_usd: annualPassMinuteRoyaltiesUsd,
+      rf_quiet_zone_buffer_easement_annual_usd,
+      clear_sky_optical_availability_pct,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      fcc_ntia_spectrum_coordination_escrow_annual_usd,
+      pedestal_maintenance_deicing_reserve_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      teleport_cap_rate_pct,
+      teleport_asset_valuation_usd: teleportAssetValuationUsd,
+      teleport_compliance_audit: teleportComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.787. POST Cross-Asset Infrastructure Portfolio Valuation Rollup & Stress-Test Engine
+app.post('/api/leases/:id/infrastructure-portfolio-rollup', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      cap_rate_shift_bps = 0,
+      escrow_inflation_pct = 0,
+      royalty_stress_pct = 100,
+      included_sectors
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Canonical baseline institutional underwriting slices across Phases 27-28 Frontier Infrastructure
+    const sectorBaselines = [
+      {
+        sector_id: 'fusion_power',
+        sector_name: 'Commercial Fusion Power & Magnet Campus',
+        phase: 'Phase 27',
+        base_fixed_rent_usd: 1530000 + 22800000, // ground + grid reservation = 24,330,000
+        royalty_stream_usd: Math.round(650000 * 95 * 0.03) + Math.round(8500000 * 0.05), // 2,277,500
+        base_reserves_usd: 480000 + 620000, // 1,100,000
+        base_cap_rate_pct: 6.25,
+        regulatory_framework: 'NRC 10 CFR Part 30 Non-Fission'
+      },
+      {
+        sector_id: 'battery_metals',
+        sector_name: 'Critical Battery Metals Refining Complex',
+        phase: 'Phase 27',
+        base_fixed_rent_usd: Math.round(55 * 26000) + 380000, // 1,810,000
+        royalty_stream_usd: Math.round(31500 * 280 * 0.025) + Math.round(6800 * 18500 * 0.015), // 2,107,500
+        base_reserves_usd: 420000 + 310000, // 730,000
+        base_cap_rate_pct: 6.50,
+        regulatory_framework: 'IRA §30D/45X & EPA Title V ZLD'
+      },
+      {
+        sector_id: 'biomanufacturing_foundry',
+        sector_name: 'Continuous Biomanufacturing & mAb Foundry',
+        phase: 'Phase 27',
+        base_fixed_rent_usd: (22000 * 115) + (6 * 85000), // 3,040,000
+        royalty_stream_usd: (48 * 42000) + 650000, // 2,666,000
+        base_reserves_usd: 380000 + 210000, // 590,000
+        base_cap_rate_pct: 6.75,
+        regulatory_framework: 'FDA 21 CFR 210/211 cGMP ISO 5'
+      },
+      {
+        sector_id: 'autonomous_freight',
+        sector_name: 'Autonomous Freight & MCS Charging Terminal',
+        phase: 'Phase 27',
+        base_fixed_rent_usd: (40 * 36000) + (8 * 12500 * 12), // 2,640,000
+        royalty_stream_usd: (42000 * 1000 * 0.045) + 580000, // 2,470,000
+        base_reserves_usd: 290000 + 180000, // 470,000
+        base_cap_rate_pct: 6.25,
+        regulatory_framework: 'FMCSA SAE L4 ODD & CharIN MCS'
+      },
+      {
+        sector_id: 'semiconductor_fab',
+        sector_name: 'Semiconductor EUV Lithography & Packaging Fab',
+        phase: 'Phase 28',
+        base_fixed_rent_usd: (120000 * 145) + (6 * 240000), // 18,840,000
+        royalty_stream_usd: Math.round(420000 * 6.5) + 1150000, // 3,880,000
+        base_reserves_usd: 780000,
+        base_cap_rate_pct: 6.25,
+        regulatory_framework: 'CHIPS Act §48D & IEST VC-G'
+      },
+      {
+        sector_id: 'quantum_cryogenic',
+        sector_name: 'Quantum Cryogenic Dilution Vault & Photonic Node',
+        phase: 'Phase 28',
+        base_fixed_rent_usd: (18000 * 165) + (12 * 110000), // 4,290,000
+        royalty_stream_usd: 640000 + (48 * 14500), // 1,336,000
+        base_reserves_usd: 320000 + 240000, // 560,000
+        base_cap_rate_pct: 6.50,
+        regulatory_framework: 'NIST SP 800-53 & MIL-STD-188-125'
+      },
+      {
+        sector_id: 'subsea_cls',
+        sector_name: 'Subsea Cable Landing Station & Meet-Me-Room',
+        phase: 'Phase 28',
+        base_fixed_rent_usd: (32000 * 92) + (6 * 285000), // 4,654,000
+        royalty_stream_usd: (450 * 325 * 12) + (2400 * 195 * 12), // 7,371,000
+        base_reserves_usd: 410000 + 275000, // 685,000
+        base_cap_rate_pct: 5.75,
+        regulatory_framework: 'FCC 47 CFR §1.767 & FEMA VE'
+      },
+      {
+        sector_id: 'satellite_teleport',
+        sector_name: 'Satellite Phased-Array Teleport & Optical Hub',
+        phase: 'Phase 28',
+        base_fixed_rent_usd: (30 * 29000) + (14 * 145000) + 460000, // 3,360,000
+        royalty_stream_usd: (4 * 320000) + Math.round(1850000 * 0.85), // 2,852,500
+        base_reserves_usd: 195000 + 240000, // 435,000
+        base_cap_rate_pct: 6.25,
+        regulatory_framework: 'FCC Part 25 & ITU Optical Diversity'
+      }
+    ];
+
+    const activeSectors = Array.isArray(included_sectors) && included_sectors.length > 0
+      ? sectorBaselines.filter((s) => included_sectors.includes(s.sector_id))
+      : sectorBaselines;
+
+    const royaltyFactor = Number(royalty_stress_pct) / 100.0;
+    const escrowMultiplier = 1.0 + Number(escrow_inflation_pct) / 100.0;
+    const capRateShiftPct = Number(cap_rate_shift_bps) / 100.0;
+
+    let totalBaselineGrossRevenueUsd = 0;
+    let totalBaselineReservesUsd = 0;
+    let totalBaselineNoiUsd = 0;
+    let totalBaselineValuationUsd = 0;
+
+    let totalStressedGrossRevenueUsd = 0;
+    let totalStressedReservesUsd = 0;
+    let totalStressedNoiUsd = 0;
+    let totalStressedValuationUsd = 0;
+
+    const sectorResults = activeSectors.map((sector) => {
+      const baseGross = sector.base_fixed_rent_usd + sector.royalty_stream_usd;
+      const baseNoi = baseGross - sector.base_reserves_usd;
+      const baseVal = Math.round(baseNoi / (sector.base_cap_rate_pct / 100.0));
+
+      const stressedRoyalty = Math.round(sector.royalty_stream_usd * royaltyFactor);
+      const stressedGross = sector.base_fixed_rent_usd + stressedRoyalty;
+      const stressedReserves = Math.round(sector.base_reserves_usd * escrowMultiplier);
+      const stressedNoi = stressedGross - stressedReserves;
+      const stressedCapRatePct = Math.max(1.0, Math.round((sector.base_cap_rate_pct + capRateShiftPct) * 100) / 100);
+      const stressedVal = Math.round(stressedNoi / (stressedCapRatePct / 100.0));
+      const valDeltaPct = baseVal > 0 ? Math.round(((stressedVal - baseVal) / baseVal) * 10000) / 100 : 0;
+
+      totalBaselineGrossRevenueUsd += baseGross;
+      totalBaselineReservesUsd += sector.base_reserves_usd;
+      totalBaselineNoiUsd += baseNoi;
+      totalBaselineValuationUsd += baseVal;
+
+      totalStressedGrossRevenueUsd += stressedGross;
+      totalStressedReservesUsd += stressedReserves;
+      totalStressedNoiUsd += stressedNoi;
+      totalStressedValuationUsd += stressedVal;
+
+      return {
+        sector_id: sector.sector_id,
+        sector_name: sector.sector_name,
+        phase: sector.phase,
+        regulatory_framework: sector.regulatory_framework,
+        baseline_gross_revenue_usd: baseGross,
+        baseline_noi_usd: baseNoi,
+        baseline_cap_rate_pct: sector.base_cap_rate_pct,
+        baseline_valuation_usd: baseVal,
+        stressed_gross_revenue_usd: stressedGross,
+        stressed_reserves_usd: stressedReserves,
+        stressed_noi_usd: stressedNoi,
+        stressed_cap_rate_pct: stressedCapRatePct,
+        stressed_valuation_usd: stressedVal,
+        valuation_delta_pct: valDeltaPct,
+        reserve_coverage_ratio: stressedReserves > 0 ? Math.round((stressedGross / stressedReserves) * 100) / 100 : 0
+      };
+    });
+
+    const blendedBaselineCapRatePct = totalBaselineValuationUsd > 0
+      ? Math.round((totalBaselineNoiUsd / totalBaselineValuationUsd) * 10000) / 100
+      : 0;
+    const blendedStressedCapRatePct = totalStressedValuationUsd > 0
+      ? Math.round((totalStressedNoiUsd / totalStressedValuationUsd) * 10000) / 100
+      : 0;
+    const portfolioValuationDeltaUsd = totalStressedValuationUsd - totalBaselineValuationUsd;
+    const portfolioValuationDeltaPct = totalBaselineValuationUsd > 0
+      ? Math.round((portfolioValuationDeltaUsd / totalBaselineValuationUsd) * 10000) / 100
+      : 0;
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Cross-Asset Institutional Infrastructure Portfolio',
+      stress_parameters: {
+        cap_rate_shift_bps: Number(cap_rate_shift_bps),
+        escrow_inflation_pct: Number(escrow_inflation_pct),
+        royalty_stress_pct: Number(royalty_stress_pct),
+        sector_count: sectorResults.length
+      },
+      portfolio_summary: {
+        total_baseline_gross_revenue_usd: totalBaselineGrossRevenueUsd,
+        total_baseline_reserves_usd: totalBaselineReservesUsd,
+        total_baseline_noi_usd: totalBaselineNoiUsd,
+        blended_baseline_cap_rate_pct: blendedBaselineCapRatePct,
+        total_baseline_valuation_usd: totalBaselineValuationUsd,
+        total_stressed_gross_revenue_usd: totalStressedGrossRevenueUsd,
+        total_stressed_reserves_usd: totalStressedReservesUsd,
+        total_stressed_noi_usd: totalStressedNoiUsd,
+        blended_stressed_cap_rate_pct: blendedStressedCapRatePct,
+        total_stressed_valuation_usd: totalStressedValuationUsd,
+        portfolio_valuation_delta_usd: portfolioValuationDeltaUsd,
+        portfolio_valuation_delta_pct: portfolioValuationDeltaPct
+      },
+      sector_breakdown: sectorResults
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
