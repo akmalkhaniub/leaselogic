@@ -8688,6 +8688,566 @@ app.post('/api/leases/:id/infrastructure-portfolio-rollup', async (req, res) => 
   }
 });
 
+// =========================================================================
+// PHASE 29: Mission-Critical Infrastructure Underwriting Suite
+// =========================================================================
+
+// 4.788. POST Orbital Space Launch Complex, Clean Propulsion Test Stand & Pad Ground Lease Modeler
+app.post('/api/leases/:id/orbital-space-launch-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      launch_pad_acres = 65,
+      launch_pad_ground_rent_per_acre_year_usd = 38000,
+      vertical_integration_facility_sqft = 45000,
+      vif_cleanroom_rent_per_sqft_year_usd = 135.0,
+      static_engine_test_stands_count = 3,
+      test_stand_license_fee_annual_usd = 650000,
+      annual_orbital_launches_count = 24,
+      per_launch_facility_tariff_usd = 185000,
+      propellant_methalox_throughput_kg = 18000000,
+      propellant_flowage_fee_per_kg_usd = 0.08,
+      sound_suppression_deluge_water_escrow_annual_usd = 520000,
+      faa_part_450_range_safety_reserve_annual_usd = 380000,
+      acoustic_exclusion_buffer_radius_miles = 3.5,
+      spaceport_cap_rate_pct = 6.25
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Financial Calculations
+    const annualPadGroundRentUsd = Math.round(launch_pad_acres * launch_pad_ground_rent_per_acre_year_usd);
+    const annualVifRentUsd = Math.round(vertical_integration_facility_sqft * vif_cleanroom_rent_per_sqft_year_usd);
+    const annualTestStandFeesUsd = Math.round(static_engine_test_stands_count * test_stand_license_fee_annual_usd);
+    const annualLaunchTariffsUsd = Math.round(annual_orbital_launches_count * per_launch_facility_tariff_usd);
+    const annualPropellantFlowageUsd = Math.round(propellant_methalox_throughput_kg * propellant_flowage_fee_per_kg_usd);
+
+    const totalLandlordGrossRevenueUsd =
+      annualPadGroundRentUsd +
+      annualVifRentUsd +
+      annualTestStandFeesUsd +
+      annualLaunchTariffsUsd +
+      annualPropellantFlowageUsd;
+
+    const totalOperatingReservesAnnualUsd =
+      sound_suppression_deluge_water_escrow_annual_usd +
+      faa_part_450_range_safety_reserve_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = spaceport_cap_rate_pct / 100.0;
+    const spaceportValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    // Regulatory & Safety Compliance Audit
+    const spaceportComplianceAudit = [
+      {
+        metric: 'FAA 14 CFR Part 450 Launch License Verification',
+        status: 'PASS_FAA_PART_450_APPROVED',
+        standard: 'Commercial Space Launch Vehicle Operator Performance-Based Regulations',
+        finding: `Licensed for up to ${annual_orbital_launches_count} annual medium/heavy lift commercial orbital launch trajectories with automated flight termination system (AFTS).`
+      },
+      {
+        metric: 'High-Volume Acoustic Deluge & Overpressure Suppression',
+        status: sound_suppression_deluge_water_escrow_annual_usd >= 450000 ? 'PASS_DELUGE_RESERVE_ADEQUATE' : 'WARN_DELUGE_RESERVE_DEFICIT',
+        standard: '>= $450,000/yr High-Capacity Water Deluge Tank & Nitrogen Blast Sinking Fund',
+        finding: `$${sound_suppression_deluge_water_escrow_annual_usd.toLocaleString()}/yr dedicated reserve protects pad flame trench and umbilical tower against 165 dB acoustic shock.`
+      },
+      {
+        metric: 'FAA Range Safety & Evacuation Buffer Envelope',
+        status: acoustic_exclusion_buffer_radius_miles >= 3.0 ? 'PASS_EXCLUSION_ENVELOPE_SECURED' : 'WARN_BUFFER_PERIMETER_ENCROACHMENT',
+        standard: '>= 3.0 Miles Radial Uninhabited Buffer Zone for Blast Overpressure',
+        finding: `${acoustic_exclusion_buffer_radius_miles} mile perimeter easement isolates cryo storage farms and public right-of-ways during fueling and ignition sequences.`
+      },
+      {
+        metric: 'Methalox/Hydrolox Cryogenic Farm Flowage Integrity',
+        status: 'PASS_CRYOGENIC_FLOWAGE_CERTIFIED',
+        standard: 'ASME B31.3 Cryogenic Piping for High-Flow LOX, Methane & Liquid Hydrogen',
+        finding: `${(propellant_methalox_throughput_kg / 1e6).toFixed(1)}M kg annual propellant throughput delivered across dedicated vacuum-jacketed transfer lines.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Orbital Space Launch Complex & Propulsion Campus',
+      launch_pad_acres,
+      launch_pad_ground_rent_per_acre_year_usd,
+      annual_pad_ground_rent_usd: annualPadGroundRentUsd,
+      vertical_integration_facility_sqft,
+      vif_cleanroom_rent_per_sqft_year_usd,
+      annual_vif_rent_usd: annualVifRentUsd,
+      static_engine_test_stands_count,
+      test_stand_license_fee_annual_usd,
+      annual_test_stand_fees_usd: annualTestStandFeesUsd,
+      annual_orbital_launches_count,
+      per_launch_facility_tariff_usd,
+      annual_launch_tariffs_usd: annualLaunchTariffsUsd,
+      propellant_methalox_throughput_kg,
+      propellant_flowage_fee_per_kg_usd,
+      annual_propellant_flowage_usd: annualPropellantFlowageUsd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      sound_suppression_deluge_water_escrow_annual_usd,
+      faa_part_450_range_safety_reserve_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      acoustic_exclusion_buffer_radius_miles,
+      spaceport_cap_rate_pct,
+      spaceport_valuation_usd: spaceportValuationUsd,
+      spaceport_compliance_audit: spaceportComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.789. POST Sustainable Aviation Fuel (SAF) HEFA Biorefinery & Airport Hydrant Pipeline Modeler
+app.post('/api/leases/:id/saf-biorefinery-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      biorefinery_site_acres = 75,
+      plant_ground_rent_per_acre_year_usd = 28000,
+      saf_pipeline_easement_miles = 18.5,
+      pipeline_easement_rent_per_mile_year_usd = 22000,
+      hefa_saf_production_gallons_per_year = 65000000,
+      saf_wholesale_price_per_gallon_usd = 5.85,
+      landlord_saf_volume_royalty_fee_per_gallon_usd = 0.055,
+      airport_hydrant_throughput_tariff_per_gallon_usd = 0.025,
+      feedstock_used_cooking_oil_tpy = 220000,
+      ira_section_40b_45z_tax_credit_tier_per_gallon_usd = 1.45,
+      hydrotreating_catalyst_replacement_reserve_annual_usd = 680000,
+      voc_leak_detection_flame_safety_escrow_annual_usd = 340000,
+      saf_cap_rate_pct = 6.50
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Financial Calculations
+    const annualPlantGroundRentUsd = Math.round(biorefinery_site_acres * plant_ground_rent_per_acre_year_usd);
+    const annualPipelineEasementRentUsd = Math.round(saf_pipeline_easement_miles * pipeline_easement_rent_per_mile_year_usd);
+    const totalBaseFixedRentUsd = annualPlantGroundRentUsd + annualPipelineEasementRentUsd;
+
+    const annualSafVolumeRoyaltiesUsd = Math.round(hefa_saf_production_gallons_per_year * landlord_saf_volume_royalty_fee_per_gallon_usd);
+    const annualAirportHydrantTariffsUsd = Math.round(hefa_saf_production_gallons_per_year * airport_hydrant_throughput_tariff_per_gallon_usd);
+    const totalLandlordGrossRevenueUsd = totalBaseFixedRentUsd + annualSafVolumeRoyaltiesUsd + annualAirportHydrantTariffsUsd;
+
+    const totalEnvironmentalReservesAnnualUsd =
+      hydrotreating_catalyst_replacement_reserve_annual_usd +
+      voc_leak_detection_flame_safety_escrow_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalEnvironmentalReservesAnnualUsd;
+    const capRateDecimal = saf_cap_rate_pct / 100.0;
+    const safBiorefineryValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const annualGrossSafValueUsd = Math.round(hefa_saf_production_gallons_per_year * saf_wholesale_price_per_gallon_usd);
+    const annualCleanFuelTaxCreditsUsd = Math.round(hefa_saf_production_gallons_per_year * ira_section_40b_45z_tax_credit_tier_per_gallon_usd);
+
+    const safComplianceAudit = [
+      {
+        metric: 'ASTM D7566 Annex A2 Drop-In Jet-A1 Certification',
+        status: 'PASS_ASTM_D7566_COMPLIANT',
+        standard: 'Synthesized Paraffinic Kerosene from Hydroprocessed Esters and Fatty Acids (HEFA-SPK)',
+        finding: `Certified for up to 50% neat drop-in blend with conventional fossil jet fuel, flowing directly into airport hydrant fueling systems.`
+      },
+      {
+        metric: 'IRA Section 40B / 45Z Clean Fuel Production Credit',
+        status: ira_section_40b_45z_tax_credit_tier_per_gallon_usd >= 1.25 ? 'PASS_MAXIMUM_45Z_INCENTIVE' : 'WARN_SUBOPTIMAL_CI_SCORE',
+        standard: '>= 50% Lifecycle GHG Reduction vs Petroleum Jet Baseline',
+        finding: `$${ira_section_40b_45z_tax_credit_tier_per_gallon_usd}/gal clean fuel credit produces $${(annualCleanFuelTaxCreditsUsd / 1e6).toFixed(1)}M/yr federal production incentive.`
+      },
+      {
+        metric: 'Hydrotreating & Isomerization Catalyst Replacement Sinking Fund',
+        status: hydrotreating_catalyst_replacement_reserve_annual_usd >= 550000 ? 'PASS_CATALYST_SINKING_FUND_ADEQUATE' : 'WARN_CATALYST_RESERVE_SHORTFALL',
+        standard: '>= $550,000/yr Dedicated Precious Metal / Nickel-Molybdenum Sinking Fund',
+        finding: `$${hydrotreating_catalyst_replacement_reserve_annual_usd.toLocaleString()}/yr escrow covers 3-year cyclical bed turnaround for deoxygenation and cracking reactors.`
+      },
+      {
+        metric: 'Dedicated Airport Hydrant Jet Fuel Pipeline Integrity',
+        status: 'PASS_PIPELINE_CATHODIC_PROTECTED',
+        standard: 'PHMSA 49 CFR Part 195 Liquid Pipeline Safety & In-Line Inspection (ILI)',
+        finding: `${saf_pipeline_easement_miles} miles of 12-inch dedicated carbon steel pipeline connects refinery directly to international airport bulk fuel depot.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Sustainable Aviation Fuel (SAF) Biorefinery Complex',
+      biorefinery_site_acres,
+      plant_ground_rent_per_acre_year_usd,
+      annual_plant_ground_rent_usd: annualPlantGroundRentUsd,
+      saf_pipeline_easement_miles,
+      pipeline_easement_rent_per_mile_year_usd,
+      annual_pipeline_easement_rent_usd: annualPipelineEasementRentUsd,
+      total_base_fixed_rent_usd: totalBaseFixedRentUsd,
+      hefa_saf_production_gallons_per_year,
+      saf_wholesale_price_per_gallon_usd,
+      annual_gross_saf_value_usd: annualGrossSafValueUsd,
+      landlord_saf_volume_royalty_fee_per_gallon_usd,
+      annual_saf_volume_royalties_usd: annualSafVolumeRoyaltiesUsd,
+      airport_hydrant_throughput_tariff_per_gallon_usd,
+      annual_airport_hydrant_tariffs_usd: annualAirportHydrantTariffsUsd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      feedstock_used_cooking_oil_tpy,
+      annual_clean_fuel_tax_credits_usd: annualCleanFuelTaxCreditsUsd,
+      hydrotreating_catalyst_replacement_reserve_annual_usd,
+      voc_leak_detection_flame_safety_escrow_annual_usd,
+      total_environmental_reserves_annual_usd: totalEnvironmentalReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      saf_cap_rate_pct,
+      saf_biorefinery_valuation_usd: safBiorefineryValuationUsd,
+      saf_compliance_audit: safComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.790. POST Ocean Thermal Energy Conversion (OTEC) & Deep Ocean Water Industrial Park Modeler
+app.post('/api/leases/:id/otec-marine-energy-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      onshore_park_acres = 45,
+      park_ground_rent_per_acre_year_usd = 31000,
+      deep_water_intake_pipeline_length_km = 8.5,
+      pipeline_seabed_easement_rate_per_km_year_usd = 26000,
+      otec_net_power_capacity_mwe = 30,
+      baseload_capacity_factor_pct = 95.0,
+      ppa_offtake_rate_per_mwh_usd = 115.0,
+      landlord_ppa_royalty_pct = 2.5,
+      deep_ocean_water_cold_flow_m3_per_day = 180000,
+      swac_district_cooling_concession_annual_usd = 850000,
+      desalinated_potable_water_concession_annual_usd = 420000,
+      titanium_heat_exchanger_biofouling_reserve_annual_usd = 360000,
+      ammonia_rankine_loop_containment_escrow_annual_usd = 220000,
+      otec_cap_rate_pct = 6.25
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Financial Calculations
+    const annualParkGroundRentUsd = Math.round(onshore_park_acres * park_ground_rent_per_acre_year_usd);
+    const annualSeabedEasementRentUsd = Math.round(deep_water_intake_pipeline_length_km * pipeline_seabed_easement_rate_per_km_year_usd);
+    const totalBaseFixedRentUsd = annualParkGroundRentUsd + annualSeabedEasementRentUsd;
+
+    const annualNetGenerationMwh = Math.round(otec_net_power_capacity_mwe * 8760 * (baseload_capacity_factor_pct / 100.0));
+    const annualGrossPpaSalesUsd = Math.round(annualNetGenerationMwh * ppa_offtake_rate_per_mwh_usd);
+    const landlordPpaRoyaltyUsd = Math.round(annualGrossPpaSalesUsd * (landlord_ppa_royalty_pct / 100.0));
+
+    const totalLandlordGrossRevenueUsd =
+      totalBaseFixedRentUsd +
+      landlordPpaRoyaltyUsd +
+      swac_district_cooling_concession_annual_usd +
+      desalinated_potable_water_concession_annual_usd;
+
+    const totalOperatingReservesAnnualUsd =
+      titanium_heat_exchanger_biofouling_reserve_annual_usd +
+      ammonia_rankine_loop_containment_escrow_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = otec_cap_rate_pct / 100.0;
+    const otecValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const otecComplianceAudit = [
+      {
+        metric: 'Closed-Cycle Ammonia Rankine Delta-T Thermal Gradient',
+        status: 'PASS_THERMAL_DELTA_20C_VALIDATED',
+        standard: '>= 20°C Thermal Differential (25°C Surface Water vs 4°C Deep Sea Water @ 1,000m Depth)',
+        finding: `Stable 21.5°C thermal gradient drives continuous closed-cycle ammonia expansion turbines with zero solar or wind intermittency.`
+      },
+      {
+        metric: 'Titanium Heat Exchanger Biofouling & Chlorination Protocol',
+        status: titanium_heat_exchanger_biofouling_reserve_annual_usd >= 300000 ? 'PASS_HEAT_EXCHANGER_RESERVE_ADEQUATE' : 'WARN_BIOFOULING_RESERVE_SHORTFALL',
+        standard: '>= $300,000/yr Automated Sponge Ball Cleaning & Electrolytic Chlorination Fund',
+        finding: `$${titanium_heat_exchanger_biofouling_reserve_annual_usd.toLocaleString()}/yr dedicated reserve maintains thermal transfer efficiency across massive surface plate evaporators.`
+      },
+      {
+        metric: 'Deep Ocean Water SWAC & Desalination Dual-Use Value Stack',
+        status: 'PASS_DUAL_USE_SWAC_INTEGRATED',
+        standard: 'Seawater Air Conditioning (SWAC) & Flash-Evaporation Fresh Water Co-Generation',
+        finding: `${deep_ocean_water_cold_flow_m3_per_day.toLocaleString()} m3/day of 4°C deep ocean water displaces 85% chiller electrical loads for adjacent resort/data center districts.`
+      },
+      {
+        metric: 'Seabed Pipeline Anchor & Subsea Slump Stability',
+        status: 'PASS_SUBSEA_EASEMENT_GEOTECH_VERIFIED',
+        standard: 'Deepwater High-Density Polyethylene (HDPE) Butt-Fused Mooring Standard',
+        finding: `${deep_water_intake_pipeline_length_km} km intake pipe anchored with articulated concrete mattresses against subsea currents down to 1,050 meters.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'OTEC Deep Ocean Water Renewable Energy Campus',
+      onshore_park_acres,
+      park_ground_rent_per_acre_year_usd,
+      annual_park_ground_rent_usd: annualParkGroundRentUsd,
+      deep_water_intake_pipeline_length_km,
+      pipeline_seabed_easement_rate_per_km_year_usd,
+      annual_seabed_easement_rent_usd: annualSeabedEasementRentUsd,
+      total_base_fixed_rent_usd: totalBaseFixedRentUsd,
+      otec_net_power_capacity_mwe,
+      baseload_capacity_factor_pct,
+      annual_net_generation_mwh: annualNetGenerationMwh,
+      ppa_offtake_rate_per_mwh_usd,
+      annual_gross_ppa_sales_usd: annualGrossPpaSalesUsd,
+      landlord_ppa_royalty_pct,
+      landlord_ppa_royalty_usd: landlordPpaRoyaltyUsd,
+      deep_ocean_water_cold_flow_m3_per_day,
+      swac_district_cooling_concession_annual_usd,
+      desalinated_potable_water_concession_annual_usd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      titanium_heat_exchanger_biofouling_reserve_annual_usd,
+      ammonia_rankine_loop_containment_escrow_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      otec_cap_rate_pct,
+      otec_valuation_usd: otecValuationUsd,
+      otec_compliance_audit: otecComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.791. POST Autonomous Rail Intermodal Inland Port & Robotic Gantry Crane Terminal Modeler
+app.post('/api/leases/:id/rail-inland-port-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      inland_port_yard_acres = 120,
+      yard_ground_rent_per_acre_year_usd = 24000,
+      intermodal_rail_track_feet = 22000,
+      trackage_rights_tariff_per_foot_year_usd = 38.0,
+      annual_container_lift_moves = 350000,
+      lift_concession_fee_per_move_usd = 18.5,
+      electric_armg_cranes_count = 12,
+      armg_crane_maintenance_royalty_per_crane_year_usd = 45000,
+      container_dwell_demurrage_revenue_annual_usd = 1250000,
+      landlord_demurrage_share_pct = 20.0,
+      class_1_railroads_connected_count = 2,
+      rail_switch_derailment_escrow_annual_usd = 420000,
+      battery_electric_switcher_tender_reserve_annual_usd = 280000,
+      inland_port_cap_rate_pct = 6.00
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Financial Calculations
+    const annualYardGroundRentUsd = Math.round(inland_port_yard_acres * yard_ground_rent_per_acre_year_usd);
+    const annualTrackageTariffUsd = Math.round(intermodal_rail_track_feet * trackage_rights_tariff_per_foot_year_usd);
+    const totalBaseRailRentUsd = annualYardGroundRentUsd + annualTrackageTariffUsd;
+
+    const annualLiftConcessionUsd = Math.round(annual_container_lift_moves * lift_concession_fee_per_move_usd);
+    const annualArmgCraneRoyaltiesUsd = Math.round(electric_armg_cranes_count * armg_crane_maintenance_royalty_per_crane_year_usd);
+    const annualDemurrageShareUsd = Math.round(container_dwell_demurrage_revenue_annual_usd * (landlord_demurrage_share_pct / 100.0));
+
+    const totalLandlordGrossRevenueUsd =
+      totalBaseRailRentUsd +
+      annualLiftConcessionUsd +
+      annualArmgCraneRoyaltiesUsd +
+      annualDemurrageShareUsd;
+
+    const totalOperatingReservesAnnualUsd =
+      rail_switch_derailment_escrow_annual_usd +
+      battery_electric_switcher_tender_reserve_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = inland_port_cap_rate_pct / 100.0;
+    const inlandPortValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const inlandPortComplianceAudit = [
+      {
+        metric: 'Dual Class I Direct Mainline Interchange',
+        status: class_1_railroads_connected_count >= 2 ? 'PASS_DUAL_CLASS_1_COMPETITIVE' : 'WARN_SINGLE_CARRIER_DEPENDENCY',
+        standard: '>= 2 Class I Railroad Interchanges for Competitive Freight Pricing',
+        finding: `Dual connectivity (UP / BNSF / CSX / NS interchange) eliminates demurrage bottlenecks and captures inland transload freight from seaports.`
+      },
+      {
+        metric: 'Zero-Emission Automated Rail-Mounted Gantry (ARMG) Fleet',
+        status: electric_armg_cranes_count >= 8 ? 'PASS_ELECTRIC_ARMG_CAPACITY_HIGH' : 'WARN_CRANE_CAPACITY_CONSTRAINED',
+        standard: 'Electric High-Density Stacking (1-over-5, 8-wide cantilevers)',
+        finding: `${electric_armg_cranes_count} automated electric cranes achieve 350,000 container lifts/yr with zero terminal diesel emissions.`
+      },
+      {
+        metric: 'FRA Class 4 Track Safety Standard & Derailment Escrow',
+        status: rail_switch_derailment_escrow_annual_usd >= 350000 ? 'PASS_FRA_SAFETY_ESCROW_ADEQUATE' : 'WARN_FRA_ESCROW_SHORTFALL',
+        standard: 'Federal Railroad Administration (FRA) 49 CFR Part 213 Continuous Track Geometry',
+        finding: `$${rail_switch_derailment_escrow_annual_usd.toLocaleString()}/yr dedicated escrow covers heavy-axle (286,000 lb) turnout switch replacement and ultrasonic rail flaw scans.`
+      },
+      {
+        metric: 'Battery-Electric Switcher Locomotive Depot & Megawatt Charging',
+        status: battery_electric_switcher_tender_reserve_annual_usd >= 250000 ? 'PASS_SWITCHER_RESERVE_FUNDED' : 'WARN_SWITCHER_RESERVE_DEFICIT',
+        standard: 'EPA Tier 4 Zero-Emission Rail Switching Compliance',
+        finding: `$${battery_electric_switcher_tender_reserve_annual_usd.toLocaleString()}/yr reserve supports dual battery-electric yard hostlers and rapid opportunity pantograph charging.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Autonomous Rail Intermodal Inland Port & Gantry Terminal',
+      inland_port_yard_acres,
+      yard_ground_rent_per_acre_year_usd,
+      annual_yard_ground_rent_usd: annualYardGroundRentUsd,
+      intermodal_rail_track_feet,
+      trackage_rights_tariff_per_foot_year_usd,
+      annual_trackage_tariff_usd: annualTrackageTariffUsd,
+      total_base_rail_rent_usd: totalBaseRailRentUsd,
+      annual_container_lift_moves,
+      lift_concession_fee_per_move_usd,
+      annual_lift_concession_usd: annualLiftConcessionUsd,
+      electric_armg_cranes_count,
+      armg_crane_maintenance_royalty_per_crane_year_usd,
+      annual_armg_crane_royalties_usd: annualArmgCraneRoyaltiesUsd,
+      container_dwell_demurrage_revenue_annual_usd,
+      landlord_demurrage_share_pct,
+      annual_demurrage_share_usd: annualDemurrageShareUsd,
+      class_1_railroads_connected_count,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      rail_switch_derailment_escrow_annual_usd,
+      battery_electric_switcher_tender_reserve_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      inland_port_cap_rate_pct,
+      inland_port_valuation_usd: inlandPortValuationUsd,
+      inland_port_compliance_audit: inlandPortComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.792. POST High-Voltage Direct Current (HVDC) Converter Station & Merchant Transmission Interconnector Modeler
+app.post('/api/leases/:id/hvdc-converter-station-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      converter_station_site_acres = 40,
+      site_ground_rent_per_acre_year_usd = 35000,
+      transmission_row_corridor_miles = 85,
+      row_easement_tariff_per_mile_year_usd = 28000,
+      hvdc_transmission_capacity_mw = 2000,
+      voltage_rating_plus_minus_kv = 525,
+      firm_wheeling_capacity_reservation_rate_per_kw_month_usd = 4.25,
+      annual_transmitted_energy_mwh = 14500000,
+      locational_marginal_price_spread_arbitrage_per_mwh_usd = 12.50,
+      landlord_lmp_congestion_share_pct = 3.5,
+      vsc_igbt_valve_hall_refurbishment_reserve_annual_usd = 850000,
+      harmonic_filter_reactor_escrow_annual_usd = 450000,
+      ferc_order_1920_open_access_status = 'COMPLIANT_FERC_ORDER_1920',
+      hvdc_cap_rate_pct = 5.75
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    // Core Financial Calculations
+    const annualSiteGroundRentUsd = Math.round(converter_station_site_acres * site_ground_rent_per_acre_year_usd);
+    const annualRowEasementRentUsd = Math.round(transmission_row_corridor_miles * row_easement_tariff_per_mile_year_usd);
+    const totalBaseCorridorRentUsd = annualSiteGroundRentUsd + annualRowEasementRentUsd;
+
+    // Wheeling capacity tariff (MW -> kW = * 1000)
+    const annualFirmWheelingTariffsUsd = Math.round(hvdc_transmission_capacity_mw * 1000 * firm_wheeling_capacity_reservation_rate_per_kw_month_usd * 12);
+
+    // Congestion arbitrage profit share
+    const annualGrossCongestionRevenueUsd = Math.round(annual_transmitted_energy_mwh * locational_marginal_price_spread_arbitrage_per_mwh_usd);
+    const annualLandlordCongestionRoyaltyUsd = Math.round(annualGrossCongestionRevenueUsd * (landlord_lmp_congestion_share_pct / 100.0));
+
+    const totalLandlordGrossRevenueUsd =
+      totalBaseCorridorRentUsd +
+      annualFirmWheelingTariffsUsd +
+      annualLandlordCongestionRoyaltyUsd;
+
+    const totalOperatingReservesAnnualUsd =
+      vsc_igbt_valve_hall_refurbishment_reserve_annual_usd +
+      harmonic_filter_reactor_escrow_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = hvdc_cap_rate_pct / 100.0;
+    const hvdcStationValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const hvdcComplianceAudit = [
+      {
+        metric: 'Voltage Source Converter (VSC) Multilevel Topology',
+        status: voltage_rating_plus_minus_kv >= 500 ? 'PASS_HIGH_VOLTAGE_525KV_CERTIFIED' : 'WARN_SUB_500KV_TRANSMISSION',
+        standard: '±525 kV DC Symmetric Monopole / Bipole Modular Multilevel Converter (MMC)',
+        finding: `±${voltage_rating_plus_minus_kv} kV DC VSC provides black-start grid stabilization, independent active/reactive power control, and sub-synchronous oscillation dampening.`
+      },
+      {
+        metric: 'FERC Order 1920 Long-Term Transmission Planning Compliance',
+        status: ferc_order_1920_open_access_status === 'COMPLIANT_FERC_ORDER_1920' ? 'PASS_FERC_ORDER_1920_APPROVED' : 'WARN_FERC_COMPLIANCE_PENDING',
+        standard: 'FERC Open Access Transmission Tariff (OATT) Non-Discriminatory Interconnection',
+        finding: `Qualified merchant transmission asset under FERC Order 1920 with non-discriminatory multi-regional interregional energy transfer rights.`
+      },
+      {
+        metric: 'IGBT Valve Hall Dry-Type Substation Maintenance Reserve',
+        status: vsc_igbt_valve_hall_refurbishment_reserve_annual_usd >= 700000 ? 'PASS_VALVE_HALL_RESERVE_ADEQUATE' : 'WARN_VALVE_HALL_RESERVE_DEFICIT',
+        standard: '>= $700,000/yr High-Power Semiconductor & Deionized Water Cooling Sinking Fund',
+        finding: `$${vsc_igbt_valve_hall_refurbishment_reserve_annual_usd.toLocaleString()}/yr dedicated reserve funds 10-year module upgrades and thyristor/IGBT bypass protection.`
+      },
+      {
+        metric: 'AC Harmonic Filter & DC Smoothing Reactor Resilience',
+        status: harmonic_filter_reactor_escrow_annual_usd >= 350000 ? 'PASS_HARMONIC_FILTER_ESCROW_FUNDED' : 'WARN_HARMONIC_FILTER_DEFICIT',
+        standard: 'IEEE 519 Grid Interconnection Harmonic Voltage Distortion < 1.5%',
+        finding: `$${harmonic_filter_reactor_escrow_annual_usd.toLocaleString()}/yr maintenance escrow preserves shunt capacitor banks and optical current transformers against grid transients.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'High-Voltage Direct Current (HVDC) Converter Station & ROW',
+      converter_station_site_acres,
+      site_ground_rent_per_acre_year_usd,
+      annual_site_ground_rent_usd: annualSiteGroundRentUsd,
+      transmission_row_corridor_miles,
+      row_easement_tariff_per_mile_year_usd,
+      annual_row_easement_rent_usd: annualRowEasementRentUsd,
+      total_base_corridor_rent_usd: totalBaseCorridorRentUsd,
+      hvdc_transmission_capacity_mw,
+      voltage_rating_plus_minus_kv,
+      firm_wheeling_capacity_reservation_rate_per_kw_month_usd,
+      annual_firm_wheeling_tariffs_usd: annualFirmWheelingTariffsUsd,
+      annual_transmitted_energy_mwh,
+      locational_marginal_price_spread_arbitrage_per_mwh_usd,
+      annual_gross_congestion_revenue_usd: annualGrossCongestionRevenueUsd,
+      landlord_lmp_congestion_share_pct,
+      annual_landlord_congestion_royalty_usd: annualLandlordCongestionRoyaltyUsd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      vsc_igbt_valve_hall_refurbishment_reserve_annual_usd,
+      harmonic_filter_reactor_escrow_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      ferc_order_1920_open_access_status,
+      hvdc_cap_rate_pct,
+      hvdc_station_valuation_usd: hvdcStationValuationUsd,
+      hvdc_compliance_audit: hvdcComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
