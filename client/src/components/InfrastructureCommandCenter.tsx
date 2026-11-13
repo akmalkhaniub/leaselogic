@@ -71,6 +71,9 @@ export const MODULE_REGISTRY: ModuleRegistryItem[] = [
   { id: 'offshore_wind_port', label: '🚢 Offshore Wind Port', category: 'Energy & Cleantech', keywords: 'boem turbine marshaling' },
   { id: 'fusion_power', label: '⚛️ Fusion Power Campus', category: 'Energy & Cleantech', keywords: 'tokamak hts magnet tritium' },
   { id: 'battery_metals', label: '🔋 Battery Metals Complex', category: 'Energy & Cleantech', keywords: 'black mass lithium ira 30d' },
+  { id: 'saf_biorefinery', label: '🧪 SAF HEFA Biorefinery', category: 'Energy & Cleantech', keywords: 'sustainable aviation fuel hefa pipeline 40b 45z' },
+  { id: 'otec_marine_energy', label: '🌊 OTEC Marine Energy', category: 'Energy & Cleantech', keywords: 'ocean thermal swac ammonia rankine deep water' },
+  { id: 'hvdc_converter_station', label: '⚡ HVDC Converter Station', category: 'Energy & Cleantech', keywords: 'direct current vsc mmc transmission ferc wheeling' },
 
   // Deep-Tech & Bio
   { id: 'datacenter_pue', label: '🛰️ Data Center PUE', category: 'Deep-Tech & Bio', keywords: 'colocation mw ups cooling' },
@@ -82,6 +85,7 @@ export const MODULE_REGISTRY: ModuleRegistryItem[] = [
   { id: 'semiconductor_fab', label: '💎 Semiconductor EUV Fab', category: 'Deep-Tech & Bio', keywords: 'lithography wafer vc-g chips 48d pfas' },
   { id: 'quantum_cryogenic', label: '❄️ Quantum Cryogenic Vault', category: 'Deep-Tech & Bio', keywords: 'dilution fridge helium3 faraday millikelvin' },
   { id: 'satellite_teleport', label: '🌌 Satellite Teleport', category: 'Deep-Tech & Bio', keywords: 'phased array fsoc optical downlink fcc' },
+  { id: 'orbital_space_launch', label: '🛰️ Orbital Space Launch', category: 'Deep-Tech & Bio', keywords: 'rocket pad static test faa part 450 methalox' },
 
   // Mobility & Subsea
   { id: 'industrial_logistics', label: '📦 Industrial Logistics', category: 'Mobility & Subsea', keywords: 'warehouse dock clear height' },
@@ -94,6 +98,7 @@ export const MODULE_REGISTRY: ModuleRegistryItem[] = [
   { id: 'subsea_cls', label: '🌊 Subsea Cable Landing (CLS)', category: 'Mobility & Subsea', keywords: 'borehole mmr pfe submarine fiber' },
   { id: 'telecom_5g', label: '📡 5G & Fiber Telecom', category: 'Mobility & Subsea', keywords: 'rooftop cell das small cell' },
   { id: 'spaceport_launch', label: '🛰️ Spaceport Launch Complex', category: 'Mobility & Subsea', keywords: 'faa orbital range pad' },
+  { id: 'rail_inland_port', label: '🚆 Rail Intermodal Port', category: 'Mobility & Subsea', keywords: 'armg container rail class 1 trackage demurrage' },
 
   // Real Assets & Ops
   { id: 'spatial', label: '📍 Spatial', category: 'Real Assets & Ops', keywords: 'floorplan map occupancy' },
@@ -215,7 +220,7 @@ export function ModuleCommandPaletteModal({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Search ${MODULE_REGISTRY.length} LeaseLogic modelers (e.g., semiconductor, quantum, subsea, cmbs, cam)...`}
+            placeholder={`Search ${MODULE_REGISTRY.length} LeaseLogic modelers (e.g., saf, otec, rail, hvdc, launch, semi)...`}
             style={{
               flex: 1,
               border: 'none',
@@ -363,7 +368,7 @@ export function InfrastructureRollupView({
             🏛️ Cross-Asset Frontier Infrastructure Rollup &amp; Macro Shock Simulator
           </h2>
           <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-            Aggregating Baseline vs Macro-Stressed NOI, Cap Rates, and Reserve Coverage across Phase 27–28 sectors for <strong>{leaseName || leaseId}</strong>
+            Aggregating Baseline vs Macro-Stressed NOI, Cap Rates, and Reserve Coverage across Phase 27–29 sectors for <strong>{leaseName || leaseId}</strong>
           </p>
         </div>
         <button onClick={runRollup} disabled={loading} className="btn btn-primary" style={{ padding: '10px 18px', fontSize: '0.85rem' }}>

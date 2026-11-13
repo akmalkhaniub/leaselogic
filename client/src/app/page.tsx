@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { SemiconductorFabView, QuantumCryogenicView, SubseaClsView, SatelliteTeleportView } from '@/components/Phase28Modelers';
+import { OrbitalSpaceLaunchView, SafBiorefineryView, OtecMarineEnergyView, RailInlandPortView, HvdcConverterStationView } from '@/components/Phase29Modelers';
 import { MODULE_CATEGORIES, MODULE_REGISTRY, ModuleCategory, ModuleCommandPaletteModal, InfrastructureRollupView } from '@/components/InfrastructureCommandCenter';
 
 interface Lease {
@@ -1030,7 +1031,7 @@ export default function LeaseLogicApp() {
   const [loadingAf, setLoadingAf] = useState(false);
 
   // Tabs: 'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry' | 'autonomous_freight'
-  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry' | 'autonomous_freight' | 'semiconductor_fab' | 'quantum_cryogenic' | 'subsea_cls' | 'satellite_teleport'>('abstract');
+  const [activeTab, setActiveTab] = useState<'abstract' | 'chat' | 'schedule' | 'review' | 'effective' | 'cam_audit' | 'esg' | 'negotiation' | 'sublease' | 'accounting' | 'strategy' | 'spatial' | 'approvals' | 'carbon' | 'buyout' | 'drafter' | 'inflation' | 'regulatory' | 'restructure' | 'cam_dispute' | 'tax_calc' | 'carbon_marketplace' | 'coi_audit' | 'fitout_estimator' | 'sublease_royalty' | 'zoning_screener' | 'demand_response' | 'industrial_logistics' | 'ev_charging' | 'climate_risk' | 'iot_occupancy' | 'estoppel_waiver' | 'version_diff' | 'solar_bess' | 'bms_diagnostics' | 'break_optimizer' | 'lab_compliance' | 'cmbs_debt' | 'water_leak' | 'argus_dcf' | 'ev_microgrid' | 'construction_delay' | 'cold_storage' | 'syndication_waterfall' | 'datacenter_pue' | 'mob_compliance' | 'cool_roof_uhi' | 'abandonment_recovery' | 'geothermal_gshp' | 'condemnation_taking' | 'vertiport_aam' | 'agrivoltaics_ground_lease' | 'port_ftz_logistics' | 'telecom_5g' | 'film_soundstage' | 'brownfield_remediation' | 'hospitality_revpar' | 'port_terminal' | 'cea_farm' | 'self_storage' | 'aviation_fbo' | 'hyperscale_ai' | 'radiopharmacy' | 'theme_park' | 'hsr_station' | 'grid_bess' | 'desalination_swro' | 'stadium_arena' | 'spaceport_launch' | 'nuclear_smr' | 'green_hydrogen' | 'dac_carbon_hub' | 'offshore_wind_port' | 'fusion_power' | 'battery_metals' | 'biomanufacturing_foundry' | 'autonomous_freight' | 'semiconductor_fab' | 'quantum_cryogenic' | 'subsea_cls' | 'satellite_teleport' | 'orbital_space_launch' | 'saf_biorefinery' | 'otec_marine_energy' | 'rail_inland_port' | 'hvdc_converter_station'>('abstract');
 
 
 
@@ -7726,6 +7727,21 @@ export default function LeaseLogicApp() {
                 </div>
                 <div className={`tab ${activeTab === 'satellite_teleport' ? 'active' : ''}`} onClick={() => setActiveTab('satellite_teleport')}>
                   🌌 Satellite Teleport
+                </div>
+                <div className={`tab ${activeTab === 'orbital_space_launch' ? 'active' : ''}`} onClick={() => setActiveTab('orbital_space_launch')}>
+                  🛰️ Orbital Space Launch
+                </div>
+                <div className={`tab ${activeTab === 'saf_biorefinery' ? 'active' : ''}`} onClick={() => setActiveTab('saf_biorefinery')}>
+                  🧪 SAF HEFA Biorefinery
+                </div>
+                <div className={`tab ${activeTab === 'otec_marine_energy' ? 'active' : ''}`} onClick={() => setActiveTab('otec_marine_energy')}>
+                  🌊 OTEC Marine Energy
+                </div>
+                <div className={`tab ${activeTab === 'rail_inland_port' ? 'active' : ''}`} onClick={() => setActiveTab('rail_inland_port')}>
+                  🚆 Rail Intermodal Port
+                </div>
+                <div className={`tab ${activeTab === 'hvdc_converter_station' ? 'active' : ''}`} onClick={() => setActiveTab('hvdc_converter_station')}>
+                  ⚡ HVDC Converter Station
                 </div>
                 <div className={`tab ${activeTab === 'hospitality_revpar' ? 'active' : ''}`} onClick={() => { setActiveTab('hospitality_revpar'); handleRunHospitality(); }}>
                   🏨 Hospitality & RevPAR
@@ -18941,7 +18957,17 @@ export default function LeaseLogicApp() {
               ) : activeTab === 'subsea_cls' ? (
                 <SubseaClsView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
               ) : activeTab === 'satellite_teleport' ? (
-                <SatelliteTeleportView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+                <SatelliteTeleportView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+              ) : activeTab === 'orbital_space_launch' ? (
+                <OrbitalSpaceLaunchView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+              ) : activeTab === 'saf_biorefinery' ? (
+                <SafBiorefineryView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+              ) : activeTab === 'otec_marine_energy' ? (
+                <OtecMarineEnergyView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+              ) : activeTab === 'rail_inland_port' ? (
+                <RailInlandPortView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
+              ) : activeTab === 'hvdc_converter_station' ? (
+                <HvdcConverterStationView leaseId={selectedLease?.id || ''} apiBase={API_BASE} />
 ) : activeTab === 'hospitality_revpar' ? (
                 <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', overflowY: 'auto' }}>
                   {/* Header */}
