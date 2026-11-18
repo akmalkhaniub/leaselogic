@@ -9248,6 +9248,498 @@ app.post('/api/leases/:id/hvdc-converter-station-modeler', async (req, res) => {
   }
 });
 
+// 4.793. POST Enhanced Geothermal Systems (EGS) & Deep Hot-Dry-Rock Baseload Power Campus Modeler
+app.post('/api/leases/:id/egs-geothermal-power-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      wellpad_acres = 55,
+      ground_rent_per_acre_year_usd = 26000,
+      gross_power_capacity_mwe = 80,
+      capacity_factor_pct = 92.0,
+      ppa_price_per_mwh_usd = 98.0,
+      thermal_royalty_pct = 4.0,
+      steam_offtake_concession_annual_usd = 1150000,
+      dle_lithium_carbonate_tpy = 4500,
+      dle_royalty_per_ton_usd = 420,
+      induced_seismicity_monitoring_escrow_annual_usd = 380000,
+      well_plugging_abandonment_reserve_annual_usd = 490000,
+      egs_cap_rate_pct = 6.00
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const annualWellpadGroundRentUsd = Math.round(wellpad_acres * ground_rent_per_acre_year_usd);
+    const annualNetGenerationMwh = Math.round(gross_power_capacity_mwe * 8760 * (capacity_factor_pct / 100.0));
+    const annualGrossPpaSalesUsd = Math.round(annualNetGenerationMwh * ppa_price_per_mwh_usd);
+    const annualThermalPpaRoyaltyUsd = Math.round(annualGrossPpaSalesUsd * (thermal_royalty_pct / 100.0));
+    const annualDleLithiumRoyaltyUsd = Math.round(dle_lithium_carbonate_tpy * dle_royalty_per_ton_usd);
+
+    const totalLandlordGrossRevenueUsd =
+      annualWellpadGroundRentUsd +
+      annualThermalPpaRoyaltyUsd +
+      steam_offtake_concession_annual_usd +
+      annualDleLithiumRoyaltyUsd;
+
+    const totalOperatingReservesAnnualUsd =
+      induced_seismicity_monitoring_escrow_annual_usd +
+      well_plugging_abandonment_reserve_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = egs_cap_rate_pct / 100.0;
+    const egsCampusValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const egsComplianceAudit = [
+      {
+        metric: 'DOE Enhanced Geothermal Shot & Horizontal Stimulation Integrity',
+        status: 'PASS_EGS_STIMULATION_CERTIFIED',
+        standard: '3.5 km Deep Hot-Dry-Rock Closed-Loop Doublet Wellbore Spacing',
+        finding: `${gross_power_capacity_mwe} MWe firm 24/7 baseload generation (${annualNetGenerationMwh.toLocaleString()} MWh/yr @ ${capacity_factor_pct}% CF) with zero intermittency.`
+      },
+      {
+        metric: 'Induced Seismicity Micro-Seismic Traffic-Light Protocol (TLP)',
+        status: induced_seismicity_monitoring_escrow_annual_usd >= 325000 ? 'PASS_SEISMIC_TLP_FUNDED' : 'WARN_SEISMIC_ESCROW_DEFICIT',
+        standard: 'DOE Protocol for Addressing Induced Seismicity (< 2.0 Mw Automated Shut-In)',
+        finding: `$${induced_seismicity_monitoring_escrow_annual_usd.toLocaleString()}/yr dedicated borehole geophone array escrow monitors subsurface stimulation fractures in real time.`
+      },
+      {
+        metric: 'Direct Lithium Extraction (DLE) Geothermal Brine Mineral Co-Title',
+        status: dle_lithium_carbonate_tpy >= 2500 ? 'PASS_DLE_MINERAL_RIGHTS_SECURED' : 'WARN_LOW_BRINE_RECOVERY',
+        standard: 'Dual Geothermal Fluid & Battery-Grade Lithium Carbonate (LCE) Mineral Severance',
+        finding: `${dle_lithium_carbonate_tpy.toLocaleString()} tpy battery-grade LCE co-extraction adds $${annualDleLithiumRoyaltyUsd.toLocaleString()}/yr non-dilutive mineral royalty.`
+      },
+      {
+        metric: 'Deep Well Plugging & Abandonment (P&A) Decommissioning Bond',
+        status: well_plugging_abandonment_reserve_annual_usd >= 400000 ? 'PASS_PA_SINKING_FUND_ADEQUATE' : 'WARN_PA_BOND_SHORTFALL',
+        standard: 'BLM 43 CFR Part 3200 Geothermal Resource Decommissioning & Casing Integrity',
+        finding: `$${well_plugging_abandonment_reserve_annual_usd.toLocaleString()}/yr reserve fully amortizes high-temperature cement plug closure across production/injection doublets.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Enhanced Geothermal Systems (EGS) Baseload Power Campus',
+      wellpad_acres,
+      ground_rent_per_acre_year_usd,
+      annual_wellpad_ground_rent_usd: annualWellpadGroundRentUsd,
+      gross_power_capacity_mwe,
+      capacity_factor_pct,
+      annual_net_generation_mwh: annualNetGenerationMwh,
+      ppa_price_per_mwh_usd,
+      annual_gross_ppa_sales_usd: annualGrossPpaSalesUsd,
+      thermal_royalty_pct,
+      annual_thermal_ppa_royalty_usd: annualThermalPpaRoyaltyUsd,
+      steam_offtake_concession_annual_usd,
+      dle_lithium_carbonate_tpy,
+      dle_royalty_per_ton_usd,
+      annual_dle_lithium_royalty_usd: annualDleLithiumRoyaltyUsd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      induced_seismicity_monitoring_escrow_annual_usd,
+      well_plugging_abandonment_reserve_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      egs_cap_rate_pct,
+      egs_campus_valuation_usd: egsCampusValuationUsd,
+      egs_compliance_audit: egsComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.794. POST Green Steel DRI (Direct Reduced Iron) & Electric Arc Furnace (EAF) Zero-Carbon Mill Modeler
+app.post('/api/leases/:id/green-steel-dri-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      mill_site_acres = 140,
+      ground_rent_per_acre_year_usd = 32000,
+      ore_dock_rail_concession_annual_usd = 1850000,
+      annual_green_steel_metric_tons = 1600000,
+      landlord_tonnage_royalty_usd = 2.75,
+      eaf_substation_mva = 220,
+      substation_lease_per_mva_year_usd = 6500,
+      baghouse_refractory_escrow_annual_usd = 720000,
+      h2_mill_safety_reserve_annual_usd = 410000,
+      steel_mill_cap_rate_pct = 6.50
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const annualMillGroundRentUsd = Math.round(mill_site_acres * ground_rent_per_acre_year_usd);
+    const annualGreenSteelRoyaltiesUsd = Math.round(annual_green_steel_metric_tons * landlord_tonnage_royalty_usd);
+    const annualEafSubstationLeaseUsd = Math.round(eaf_substation_mva * substation_lease_per_mva_year_usd);
+
+    const totalLandlordGrossRevenueUsd =
+      annualMillGroundRentUsd +
+      ore_dock_rail_concession_annual_usd +
+      annualGreenSteelRoyaltiesUsd +
+      annualEafSubstationLeaseUsd;
+
+    const totalOperatingReservesAnnualUsd =
+      baghouse_refractory_escrow_annual_usd +
+      h2_mill_safety_reserve_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = steel_mill_cap_rate_pct / 100.0;
+    const greenSteelMillValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const steelComplianceAudit = [
+      {
+        metric: 'EU CBAM & ResponsibleSteel Low-Emission Threshold',
+        status: 'PASS_CBAM_NEAR_ZERO_CERTIFIED',
+        standard: '< 0.40 tCO2e per Metric Ton Crude Steel (H2-DRI + Renewable EAF)',
+        finding: `${(annual_green_steel_metric_tons / 1e6).toFixed(2)}M metric tons/yr of zero-carbon steel qualifies for CBAM tariff exemption and green automotive OEM offtake.`
+      },
+      {
+        metric: 'EAF High-Voltage Substation Flicker & Static Var Compensator (SVC)',
+        status: eaf_substation_mva >= 180 ? 'PASS_IEEE_1453_SVC_COMPLIANT' : 'WARN_SUB_180MVA_CAPACITY',
+        standard: 'IEEE 1453 Power Quality & Reactive Arc Furnace Flicker Suppression',
+        finding: `${eaf_substation_mva} MVA dedicated substation with STATCOM reactive stabilization isolates grid harmonics during high-current scrap/DRI meltdown.`
+      },
+      {
+        metric: 'EPA NESHAP Subpart YYYYY Baghouse & Refractory Escrow',
+        status: baghouse_refractory_escrow_annual_usd >= 600000 ? 'PASS_NESHAP_ESCROW_FUNDED' : 'WARN_BAGHOUSE_ESCROW_DEFICIT',
+        standard: '>= $600,000/yr Particulate Capture & EAF Slag Remediation Sinking Fund',
+        finding: `$${baghouse_refractory_escrow_annual_usd.toLocaleString()}/yr dedicated environmental escrow maintains 99.9% off-gas particulate filtration and slag recycling.`
+      },
+      {
+        metric: 'Direct Reduction Shaft Hydrogen Embrittlement Safety Protocol',
+        status: h2_mill_safety_reserve_annual_usd >= 350000 ? 'PASS_H2_SAFETY_CERTIFIED' : 'WARN_H2_SAFETY_RESERVE_LOW',
+        standard: 'ASME B31.12 Hydrogen Piping & Automated Nitrogen Purge Interlocks',
+        finding: `$${h2_mill_safety_reserve_annual_usd.toLocaleString()}/yr safety reserve protects high-pressure H2 reduction shaft headers and flare stack arrestors.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Green Steel H2-DRI & EAF Zero-Carbon Mill Complex',
+      mill_site_acres,
+      ground_rent_per_acre_year_usd,
+      annual_mill_ground_rent_usd: annualMillGroundRentUsd,
+      ore_dock_rail_concession_annual_usd,
+      annual_green_steel_metric_tons,
+      landlord_tonnage_royalty_usd,
+      annual_green_steel_royalties_usd: annualGreenSteelRoyaltiesUsd,
+      eaf_substation_mva,
+      substation_lease_per_mva_year_usd,
+      annual_eaf_substation_lease_usd: annualEafSubstationLeaseUsd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      baghouse_refractory_escrow_annual_usd,
+      h2_mill_safety_reserve_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      steel_mill_cap_rate_pct,
+      green_steel_mill_valuation_usd: greenSteelMillValuationUsd,
+      steel_compliance_audit: steelComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.795. POST Synthetic Biology Precision Fermentation & Cultivated Protein Bioreactor Campus Modeler
+app.post('/api/leases/:id/precision-fermentation-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      bioreactor_hall_sqft = 85000,
+      hall_rent_per_sqft_year_usd = 78.0,
+      total_fermentation_capacity_liters = 1200000,
+      capacity_tariff_per_liter_year_usd = 1.85,
+      downstream_packaging_sqft = 35000,
+      packaging_rent_per_sqft_year_usd = 46.0,
+      biogas_wastewater_concession_annual_usd = 680000,
+      cip_sip_sterile_reserve_annual_usd = 540000,
+      biosafety_compliance_escrow_annual_usd = 310000,
+      fermentation_cap_rate_pct = 6.25
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const annualBioreactorHallRentUsd = Math.round(bioreactor_hall_sqft * hall_rent_per_sqft_year_usd);
+    const annualVesselCapacityTariffUsd = Math.round(total_fermentation_capacity_liters * capacity_tariff_per_liter_year_usd);
+    const annualDownstreamPackagingRentUsd = Math.round(downstream_packaging_sqft * packaging_rent_per_sqft_year_usd);
+
+    const totalLandlordGrossRevenueUsd =
+      annualBioreactorHallRentUsd +
+      annualVesselCapacityTariffUsd +
+      annualDownstreamPackagingRentUsd +
+      biogas_wastewater_concession_annual_usd;
+
+    const totalOperatingReservesAnnualUsd =
+      cip_sip_sterile_reserve_annual_usd +
+      biosafety_compliance_escrow_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = fermentation_cap_rate_pct / 100.0;
+    const fermentationCampusValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const fermentationComplianceAudit = [
+      {
+        metric: 'FDA GRAS & USDA-FSIS Dual Food-Grade Jurisdiction Readiness',
+        status: 'PASS_FDA_USDA_DUAL_COMPLIANT',
+        standard: '21 CFR Part 117 cGMP Food-Grade Bioprocessing & FSSC 22000 ISO-7',
+        finding: `${bioreactor_hall_sqft.toLocaleString()} sqft sanitary stainless-steel suite validated for continuous precision-fermented protein and lipid harvesting.`
+      },
+      {
+        metric: 'ASME BPE Clean-in-Place (CIP) / Steam-in-Place (SIP) Sterility Fund',
+        status: cip_sip_sterile_reserve_annual_usd >= 450000 ? 'PASS_CIP_SIP_RESERVE_ADEQUATE' : 'WARN_STERILE_RESERVE_DEFICIT',
+        standard: '>= $450,000/yr Pure Steam Generator & Tangential Flow Filtration Reserve',
+        finding: `$${cip_sip_sterile_reserve_annual_usd.toLocaleString()}/yr sinking fund maintains zero-contamination turnover across ${(total_fermentation_capacity_liters / 1e6).toFixed(2)}M liters of vessel volume.`
+      },
+      {
+        metric: 'High-BOD Wastewater Anaerobic Digestion & Biogas Recovery',
+        status: 'PASS_IPP_PRETREATMENT_MONETIZED',
+        standard: 'EPA Industrial Pretreatment Program (IPP) & Closed-Loop Methane Capture',
+        finding: `On-site anaerobic digester converts spent broth biomass into renewable thermal biogas, yielding $${biogas_wastewater_concession_annual_usd.toLocaleString()}/yr landlord utility concession.`
+      },
+      {
+        metric: 'Biosafety Level 1 (BSL-1) Containment & Kill-Tank Escrow',
+        status: biosafety_compliance_escrow_annual_usd >= 250000 ? 'PASS_BIOSAFETY_ESCROW_FUNDED' : 'WARN_BIOSAFETY_ESCROW_LOW',
+        standard: 'NIH Guidelines for Engineered Microbial Strain Thermal Inactivation',
+        finding: `$${biosafety_compliance_escrow_annual_usd.toLocaleString()}/yr compliance escrow covers dual-redundant thermal kill tanks and automated HEPA exhaust monitoring.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Precision Fermentation & Cultivated Protein Bioreactor Campus',
+      bioreactor_hall_sqft,
+      hall_rent_per_sqft_year_usd,
+      annual_bioreactor_hall_rent_usd: annualBioreactorHallRentUsd,
+      total_fermentation_capacity_liters,
+      capacity_tariff_per_liter_year_usd,
+      annual_vessel_capacity_tariff_usd: annualVesselCapacityTariffUsd,
+      downstream_packaging_sqft,
+      packaging_rent_per_sqft_year_usd,
+      annual_downstream_packaging_rent_usd: annualDownstreamPackagingRentUsd,
+      biogas_wastewater_concession_annual_usd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      cip_sip_sterile_reserve_annual_usd,
+      biosafety_compliance_escrow_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      fermentation_cap_rate_pct,
+      fermentation_campus_valuation_usd: fermentationCampusValuationUsd,
+      fermentation_compliance_audit: fermentationComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.796. POST Sovereign AI Inference Edge Micro-Data Center & Urban Liquid-Cooled Pod Network Modeler
+app.post('/api/leases/:id/sovereign-ai-edge-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      edge_pod_sites_count = 24,
+      annual_site_license_per_pod_usd = 185000,
+      total_edge_it_load_kw = 18000,
+      edge_kw_tariff_per_kw_month_usd = 215.0,
+      metro_cross_connects_count = 960,
+      cross_connect_mrc_usd = 275,
+      waste_heat_export_revenue_annual_usd = 920000,
+      cdu_liquid_cooling_reserve_annual_usd = 1250000,
+      sovereign_security_escrow_annual_usd = 680000,
+      edge_network_cap_rate_pct = 5.75
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const annualEdgeSiteLicensesUsd = Math.round(edge_pod_sites_count * annual_site_license_per_pod_usd);
+    const annualEdgeItLoadTariffUsd = Math.round(total_edge_it_load_kw * edge_kw_tariff_per_kw_month_usd * 12);
+    const annualMetroCrossConnectsUsd = Math.round(metro_cross_connects_count * cross_connect_mrc_usd * 12);
+
+    const totalLandlordGrossRevenueUsd =
+      annualEdgeSiteLicensesUsd +
+      annualEdgeItLoadTariffUsd +
+      annualMetroCrossConnectsUsd +
+      waste_heat_export_revenue_annual_usd;
+
+    const totalOperatingReservesAnnualUsd =
+      cdu_liquid_cooling_reserve_annual_usd +
+      sovereign_security_escrow_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = edge_network_cap_rate_pct / 100.0;
+    const edgeNetworkValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const edgeComplianceAudit = [
+      {
+        metric: 'Sovereign Data Residency & FedRAMP High / Gaia-X Attestation',
+        status: sovereign_security_escrow_annual_usd >= 550000 ? 'PASS_SOVEREIGN_RESIDENCY_VERIFIED' : 'WARN_SECURITY_ESCROW_DEFICIT',
+        standard: 'FIPS 140-3 Hardware Root-of-Trust & Physical Biometric Mantrap Perimeter',
+        finding: `${edge_pod_sites_count} distributed urban inference pods enforce strict jurisdictional data sovereignty with $${sovereign_security_escrow_annual_usd.toLocaleString()}/yr audit escrow.`
+      },
+      {
+        metric: 'ASHRAE W45 Direct-to-Chip Liquid Cooling & Zero-Water Dry Coolers',
+        status: cdu_liquid_cooling_reserve_annual_usd >= 1000000 ? 'PASS_ASHRAE_W45_PUE_112' : 'WARN_CDU_RESERVE_SHORTFALL',
+        standard: 'Design PUE <= 1.12 with Zero Evaporative Municipal Water Consumption (WUE = 0.0)',
+        finding: `$${cdu_liquid_cooling_reserve_annual_usd.toLocaleString()}/yr CDU pump & manifold reserve supports ${(total_edge_it_load_kw / 1000).toFixed(1)} MW high-density inference racks.`
+      },
+      {
+        metric: 'Sub-2ms Metro Optical Ring & Sovereign IXP Peering Fabric',
+        status: metro_cross_connects_count >= 500 ? 'PASS_SUB_2MS_RING_CERTIFIED' : 'WARN_INTERCONNECT_DENSITY_LOW',
+        standard: 'Dual-Path Diverse Dark Fiber Ring with Automated Optical Switching',
+        finding: `${metro_cross_connects_count.toLocaleString()} active cross-connects generate $${annualMetroCrossConnectsUsd.toLocaleString()}/yr high-margin recurring peering cashflow.`
+      },
+      {
+        metric: 'Urban District Waste-Heat Export Monetization',
+        status: 'PASS_DISTRICT_HEAT_INTEGRATED',
+        standard: '60°C Return Loop Heat Exchange to Adjacent Municipal District Heating',
+        finding: `Closed-loop liquid heat rejection monetizes $${waste_heat_export_revenue_annual_usd.toLocaleString()}/yr in urban thermal energy offsets.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Sovereign AI Inference Edge Micro-Data Center Network',
+      edge_pod_sites_count,
+      annual_site_license_per_pod_usd,
+      annual_edge_site_licenses_usd: annualEdgeSiteLicensesUsd,
+      total_edge_it_load_kw,
+      edge_kw_tariff_per_kw_month_usd,
+      annual_edge_it_load_tariff_usd: annualEdgeItLoadTariffUsd,
+      metro_cross_connects_count,
+      cross_connect_mrc_usd,
+      annual_metro_cross_connects_usd: annualMetroCrossConnectsUsd,
+      waste_heat_export_revenue_annual_usd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      cdu_liquid_cooling_reserve_annual_usd,
+      sovereign_security_escrow_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      edge_network_cap_rate_pct,
+      edge_network_valuation_usd: edgeNetworkValuationUsd,
+      edge_compliance_audit: edgeComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.797. POST Autonomous Maritime Inland Barge Hub & Shore-Power Electrified River Terminal Modeler
+app.post('/api/leases/:id/electric-barge-terminal-modeler', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      terminal_riverfront_acres = 60,
+      riverfront_rent_per_acre_year_usd = 34000,
+      annual_barge_calls = 1400,
+      berth_amp_fee_per_call_usd = 2450,
+      annual_short_tons_throughput = 4200000,
+      wharfage_tariff_per_ton_usd = 0.95,
+      battery_swap_cycles_annual = 6500,
+      swap_fee_per_cycle_usd = 190,
+      channel_dredging_scour_reserve_annual_usd = 640000,
+      uscg_maritime_vts_escrow_annual_usd = 290000,
+      barge_terminal_cap_rate_pct = 6.00
+    } = req.body;
+
+    const leaseRes = await pool.query('SELECT id, filename, property_name FROM leases WHERE id = $1', [id]);
+    if (leaseRes.rows.length === 0) {
+      res.status(404).json({ error: 'Lease not found' });
+      return;
+    }
+    const lease = leaseRes.rows[0];
+
+    const annualRiverfrontGroundRentUsd = Math.round(terminal_riverfront_acres * riverfront_rent_per_acre_year_usd);
+    const annualBerthAmpFeesUsd = Math.round(annual_barge_calls * berth_amp_fee_per_call_usd);
+    const annualWharfageThroughputUsd = Math.round(annual_short_tons_throughput * wharfage_tariff_per_ton_usd);
+    const annualBatterySwapConcessionUsd = Math.round(battery_swap_cycles_annual * swap_fee_per_cycle_usd);
+
+    const totalLandlordGrossRevenueUsd =
+      annualRiverfrontGroundRentUsd +
+      annualBerthAmpFeesUsd +
+      annualWharfageThroughputUsd +
+      annualBatterySwapConcessionUsd;
+
+    const totalOperatingReservesAnnualUsd =
+      channel_dredging_scour_reserve_annual_usd +
+      uscg_maritime_vts_escrow_annual_usd;
+
+    const netOperatingIncomeUsd = totalLandlordGrossRevenueUsd - totalOperatingReservesAnnualUsd;
+    const capRateDecimal = barge_terminal_cap_rate_pct / 100.0;
+    const bargeTerminalValuationUsd = capRateDecimal > 0 ? Math.round(netOperatingIncomeUsd / capRateDecimal) : 0;
+
+    const bargeComplianceAudit = [
+      {
+        metric: 'IEC/ISO/IEEE 80005-1 High-Voltage Shore Connection (HVSC / AMP)',
+        status: 'PASS_HVSC_SHORE_POWER_CERTIFIED',
+        standard: 'Automated Megawatt Cold-Ironing & 20-ft Containerized Maritime Battery Swapping',
+        finding: `${annual_barge_calls.toLocaleString()} annual zero-emission barge calls and ${battery_swap_cycles_annual.toLocaleString()} battery container swaps eliminate diesel auxiliary idling.`
+      },
+      {
+        metric: 'USACE Inland Waterway Navigation Channel & Bulkhead Scour Fund',
+        status: channel_dredging_scour_reserve_annual_usd >= 500000 ? 'PASS_DREDGING_RESERVE_ADEQUATE' : 'WARN_DREDGING_RESERVE_DEFICIT',
+        standard: 'U.S. Army Corps of Engineers 14-ft Draft Maintenance & Sheet-Pile Scour Protection',
+        finding: `$${channel_dredging_scour_reserve_annual_usd.toLocaleString()}/yr dedicated dredging escrow preserves uninterrupted low-water navigation draft.`
+      },
+      {
+        metric: 'IMO MASS Autonomous Surface Vessel & USCG VTS Cyber Escrow',
+        status: uscg_maritime_vts_escrow_annual_usd >= 250000 ? 'PASS_IMO_MASS_VTS_READY' : 'WARN_VTS_ESCROW_SHORTFALL',
+        standard: 'USCG MTSA Maritime Cybersecurity & Automated Lidar/Radar Berthing Guidance',
+        finding: `$${uscg_maritime_vts_escrow_annual_usd.toLocaleString()}/yr escrow supports shore-side remote operations center (ROC) telemetry and auto-mooring vacuum pads.`
+      },
+      {
+        metric: 'EPA Clean Ports Initiative Zero-Emission Inland Modal Shift',
+        status: 'PASS_CLEAN_PORTS_ELIGIBLE',
+        standard: 'Inland Barge-to-Truck Displacement (> 140,000 Heavy Diesel Drayage Trips Avoided/Yr)',
+        finding: `${(annual_short_tons_throughput / 1e6).toFixed(2)}M short tons/yr electrified river throughput qualifies for federal Clean Ports capital grants.`
+      }
+    ];
+
+    res.json({
+      lease_id: id,
+      property_name: lease.property_name || 'Autonomous Electric Inland Barge Hub & River Terminal',
+      terminal_riverfront_acres,
+      riverfront_rent_per_acre_year_usd,
+      annual_riverfront_ground_rent_usd: annualRiverfrontGroundRentUsd,
+      annual_barge_calls,
+      berth_amp_fee_per_call_usd,
+      annual_berth_amp_fees_usd: annualBerthAmpFeesUsd,
+      annual_short_tons_throughput,
+      wharfage_tariff_per_ton_usd,
+      annual_wharfage_throughput_usd: annualWharfageThroughputUsd,
+      battery_swap_cycles_annual,
+      swap_fee_per_cycle_usd,
+      annual_battery_swap_concession_usd: annualBatterySwapConcessionUsd,
+      total_landlord_gross_revenue_usd: totalLandlordGrossRevenueUsd,
+      channel_dredging_scour_reserve_annual_usd,
+      uscg_maritime_vts_escrow_annual_usd,
+      total_operating_reserves_annual_usd: totalOperatingReservesAnnualUsd,
+      net_operating_income_usd: netOperatingIncomeUsd,
+      barge_terminal_cap_rate_pct,
+      barge_terminal_valuation_usd: bargeTerminalValuationUsd,
+      barge_compliance_audit: bargeComplianceAudit
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 4.77. GET all alerts for a specific lease
 app.get('/api/leases/:id/alerts', async (req, res) => {
   try {
