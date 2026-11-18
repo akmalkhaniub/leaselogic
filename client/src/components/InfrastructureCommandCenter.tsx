@@ -74,6 +74,7 @@ export const MODULE_REGISTRY: ModuleRegistryItem[] = [
   { id: 'saf_biorefinery', label: '🧪 SAF HEFA Biorefinery', category: 'Energy & Cleantech', keywords: 'sustainable aviation fuel hefa pipeline 40b 45z' },
   { id: 'otec_marine_energy', label: '🌊 OTEC Marine Energy', category: 'Energy & Cleantech', keywords: 'ocean thermal swac ammonia rankine deep water' },
   { id: 'hvdc_converter_station', label: '⚡ HVDC Converter Station', category: 'Energy & Cleantech', keywords: 'direct current vsc mmc transmission ferc wheeling' },
+  { id: 'egs_geothermal_power', label: '🔥 EGS Geothermal Power', category: 'Energy & Cleantech', keywords: 'enhanced geothermal hot dry rock dle lithium baseload ppa' },
 
   // Deep-Tech & Bio
   { id: 'datacenter_pue', label: '🛰️ Data Center PUE', category: 'Deep-Tech & Bio', keywords: 'colocation mw ups cooling' },
@@ -86,6 +87,8 @@ export const MODULE_REGISTRY: ModuleRegistryItem[] = [
   { id: 'quantum_cryogenic', label: '❄️ Quantum Cryogenic Vault', category: 'Deep-Tech & Bio', keywords: 'dilution fridge helium3 faraday millikelvin' },
   { id: 'satellite_teleport', label: '🌌 Satellite Teleport', category: 'Deep-Tech & Bio', keywords: 'phased array fsoc optical downlink fcc' },
   { id: 'orbital_space_launch', label: '🛰️ Orbital Space Launch', category: 'Deep-Tech & Bio', keywords: 'rocket pad static test faa part 450 methalox' },
+  { id: 'precision_fermentation', label: '🧬 Precision Fermentation', category: 'Deep-Tech & Bio', keywords: 'synbio bioreactor protein fda gras cip sip biogas' },
+  { id: 'sovereign_ai_edge', label: '⚡ Sovereign AI Edge Pods', category: 'Deep-Tech & Bio', keywords: 'micro data center liquid cooled fedramp gaia-x ixp' },
 
   // Mobility & Subsea
   { id: 'industrial_logistics', label: '📦 Industrial Logistics', category: 'Mobility & Subsea', keywords: 'warehouse dock clear height' },
@@ -99,6 +102,7 @@ export const MODULE_REGISTRY: ModuleRegistryItem[] = [
   { id: 'telecom_5g', label: '📡 5G & Fiber Telecom', category: 'Mobility & Subsea', keywords: 'rooftop cell das small cell' },
   { id: 'spaceport_launch', label: '🛰️ Spaceport Launch Complex', category: 'Mobility & Subsea', keywords: 'faa orbital range pad' },
   { id: 'rail_inland_port', label: '🚆 Rail Intermodal Port', category: 'Mobility & Subsea', keywords: 'armg container rail class 1 trackage demurrage' },
+  { id: 'electric_barge_terminal', label: '🚢 Electric Barge Terminal', category: 'Mobility & Subsea', keywords: 'inland river barge shore power amp battery swap usace' },
 
   // Real Assets & Ops
   { id: 'spatial', label: '📍 Spatial', category: 'Real Assets & Ops', keywords: 'floorplan map occupancy' },
@@ -115,7 +119,8 @@ export const MODULE_REGISTRY: ModuleRegistryItem[] = [
   { id: 'self_storage', label: '📦 Self-Storage & Vault', category: 'Real Assets & Ops', keywords: 'climate units occupancy' },
   { id: 'theme_park', label: '🎢 Theme Park & Attractions', category: 'Real Assets & Ops', keywords: 'turnstile gate percentage rent' },
   { id: 'stadium_arena', label: '🏟️ Stadium & Arena District', category: 'Real Assets & Ops', keywords: 'naming rights luxury suite' },
-  { id: 'hospitality_revpar', label: '🏨 Hospitality & RevPAR', category: 'Real Assets & Ops', keywords: 'hotel adr f&b royalty' }
+  { id: 'hospitality_revpar', label: '🏨 Hospitality & RevPAR', category: 'Real Assets & Ops', keywords: 'hotel adr f&b royalty' },
+  { id: 'green_steel_dri', label: '🏗️ Green Steel H2-DRI Mill', category: 'Real Assets & Ops', keywords: 'direct reduced iron eaf steel cbam hydrogen substation' }
 ];
 
 export const MODULE_CATEGORIES: ModuleCategory[] = [
